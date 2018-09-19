@@ -1,2 +1,1 @@
-# misc-functions
-Miscellaneous Python functions.
+# Miscellaneous Python functions
