@@ -77,6 +77,7 @@ def convolve(oldres_FWHM,newres_FWHM,data,header):
     data   : data to be convolved
     header : FITS header for data
     '''
+    
     # convert FWHM to standard deviations
     oldres_sigma = oldres_FWHM/(2.*np.sqrt(2.*np.log(2.)))
     newres_sigma = newres_FWHM/(2.*np.sqrt(2.*np.log(2.)))
