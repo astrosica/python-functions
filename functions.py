@@ -1,6 +1,7 @@
 #!/Users/campbell/anaconda2/bin/python
 
 import numpy as np
+from scipy import signal
 from PyAstronomy import pyasl
 
 def degtosexa(ra_deg,dec_deg):
@@ -66,3 +67,36 @@ def sexatodeg(ra_sexa,dec_sexa):
         dec_deg = np.array(dec_deg_list)
      
     return ra_deg,dec_deg
+
+def convolve(oldres_FWHM,newres_FWHM,data,header):
+    '''
+    Convolves data from oldres to newres.
+    
+    oldres : native resolution in arcminutes (FWHM)
+    newres : desired resolution in arcminutes (FWHM)
+    data   : data to be convolved
+    header : FITS header for data
+    '''
+    # convert FWHM to standard deviations
+    oldres_sigma = oldres_FWHM/(2.*np.sqrt(2.*np.log(2.)))
+    newres_sigma = newres_FWHM/(2.*np.sqrt(2.*np.log(2.)))
+    # construct kernel
+    kernel_arcmin = np.sqrt(newres_sigma**2.-oldres_sigma**2.) # convolution theorem
+    pixelsize     = header["CDELT2"]*60.                       # in arcminutes
+    kernelsize    = kernel_arcmin/pixelsize                    # in pixels
+    data_size_x   = data.shape[0]
+    data_size_y   = data.shape[1]
+    kernel_x      = signal.gaussian(data_size_x,kernelsize)
+    kernel_y      = signal.gaussian(data_size_y,kernelsize)
+    kernel        = np.outer(kernel_x,kernel_y)
+    # normalize convolution kernel
+    kernel_norm   = kernel/np.sum(kernel)
+    
+    # convolve data using FFT
+    data_smoothed = signal.fftconvolve(data,kernel_norm,mode="same")
+    
+    return data_smoothed
+    
+    
+
+
