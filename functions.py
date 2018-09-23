@@ -97,7 +97,19 @@ def convolve(oldres_FWHM,newres_FWHM,data,header):
     data_smoothed = signal.fftconvolve(data,kernel_norm,mode="same")
     
     return data_smoothed
+
+def polgrad(Q,U):
+    '''
+    Constructs the spatial polarization gradient given Stokes Q and U maps.
     
+    Q : Stokes Q data
+    U : Stokes U data
+    '''
     
+    Q_grad   = np.gradient(Q)
+    U_grad   = np.gradient(U)
+    polgrad  = np.sqrt(Q_grad[0]**2.+Q_grad[1]**2.+U_grad[0]**2.+U_grad[1]**2.)
+    
+    return polgrad
 
 
