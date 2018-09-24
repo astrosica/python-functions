@@ -189,10 +189,9 @@ def polgrad_arg(Q,U):
     U_grad_x = U_grad[0]
     U_grad_y = U_grad[1]
     
-    a = Q_grad_x*Q_grad_y + U_grad_x*U*grad_y
-    b = np.sqrt(Q_grad_y**2. + U_grad_y**2.)
-    c = np.sqrt(Q_grad_x**2. + U_grad_x**2.)
+    num = (Q_grad_x*Q_grad_y + U_grad_x*U*grad_y)*np.sqrt(Q_grad_y**2. + U_grad_y**2.)
+    den = np.sqrt(Q_grad_x**2. + U_grad_x**2.)
     
-    polgrad_arg = np.arctan(a*b/c)
+    polgrad_arg = np.arctan2(num/den)
     
     return polgrad_arg
