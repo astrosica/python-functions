@@ -171,4 +171,28 @@ def polgrad_tan(Q,U):
     
     return polgrad_tan
 
-
+def polgrad_arg(Q,U):
+    '''
+    Computes the angle of the spatial polarization gradient given Stokes Q and U maps.
+    
+    Q : Stokes Q data
+    U : Stokes U data
+    '''
+    
+    # compute Stokes spatial gradients
+    Q_grad   = np.gradient(Q)
+    U_grad   = np.gradient(U)
+    
+    # define components of spatial gradients
+    Q_grad_x = Q_grad[0]
+    Q_grad_y = Q_grad[1]
+    U_grad_x = U_grad[0]
+    U_grad_y = U_grad[1]
+    
+    a = Q_grad_x*Q_grad_y + U_grad_x*U*grad_y
+    b = np.sqrt(Q_grad_y**2. + U_grad_y**2.)
+    c = np.sqrt(Q_grad_x**2. + U_grad_x**2.)
+    
+    polgrad_arg = np.arctan(a*b/c)
+    
+    return polgrad_arg
