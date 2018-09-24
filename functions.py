@@ -106,10 +106,69 @@ def polgrad(Q,U):
     U : Stokes U data
     '''
     
+    # compute Stokes spatial gradients
     Q_grad   = np.gradient(Q)
     U_grad   = np.gradient(U)
-    polgrad  = np.sqrt(Q_grad[0]**2.+Q_grad[1]**2.+U_grad[0]**2.+U_grad[1]**2.)
+    
+    # define components of spatial gradients
+    Q_grad_x = Q_grad[0]
+    Q_grad_y = Q_grad[1]
+    U_grad_x = U_grad[0]
+    U_grad_y = U_grad[1]
+    
+    # compute spatial polarization gradient
+    polgrad  = np.sqrt(Q_grad_x**2.+Q_grad_y**2.+U_grad_x**2.+U_grad_y**2.)
     
     return polgrad
+
+def polgrad_rad(Q,U):
+    '''
+    Constructs the radial component of the spatial polarization gradient given Stokes Q and U maps.
+    
+    Q : Stokes Q data
+    U : Stokes U data
+    '''
+    
+    # compute Stokes spatial gradients
+    Q_grad   = np.gradient(Q)
+    U_grad   = np.gradient(U)
+    
+    # define components of spatial gradients
+    Q_grad_x = Q_grad[0]
+    Q_grad_y = Q_grad[1]
+    U_grad_x = U_grad[0]
+    U_grad_y = U_grad[1]
+    
+    polgrad_rad_num = (Q*Q_grad_x+U*U_grad_x)**2. + (Q*Q_grad_y+U*U_grad_y)**2.
+    polgrad_rad_den = Q**2.+U**2.
+    
+    polgrad_rad = np.sqrt(polgrad_rad_num/polgrad_rad_den)
+    
+    return polgrad_rad
+
+def polgrad_tan(Q,U):
+    '''
+    Constructs the tangential component of the spatial polarization gradient given Stokes Q and U maps.
+    
+    Q : Stokes Q data
+    U : Stokes U data
+    '''
+    
+    # compute Stokes spatial gradients
+    Q_grad   = np.gradient(Q)
+    U_grad   = np.gradient(U)
+    
+    # define components of spatial gradients
+    Q_grad_x = Q_grad[0]
+    Q_grad_y = Q_grad[1]
+    U_grad_x = U_grad[0]
+    U_grad_y = U_grad[1]
+    
+    polgrad_tan_num = (Q*U_grad_x-U*Q_grad_x)**2. + (Q*U_grad_y-U*Q_grad_y)**2.
+    polgrad_tan_den = Q**2.+U**2.
+    
+    polgrad_tan = np.sqrt(polgrad_tan_num/polgrad_tan_den)
+    
+    return polgrad_tan
 
 
