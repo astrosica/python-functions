@@ -195,3 +195,22 @@ def polgrad_arg(Q,U):
     polgrad_arg = np.arctan2(num/den)
     
     return polgrad_arg
+
+def fgradient(x):
+    '''
+    Constructs the spatial gradient.
+    
+    x : 2-dimensional input map
+    '''
+    
+    # compute spatial gradients
+    grad_xy = np.gradient(x)
+    
+    # define components of spatial gradient
+    grad_x = grad_xy[0]
+    grad_y = grad_xy[1]
+    
+    # compute total spatial gradient map
+    grad = np.sqrt(grad_x**2. + grad_y**2.)
+    
+    return grad
