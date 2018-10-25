@@ -4,6 +4,28 @@ import numpy as np
 from scipy import signal
 from PyAstronomy import pyasl
 
+def ffreqaxis(file):
+	'''
+	Extracts the frequency axis from a FITS file using the header.
+
+	file : location of FITS file
+	'''
+
+	# extract header information
+	header = getheader(file)
+	CRVAL3 = header["CRVAL3"]
+	CRPIX3 = header["CRPIX3"]
+	CDELT3 = header["CDELT3"]
+	NAXIS3 = header["NAXIS3"]
+
+	#construct pixel array
+	freqpixels = np.arange(NAXIS3)
+
+	# transform pixels to frequency
+	freqaxis =  CRVAL3 + (freqpixels-CRPIX3)*CDELT3
+
+	return freqaxis
+
 def degtosexa(ra_deg,dec_deg):
     '''
     Converts Right Ascension and Declination from decimal degrees to sexagismal format. Inputs integers, floats, lists, or arrays.
