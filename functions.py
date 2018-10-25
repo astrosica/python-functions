@@ -121,6 +121,31 @@ def polgrad(Q,U):
     
     return polgrad
 
+def fpolgrad_crossterms(Q,U):
+    '''
+    Constructs the complete spatial polarization gradient with the cross-terms included given Stokes Q and U maps.
+    
+    Q : Stokes Q data
+    U : Stokes U data
+    '''
+    
+    # compute Stokes spatial gradients
+    Q_grad   = np.gradient(Q)
+    U_grad   = np.gradient(U)
+    
+    # define components of spatial gradients
+    Q_grad_x = Q_grad[0]
+    Q_grad_y = Q_grad[1]
+    U_grad_x = U_grad[0]
+    U_grad_y = U_grad[1]
+    
+    # compute spatial polarization gradient
+    a       = Q_grad_x**2.+Q_grad_y**2.+U_grad_x**2.+U_grad_y**2.
+    b       = a**2. - 4.*(Q_grad_x*U_grad_y - Q_grad_y*U_grad_x)**2.
+    polgrad = np.sqrt( 1.5*a + 1.5*np.sqrt(b) )
+    
+    return polgrad
+
 def polgrad_rad(Q,U):
     '''
     Constructs the radial component of the spatial polarization gradient given Stokes Q and U maps.
