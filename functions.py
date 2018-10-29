@@ -26,22 +26,24 @@ def ffreqaxis(file):
 
 	return freqaxis
 
-def freproject_2D(image1_dir,image2_dir,clean=False):
+def freproject_2D(image1_dir,image2_dir,clean=False,order="nearest-neighbor"):
 	'''
 	Reprojects image1 to image2 using their FITS headers.
 
 	Inputs:
 	image1_dir : directory to image that will be reprojected
 	image2_dir : directory to template image used for reprojection
+	clean      : if True, creates new minimal headers based off inputs
+	order      : order of interpolation (alternative options are 'bilinear', 'biquadratic', 'bicubic')
 
 	Outputs:
-	image1_data : data to be reprojected
-	image1_header : header of image to be reprojected
-	image1_data_reproj : data of reprojected image
+	image1_data          : data to be reprojected
+	image1_header        : header of image to be reprojected
+	image1_data_reproj   : data of reprojected image
 	image1_header_reproj : header of image1 used for reprojection (if clean=True header content is minimal)
-	image2_data : data of image used for reprojection
+	image2_data          : data of image used for reprojection
 	image2_header_reproj : header of image2 used for reprojection (if clean=True header content is minimal)
-	footprint : a mask that defines which pixels in the reprojected image have a corresponding image in the original image
+	footprint            : a mask that defines which pixels in the reprojected image have a corresponding image in the original image
 	'''
 
 	image1_data,image1_header=fits.getdata(image1_dir,header=True)
@@ -85,7 +87,7 @@ def freproject_2D(image1_dir,image2_dir,clean=False):
 		image2_header_reproj = image2_header
 
 	# perform reprojection
-	image1_data_reproj,footprint = reproject_interp((image1_data, image1_header_reproj), image2_header_reproj)
+	image1_data_reproj,footprint = reproject_interp((image1_data, image1_header_reproj), image2_header_reproj,order=order)
 
 	return (image1_data,image1_header,image1_data_reproj,image1_header_reproj,image2_data,image2_header_reproj,footprint)
 
