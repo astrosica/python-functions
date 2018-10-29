@@ -26,6 +26,69 @@ def ffreqaxis(file):
 
 	return freqaxis
 
+def freproject_2D(image1_dir,image2_dir,clean=False):
+	'''
+	Reprojects image1 to image2 using their FITS headers.
+
+	Inputs:
+	image1_dir : directory to image that will be reprojected
+	image2_dir : directory to template image used for reprojection
+
+	Outputs:
+	image1_data : data to be reprojected
+	image1_header : header of image to be reprojected
+	image1_data_reproj : data of reprojected image
+	image1_header_reproj : header of image1 used for reprojection (if clean=True header content is minimal)
+	image2_data : data of image used for reprojection
+	image2_header_reproj : header of image2 used for reprojection (if clean=True header content is minimal)
+	footprint : a mask that defines which pixels in the reprojected image have a corresponding image in the original image
+	'''
+
+	image1_data,image1_header=fits.getdata(image1_dir,header=True)
+	image2_data,image2_header=fits.getdata(image2_dir,header=True)
+
+	if clean==True:
+		image1_header_clean = fits.Header.fromkeys(["NAXIS", "NAXIS1", "NAXIS2", "CTYPE1", "CRPIX1", "CRVAL1", "CDELT1", 
+                                                    "CTYPE2", "CRPIX2", "CRVAL2", "CDELT2"])
+		image2_header_clean = fits.Header.fromkeys(["NAXIS", "NAXIS1", "NAXIS2", "CTYPE1", "CRPIX1", "CRVAL1", "CDELT1", 
+                                                    "CTYPE2", "CRPIX2", "CRVAL2", "CDELT2"])
+
+		image1_header_clean["NAXIS"]  = 2
+		image1_header_clean["NAXIS1"] = image1_header['NAXIS1']
+		image1_header_clean["NAXIS2"] = image1_header['NAXIS2']
+		image1_header_clean["CTYPE1"] = image1_header['CTYPE1']
+		image1_header_clean["CRPIX1"] = image1_header['CRPIX1']
+		image1_header_clean["CRVAL1"] = image1_header['CRVAL1']
+		image1_header_clean["CDELT1"] = image1_header['CDELT1']
+		image1_header_clean["CTYPE2"] = image1_header['CTYPE2']
+		image1_header_clean["CRPIX2"] = image1_header['CRPIX2']
+		image1_header_clean["CRVAL2"] = image1_header['CRVAL2']
+		image1_header_clean["CDELT2"] = image1_header['CDELT2']
+
+		image2_header_clean["NAXIS"]  = 2
+		image2_header_clean["NAXIS1"] = image2_header['NAXIS1']
+		image2_header_clean["NAXIS2"] = image2_header['NAXIS2']
+		image2_header_clean["CTYPE1"] = image2_header['CTYPE1']
+		image2_header_clean["CRPIX1"] = image2_header['CRPIX1']
+		image2_header_clean["CRVAL1"] = image2_header['CRVAL1']
+		image2_header_clean["CDELT1"] = image2_header['CDELT1']
+		image2_header_clean["CTYPE2"] = image2_header['CTYPE2']
+		image2_header_clean["CRPIX2"] = image2_header['CRPIX2']
+		image2_header_clean["CRVAL2"] = image2_header['CRVAL2']
+		image2_header_clean["CDELT2"] = image2_header['CDELT2']
+
+		image1_header_reproj = image1_header_clean
+		image2_header_reproj = image2_header_clean
+
+	else:
+		image1_header_reproj = image1_header
+		image2_header_reproj = image2_header
+
+	# perform reprojection
+	image1_data_reproj,footprint = reproject_interp((image1_data, image1_header_reproj), image2_header_reproj)
+
+	return (image1_data,image1_header,image1_data_reproj,image1_header_reproj,image2_data,image2_header_reproj,footprint)
+
 def degtosexa(ra_deg,dec_deg):
     '''
     Converts Right Ascension and Declination from decimal degrees to sexagismal format. Inputs integers, floats, lists, or arrays.
