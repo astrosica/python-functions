@@ -185,39 +185,44 @@ def convolve(oldres_FWHM,newres_FWHM,data,header):
     
     return data_smoothed
 
-def fwavelet(oldres_FWHM,newres_FWHM,data,header):
+def fwavelet(oldres_FWHM,newres_FWHM,data_Q,header_Q,data_U,header_U):
     '''
-    Wavelet transform: computes gradient of convolution kernel which is then
-    applied to the data via FFT convolution.
+    Wavelet transform: Computes the 2D spatial gradient of the convolution kernel which is then applied to
+    the data via FFT convolution. Assumes Q and U maps have the same FITS header quantities (size, resolution,etc.).
     
-    oldres : native resolution in arcminutes (FWHM)
-    newres : desired resolution in arcminutes (FWHM)
-    data   : data to be convolved
-    header : FITS header for data
+    oldres   : native resolution in arcminutes (FWHM)
+    newres   : desired resolution in arcminutes (FWHM)
+    data_Q   : Stokes Q data to be convolved
+    header_Q : FITS header for Stokes Q data
+    data_U   : Stokes U data to be convolved
+    header_U : FITS header for Stokes U data
     '''
     
     # convert FWHM to standard deviations
     oldres_sigma = oldres_FWHM/(2.*np.sqrt(2.*np.log(2.)))
     newres_sigma = newres_FWHM/(2.*np.sqrt(2.*np.log(2.)))
-    # construct kernel
+    # determine kernel size in arcminutes and convert to pixels
     kernel_arcmin = np.sqrt(newres_sigma**2.-oldres_sigma**2.) # convolution theorem
-    pixelsize     = header["CDELT2"]*60.                       # in arcminutes
+    pixelsize     = header_Q["CDELT2"]*60.                     # in arcminutes
     kernelsize    = kernel_arcmin/pixelsize                    # in pixels
-    data_size_x   = data.shape[0]
-    data_size_y   = data.shape[1]
+    # construct kernel
+    data_size_x   = data_Q.shape[0]
+    data_size_y   = data_Q.shape[1]
     kernel_x      = signal.gaussian(data_size_x,kernelsize)
     kernel_y      = signal.gaussian(data_size_y,kernelsize)
     kernel        = np.outer(kernel_x,kernel_y)
     # normalize convolution kernel
     kernel_norm   = kernel/np.sum(kernel)
-    
     # compute gradient of convolutin kernel
-    kernel_norm_grad = fgradient(kernel_norm)
+    kernel_grad = fgradient(kernel_norm)
+    # normalize convolution kernel
+    kernel_grad_norm   = kernel_grad/np.sum(kernel_grad)
     
     # convolve data using FFT
-    data_wavelet = signal.fftconvolve(data,kernel_norm_grad,mode="same")
+    data_Q_wavelet = signal.fftconvolve(data_Q,kernel_grad_norm,mode="same")
+    data_U_wavelet = signal.fftconvolve(data_U,kernel_grad_norm,mode="same")
     
-    return data_wavelet
+    return data_Q_wavelet,data_U_wavelet
 
 def polgrad(Q,U):
     '''
