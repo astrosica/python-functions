@@ -91,7 +91,7 @@ def freproject_2D(image1_dir,image2_dir,clean=False,order="nearest-neighbor"):
 
 	return (image1_data,image1_header,image1_data_reproj,image1_header_reproj,image2_data,image2_header_reproj,footprint)
 
-def degtosexa(ra_deg,dec_deg):
+def fdegtosexa(ra_deg,dec_deg):
     '''
     Converts Right Ascension and Declination from decimal degrees to sexagismal format. Inputs integers, floats, lists, or arrays.
     '''
@@ -125,7 +125,7 @@ def degtosexa(ra_deg,dec_deg):
     
     return ra_sexa,dec_sexa
 
-def sexatodeg(ra_sexa,dec_sexa):
+def fsexatodeg(ra_sexa,dec_sexa):
     '''
     Converts Right Ascension and Declination from sexagismal format to decimal degrees. Inputs integers, floats,, lists, or arrays.
     '''
@@ -155,7 +155,7 @@ def sexatodeg(ra_sexa,dec_sexa):
      
     return ra_deg,dec_deg
 
-def convolve(oldres_FWHM,newres_FWHM,data,header):
+def fconvolve(oldres_FWHM,newres_FWHM,data,header):
     '''
     Convolves data from oldres to newres.
     
@@ -185,7 +185,7 @@ def convolve(oldres_FWHM,newres_FWHM,data,header):
     
     return data_smoothed
 
-def fwavelet(oldres_FWHM,newres_FWHM,data_Q,header_Q,data_U,header_U):
+def fpolgrad_wavelet(oldres_FWHM,newres_FWHM,data_Q,header_Q,data_U,header_U):
     '''
     Wavelet transform: Computes the 2D spatial gradient of the convolution kernel which is then applied to
     the data via FFT convolution. Assumes Q and U maps have the same FITS header quantities (size, resolution,etc.).
@@ -224,7 +224,7 @@ def fwavelet(oldres_FWHM,newres_FWHM,data_Q,header_Q,data_U,header_U):
     
     return data_Q_wavelet,data_U_wavelet
 
-def polgrad(Q,U):
+def fpolgrad(Q,U):
     '''
     Constructs the spatial polarization gradient given Stokes Q and U maps.
     
@@ -272,7 +272,7 @@ def fpolgrad_crossterms(Q,U):
     
     return polgrad
 
-def polgrad_rad(Q,U):
+def fpolgrad_rad(Q,U):
     '''
     Constructs the radial component of the spatial polarization gradient given Stokes Q and U maps.
     
@@ -297,7 +297,7 @@ def polgrad_rad(Q,U):
     
     return polgrad_rad
 
-def polgrad_tan(Q,U):
+def fpolgrad_tan(Q,U):
     '''
     Constructs the tangential component of the spatial polarization gradient given Stokes Q and U maps.
     
@@ -322,7 +322,7 @@ def polgrad_tan(Q,U):
     
     return polgrad_tan
 
-def polgrad_arg(Q,U):
+def fpolgrad_arg(Q,U):
     '''
     Computes the angle of the spatial polarization gradient given Stokes Q and U maps.
     
