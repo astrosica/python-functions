@@ -276,7 +276,7 @@ def fpolgrad_tan(Q,U):
     U_grad_x = U_grad[0]
     U_grad_y = U_grad[1]
     
-    polgrad_tan_num = (Q*U_grad_x-U*Q_grad_x)**2. + (Q*U_grad_y-U*Q_grad_y)**2.
+    polgrad_tan_num = (Q*U_grad_x+U*Q_grad_x)**2. + (Q*U_grad_y-U*Q_grad_y)**2.
     polgrad_tan_den = Q**2.+U**2.
     
     polgrad_tan = np.sqrt(polgrad_tan_num/polgrad_tan_den)
