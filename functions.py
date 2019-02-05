@@ -327,24 +327,35 @@ def fgradient(x):
     
     return grad
 
-def fchanavg(cube,mode="mean",ignorenan=False):
+def fchanavg(cube,mode="mean",nanmode="zeros"):
     '''
     Computes the bandpass average of a three-dimensional FITS cube.
     
-    cube      : a three-dimensional data cube
-    mode      : "mean" or "max"
-    ignorenan : boolean
+    cube    : a three-dimensional data cube
+    mode    : "mean" or "max"
+    nanmode : "ignore" or "zeros"
     '''
     
-    if ignorenan==False:
-        if mode == "mean":
-            cube_avg = np.mean(cube,axis=0)
-        elif mode=="max":
-            cube_avg = np.max(cube,axis=0)
-    else:
-        if mode == "mean":
+    if mode=="mean":
+        # compute bandpass average
+        if nanmode=="ignore":
+            # ignore NaNs in computation
             cube_avg = np.nanmean(cube,axis=0)
-        elif mode == "max":
+        elif nanmode=="zeros":
+            # replace NaNs with zeros
+            mask = np.isnan(cube)
+            cube[mask] = 0.0
+            cube_avg = np.mean(cube,axis=0)
+    elif mode=="max":
+        # compute bandpass max
+        if nanmode=="ignore":
+            # ignore NaNs in computation
             cube_avg = np.nanmax(cube,axis=0)
+        elif nanmode=="zeros":
+            # replace NaNs with zeros
+            mask = np.isnan(cube)
+            cube[mask] = 0.0
+            cube_avg = np.max(cube,axis=0)
     
     return cube_avg
+    
