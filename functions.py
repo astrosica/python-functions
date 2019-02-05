@@ -185,45 +185,6 @@ def fconvolve(oldres_FWHM,newres_FWHM,data,header):
     
     return data_smoothed
 
-def fpolgrad_wavelet(oldres_FWHM,newres_FWHM,data_Q,header_Q,data_U,header_U):
-    '''
-    Wavelet transform: Computes the 2D spatial gradient of the convolution kernel which is then applied to
-    the data via FFT convolution. Assumes Q and U maps have the same FITS header quantities (size, resolution,etc.).
-    
-    oldres   : native resolution in arcminutes (FWHM)
-    newres   : desired resolution in arcminutes (FWHM)
-    data_Q   : Stokes Q data to be convolved
-    header_Q : FITS header for Stokes Q data
-    data_U   : Stokes U data to be convolved
-    header_U : FITS header for Stokes U data
-    '''
-    
-    # convert FWHM to standard deviations
-    oldres_sigma = oldres_FWHM/(2.*np.sqrt(2.*np.log(2.)))
-    newres_sigma = newres_FWHM/(2.*np.sqrt(2.*np.log(2.)))
-    # determine kernel size in arcminutes and convert to pixels
-    kernel_arcmin = np.sqrt(newres_sigma**2.-oldres_sigma**2.) # convolution theorem
-    pixelsize     = header_Q["CDELT2"]*60.                     # in arcminutes
-    kernelsize    = kernel_arcmin/pixelsize                    # in pixels
-    # construct kernel
-    data_size_x   = data_Q.shape[0]
-    data_size_y   = data_Q.shape[1]
-    kernel_x      = signal.gaussian(data_size_x,kernelsize)
-    kernel_y      = signal.gaussian(data_size_y,kernelsize)
-    kernel        = np.outer(kernel_x,kernel_y)
-    # normalize convolution kernel
-    kernel_norm   = kernel/np.sum(kernel)
-    # compute gradient of convolutin kernel
-    kernel_grad = fgradient(kernel_norm)
-    # normalize convolution kernel
-    kernel_grad_norm   = kernel_grad/np.sum(kernel_grad)
-    
-    # convolve data using FFT
-    data_Q_wavelet = signal.fftconvolve(data_Q,kernel_grad_norm,mode="same")
-    data_U_wavelet = signal.fftconvolve(data_U,kernel_grad_norm,mode="same")
-    
-    return data_Q_wavelet,data_U_wavelet
-
 def fpolgrad(Q,U):
     '''
     Constructs the spatial polarization gradient given Stokes Q and U maps.
@@ -365,3 +326,25 @@ def fgradient(x):
     grad = np.sqrt(grad_x**2. + grad_y**2.)
     
     return grad
+
+def fchanavg(cube,mode="mean",ignorenan=False):
+    '''
+    Computes the bandpass average of a three-dimensional FITS cube.
+    
+    cube      : a three-dimensional data cube
+    mode      : "mean" or "max"
+    ignorenan : boolean
+    '''
+    
+    if ignorenan==False:
+        if mode == "mean":
+            cube_avg = np.mean(cube,axis=0)
+        elif mode=="max":
+            cube_avg = np.max(cube,axis=0)
+    else:
+        if mode == "mean":
+            cube_avg = np.nanmean(cube,axis=0)
+        elif mode == "max":
+            cube_avg = np.nanmax(cube,axis=0)
+    
+    return cube_avg
