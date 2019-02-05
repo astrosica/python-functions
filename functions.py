@@ -268,7 +268,7 @@ def fpolgrad_crossterms(Q,U):
     # compute spatial polarization gradient
     a       = Q_grad_x**2.+Q_grad_y**2.+U_grad_x**2.+U_grad_y**2.
     b       = a**2. - 4.*(Q_grad_x*U_grad_y - Q_grad_y*U_grad_x)**2.
-    polgrad = np.sqrt( 1.5*a + 1.5*np.sqrt(b) )
+    polgrad = np.sqrt(0.5*a + 0.5*np.sqrt(b) )
     
     return polgrad
 
