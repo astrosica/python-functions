@@ -234,6 +234,7 @@ def fpolgradnorm(Q,U):
     
     polgrad_norm = polgrad/P
     
+    # compute the normalized polarization gradient
     return polgrad_norm
 
 def fpolgrad_crossterms(Q,U):
