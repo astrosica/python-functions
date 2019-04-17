@@ -232,6 +232,7 @@ def fpolgradnorm(Q,U):
     # compute the polarized intensity
     P = np.sqrt(Q**2.+U**2.)
     
+    # compute normalized polarization gradient
     polgrad_norm = polgrad/P
     
     # compute the normalized polarization gradient
@@ -259,7 +260,7 @@ def fpolgrad_crossterms(Q,U):
     a       = Q_grad_x**2.+Q_grad_y**2.+U_grad_x**2.+U_grad_y**2.
     b       = a**2. - 4.*(Q_grad_x*U_grad_y - Q_grad_y*U_grad_x)**2.
 
-    # compute the polarization gradient
+    # compute polarization gradient
     polgrad = np.sqrt(0.5*a + 0.5*np.sqrt(b) )
     
     return polgrad
@@ -318,6 +319,7 @@ def fpolgrad_rad(Q,U):
     
     polgrad_rad = np.sqrt(polgrad_rad_num/polgrad_rad_den)
     
+    # compute radial component of polarization gradient
     return polgrad_rad
 
 def fpolgrad_tan(Q,U):
@@ -341,6 +343,7 @@ def fpolgrad_tan(Q,U):
     polgrad_tan_num = (Q*U_grad_x+U*Q_grad_x)**2. + (Q*U_grad_y-U*Q_grad_y)**2.
     polgrad_tan_den = Q**2.+U**2.
     
+    # compute tangential component of polarization gradient
     polgrad_tan = np.sqrt(polgrad_tan_num/polgrad_tan_den)
     
     return polgrad_tan
@@ -366,6 +369,7 @@ def fpolgrad_arg(Q,U):
     num = (Q_grad_x*Q_grad_y + U_grad_x*U*grad_y)*np.sqrt(Q_grad_y**2. + U_grad_y**2.)
     den = np.sqrt(Q_grad_x**2. + U_grad_x**2.)
     
+    # compute argument of polarization gradient
     polgrad_arg = np.arctan2(num/den)
     
     return polgrad_arg
