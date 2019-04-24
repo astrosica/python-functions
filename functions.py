@@ -3,6 +3,7 @@
 import numpy as np
 from scipy import signal
 from scipy import constants
+from astropy.io import fits
 from PyAstronomy import pyasl
 
 h = constants.h # Planck's constant
