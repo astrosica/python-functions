@@ -2,7 +2,25 @@
 
 import numpy as np
 from scipy import signal
+from scipy import constants
 from PyAstronomy import pyasl
+
+h = constants.h # Planck's constant
+c = constants.c # speed of light
+
+def fEjoules(wavel):
+	'''
+	Calculates photon energy in Joules using wavelength in meters.
+	'''
+	Ejoules = h*c/wavel
+	return Ejoules
+
+def fEjoules2ergs(Ejoules):
+	'''
+	Convert energy in joules to energy in ergs.
+	'''
+	Eergs = Ejoules * 1E7
+	return Eergs
 
 def ffreqaxis(file):
 	'''
