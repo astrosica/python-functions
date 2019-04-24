@@ -5,6 +5,7 @@ from scipy import signal
 from scipy import constants
 from astropy.io import fits
 from PyAstronomy import pyasl
+from reproject import reproject_interp
 
 h = constants.h # Planck's constant
 c = constants.c # speed of light
