@@ -103,7 +103,7 @@ def freproject_2D(image1_dir,image2_dir,clean=False,order="nearest-neighbor"):
 		image2_header_reproj = image2_header_clean
 
 	else:
-		image1_header_reproj = image1_header
+		image1_header_reproj = image2_header
 		image2_header_reproj = image2_header
 
 	# perform reprojection
