@@ -205,6 +205,39 @@ def fconvolve(oldres_FWHM,newres_FWHM,data,header):
     
     return data_smoothed
 
+def fPI(Q,U):
+    '''
+    Constructs the polarized intensity given Stokes Q and U maps.
+    
+    Q : Stokes Q data
+    U : Stokes U data
+    '''
+    
+    # compute polarized intensity
+    PI = np.sqrt(Q**2.+U**2.)
+    
+    return PI
+
+def fPI_unbiased(Q,U,Q_std,U_std):
+    '''
+    Constructs the unbiased polarized intensity given Stokes Q and U maps along with estimates of their noise.
+    
+    Q     : Stokes Q data
+    U     : Stokes U data
+    Q_std : Stokes Q noise standard deviation
+    U_std : Stokes U noise standard deviation
+    '''
+
+    # compute effective Q/U noise standard deviation
+    std_QU = np.sqrt(Q_std**2. + U_std**2.)
+
+    # compute polarized intensity
+    PI = np.sqrt(Q**2.+U**2.)
+    # compute unbiased polarized intensity
+    PI_unbiased = PI * np.sqrt( 1. - (std_QU/PI)**2. )
+    
+    return PI_unbiased
+
 def fpolgrad(Q,U):
     '''
     Constructs the spatial polarization gradient given Stokes Q and U maps.
