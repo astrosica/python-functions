@@ -205,6 +205,33 @@ def fconvolve(oldres_FWHM,newres_FWHM,data,header):
     
     return data_smoothed
 
+def fmask(data,noise,snr):
+	'''
+	Creates a mask used to clip data based on SNR level.
+	
+	Inputs
+	data  : data to be clipped
+	noise : noise level in same units as data input
+	snr   : SNR used for data clipping
+
+	Outputs
+	mask         : bitmask used for data clipping
+	data_cleaned : masked data
+	'''
+
+	# calculate data SNR
+	data_snr      = data/noise
+
+	# create mask
+	mask          = np.ones(shape=data.shape) # initialize mask
+	low_snr       = np.where(data_snr<snr)    # find SNR less than input requirement
+	mask[low_snr] = np.nan                    # set low SNR to nan
+	
+	# mask data
+	data_clean    = data * mask
+
+	return (mask,data_clean)
+
 def fPI(Q,U):
     '''
     Constructs the polarized intensity given Stokes Q and U maps.
