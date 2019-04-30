@@ -220,7 +220,7 @@ def fPI(Q,U):
 
 def fPI_debiased(Q,U,Q_std,U_std):
     '''
-    Constructs the debiased polarized intensity given Stokes Q and U maps along with estimates of their noise.
+    Constructs the de-biased polarized intensity given Stokes Q and U maps along with estimates of their noise.
     
     Q     : Stokes Q data
     U     : Stokes U data
@@ -235,9 +235,9 @@ def fPI_debiased(Q,U,Q_std,U_std):
     PI = np.sqrt(Q**2.+U**2.)
     
     # compute de-biased polarized intensity
-    PI_unbiased = PI * np.sqrt( 1. - (std_QU/PI)**2. )
+    PI_debiased = PI * np.sqrt( 1. - (std_QU/PI)**2. )
     
-    return PI_unbiased
+    return PI_debiased
 
 def fpolgrad(Q,U):
     '''
