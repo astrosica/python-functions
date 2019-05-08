@@ -179,8 +179,11 @@ def matchpos(names,ra1,dec1,ra2,dec2,minarcsec,fdir=None,fname=None,N1=None,N2=N
     '''
     Match two sets of pointing positions by projectings (ra1,dec1) onto (ra2,dec2).
 
-    Usage : ra1_matches = ra1[indices] -- matched by position
-            ra1_matches_clean = ra1[indices][ii] -- matched by position and cleaned by separation requirement
+    Usage :
+    ra1_matches       = ra1[indices]     # matched by position
+    ra1_matches_clean = ra1[indices][ii] # matched by position and cleaned by separation requirement
+    ra2_clean         = ra2[ii]          # matched by position and cleaned by separation requirement
+    
     Input:
     names     : IDs names of objects in second array array
     ra1       : first array of right ascension coordinates (either decimal degrees or sexagismal)
@@ -198,7 +201,7 @@ def matchpos(names,ra1,dec1,ra2,dec2,minarcsec,fdir=None,fname=None,N1=None,N2=N
     dist_deg_clean         : array of distances between cleaned (ra1,dec1) and (ra2,dec2) in degrees
     dist_arcsec_clean      : array of distances between cleaned (ra1,dec1) and (ra2,dec2) in arcseconds
     indices                : array of indices that match (ra1,dec1) to (ra2,dec2)
-    ii                     : array of indices that clean matched (ra1,dec1) positions
+    ii                     : array of indices that clean matched (ra1,dec1) positions and (ra2,dec2) positions
     ii_nomatch             : array of indices that clean non-matched (ra1,dec1) positions
     ra1_deg_matches_clean  : array of ra1 positions matched to (ra2,dec2) and cleaned using minarcsec in degrees
     dec1_deg_matches_clean : array of dec1 positions matched to (ra2,dec2) and cleaned using minarcsec in degrees
