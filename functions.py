@@ -123,6 +123,10 @@ def freproj2D_EQ_GAL(filedir_in,filedir_out,order="nearest-neighbor",overwrite=T
 	filedir_out  : output file in Galactic coordinates
 	order        : reprojection order (default=nearest-neighbor)
 	overwrite    : overwrite FITS file boolean (default=True)
+	
+	Outputs
+    	data_GAL     : reprojected data in Galactic coordinates
+    	footprint    : footprint from reprojection
 	'''
 
 	# extract data and headers
@@ -160,6 +164,8 @@ def freproj2D_EQ_GAL(filedir_in,filedir_out,order="nearest-neighbor",overwrite=T
 	data_GAL,footprint = reproject_interp((data_EQ, header_EQ), header_GAL,order=order)
 
 	fits.writeto(filedir_out,data_GAL,header_GAL,overwrite=overwrite)
+	
+	return (data_GAL,footprint)
 
 def fdegtosexa(ra_deg,dec_deg):
     '''
