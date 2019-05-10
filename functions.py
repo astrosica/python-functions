@@ -2,6 +2,7 @@
 
 import numpy as np
 from scipy import signal
+import astropy.wcs as wcs
 from scipy import constants
 from astropy.io import fits
 from PyAstronomy import pyasl
@@ -132,11 +133,11 @@ def freproj2D_EQ_GAL(filedir_in,filedir_out,order="nearest-neighbor",overwrite=T
 	header_GAL["CTYPE1"],header_GAL["CTYPE2"] = ("GLON-CAR","GLAT-CAR")
 
 	# transform center pixel values from (ra,dec) to (l,b)
-	coords = SkyCoord(ra=header_GAL["CRVAL1"]*u.degree, dec=P_header_GAL["CRVAL2"]*u.degree, frame='fk5')
+	coords = SkyCoord(ra=header_GAL["CRVAL1"]*u.degree, dec=header_GAL["CRVAL2"]*u.degree, frame='fk5')
 	header_GAL["CRVAL1"],header_GAL["CRVAL2"] = (coords.galactic.l.deg,coords.galactic.b.deg)
 
 	# transform delta pixel values to (l,b) by measuring change in position between two adjacent pixels
-	w = wcs.WCS(fits.open(filedir)[0].header)
+	w = wcs.WCS(fits.open(filedir_in)[0].header)
 	ra_dec_11_eq = w.all_pix2world(1,1,1)
 	ra_dec_22_eq = w.all_pix2world(2,2,1)
 	ra_11_eq,dec_11_eq = np.float(ra_dec_11_eq[0]),np.float(ra_dec_11_eq[1])
