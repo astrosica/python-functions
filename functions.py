@@ -143,8 +143,8 @@ def freproj2D_EQ_GAL(filedir_in,filedir_out,order="nearest-neighbor",overwrite=T
 
     # transform delta pixel values to (l,b) by measuring change in position between two adjacent pixels
     w = wcs.WCS(fits.open(filedir_in)[0].header)
-    ra_dec_11_eq = w.all_pix2world(1,1,1)
-    ra_dec_22_eq = w.all_pix2world(2,2,1)
+    ra_dec_11_eq = w.all_pix2world(1,1,0)
+    ra_dec_22_eq = w.all_pix2world(2,2,0)
     ra_11_eq,dec_11_eq = np.float(ra_dec_11_eq[0]),np.float(ra_dec_11_eq[1])
     ra_22_eq,dec_22_eq = np.float(ra_dec_22_eq[0]),np.float(ra_dec_22_eq[1])
 
@@ -197,8 +197,8 @@ def freproj2D_GAL_EQ(filedir_in,filedir_out,order="nearest-neighbor",overwrite=T
 
     # transform delta pixel values to (ra,dec) by measuring change in position between two adjacent pixels
     w                 = wcs.WCS(fits.open(filedir_in)[0].header)
-    l_b_11_gal        = w.all_pix2world(1,1,1)
-    l_b_22_gal        = w.all_pix2world(2,2,1)
+    l_b_11_gal        = w.all_pix2world(1,1,0)
+    l_b_22_gal        = w.all_pix2world(2,2,0)
     l_11_gal,b_11_gal = np.float(l_b_11_gal[0]),np.float(l_b_11_gal[1])
     l_22_gal,b_22_gal = np.float(l_b_22_gal[0]),np.float(l_b_22_gal[1])
 
