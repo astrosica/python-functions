@@ -168,6 +168,61 @@ def freproj2D_EQ_GAL(filedir_in,filedir_out,order="nearest-neighbor",overwrite=T
 
     return (data_GAL,footprint)
 
+def freproj2D_GAL_EQ(filedir_in,filedir_out,order="nearest-neighbor",overwrite=True):
+
+    '''
+    Reprojects an input 2D image from Galactic to equatorial coordinates.
+
+    Inputs
+    filedir_in   : input file in equatorial coordinates
+    filedir_out  : output file in Galactic coordinates
+    order        : reprojection order (default=nearest-neighbor)
+    overwrite    : overwrite FITS file boolean (default=True)
+
+    Outputs
+    data_EQ     : reprojected data in equatorial coordinates
+    footprint    : footprint from reprojection
+    '''
+
+    # extract data and headers
+    data_GAL,header_GAL = fits.getdata(filedir_in,header=True)
+    data_EQ,header_EQ   = fits.getdata(filedir_in,header=True)
+
+    # change WCS from Galactic to equatorial
+    header_EQ["CTYPE1"],header_EQ["CTYPE2"] = ("RA---CAR","DEC---CAR")
+
+    # transform center pixel values from (l,b) to (ra,dec)
+    coords = SkyCoord(ra=header_EQ["CRVAL1"]*u.degree, dec=header_EQ["CRVAL2"]*u.degree, frame='galactic')
+    header_EQ["CRVAL1"],header_EQ["CRVAL2"] = (coords.fk5.ra.deg,coords.fk5.dec.deg)
+
+    # transform delta pixel values to (ra,dec) by measuring change in position between two adjacent pixels
+    w                    = wcs.WCS(fits.open(filedir_in)[0].header)
+    l_b_11_gal        = w.all_pix2world(1,1,1)
+    l_b_22_gal        = w.all_pix2world(2,2,1)
+    l_11_gal,b_11_gal = np.float(l_b_11_gal[0]),np.float(l_b_11_gal[1])
+    l_22_gal,b_22_gal = np.float(l_b_22_gal[0]),np.float(l_b_22_gal[1])
+
+    # convert pixel locations to proper (ra,dec) objects for transformation
+    coords_11_gal = SkyCoord(l=l_11_gal*u.degree, b=dec_11_gal*u.degree, frame='galactic')
+    coords_22_gal = SkyCoord(l=l_22_gal*u.degree, b=dec_22_gal*u.degree, frame='galactic')
+
+    # transform pixel (l,b) positions to (ra,dec) positions
+    l_11_eq,b_11_eq = coords_11_gal.fk5.ra.deg,coords_11_gal.fk5.dec.deg
+    l_22_eq,b_22_eq = coords_22_gal.fk5.ra.deg,coords_22_gal.fk5.dec.deg
+    delta_l_eq      = l_22_eq-l_11_eq
+    delta_b_eq      = b_11_eq-b_22_eq
+
+    # change CDELTs from Galactic to equatorial values
+    header_EQ["CDELT1"],header_EQ["CDELT2"] = (delta_l_eq,delta_b_eq)
+
+
+    # perform reprojection
+    data_EQ,footprint = reproject_interp((data_GAL, header_GAL), header_EQ,order=order)
+
+    fits.writeto(filedir_out,data_EQ,header_EQ,overwrite=overwrite)
+
+    return (data_EQ,footprint)
+
 def fdegtosexa(ra_deg,dec_deg):
     '''
     Converts Right Ascension and Declination from decimal degrees to sexagismal format. Inputs integers, floats, lists, or arrays.
