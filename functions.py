@@ -45,7 +45,7 @@ def ffreqaxis(file):
 	freqpixels = np.arange(NAXIS3)
 
 	# transform pixels to frequency
-	freqaxis =  CRVAL3 + (freqpixels-CRPIX3)*CDELT3
+	freqaxis   =  CRVAL3 + (freqpixels-CRPIX3)*CDELT3
 
 	return freqaxis
 
@@ -143,8 +143,8 @@ def freproj2D_EQ_GAL(filedir_in,filedir_out,order="nearest-neighbor",overwrite=T
 
     # transform delta pixel values to (l,b) by measuring change in position between two adjacent pixels
     w = wcs.WCS(fits.open(filedir_in)[0].header)
-    ra_dec_11_eq = w.all_pix2world(1,1,0)
-    ra_dec_22_eq = w.all_pix2world(2,2,0)
+    ra_dec_11_eq       = w.all_pix2world(1,1,0)
+    ra_dec_22_eq       = w.all_pix2world(2,2,0)
     ra_11_eq,dec_11_eq = np.float(ra_dec_11_eq[0]),np.float(ra_dec_11_eq[1])
     ra_22_eq,dec_22_eq = np.float(ra_dec_22_eq[0]),np.float(ra_dec_22_eq[1])
 
@@ -275,6 +275,7 @@ def fsexatodeg(ra_sexa,dec_sexa):
         '''
         ra_deg_list        = []
         dec_deg_list       = []
+	
         for i in range(len(ra_sexa)):
             ra_sexa_i      = ra_sexa[i]
             dec_sexa_i     = dec_sexa[i]
@@ -282,6 +283,7 @@ def fsexatodeg(ra_sexa,dec_sexa):
             ra_deg_i,dec_deg_i = pyasl.coordsSexaToDeg(sexa_i)
             ra_deg_list.append(ra_deg_i)
             dec_deg_list.append(dec_deg_i)
+	
         ra_deg = np.array(ra_deg_list)
         dec_deg = np.array(dec_deg_list)
      
@@ -325,12 +327,14 @@ def matchpos(names,ra1,dec1,ra2,dec2,minarcsec,fdir=None,fname=None,N1=None,N2=N
         # convert sexagismal format to decimal degrees
         ra1_deg  = []
         dec1_deg = []
+	
         for i in range(len(ra1)):
-            ra1_i                = ra1[i]
-            dec1_i               = dec1[i]
+            ra1_i  = ra1[i]
+            dec1_i = dec1[i]
             ra1_deg_i,dec1_deg_i = sexatodeg(ra1_i,dec1_i)
             ra1_deg.append(ra1_deg_i)
             dec1_deg.append(dec1_deg_i)
+	
         ra2_deg  = []
         dec2_deg = []
         for i in range(len(ra2)):
@@ -398,8 +402,8 @@ def fconvolve(oldres_FWHM,newres_FWHM,data,header):
     '''
     
     # convert FWHM to standard deviations
-    oldres_sigma = oldres_FWHM/(2.*np.sqrt(2.*np.log(2.)))
-    newres_sigma = newres_FWHM/(2.*np.sqrt(2.*np.log(2.)))
+    oldres_sigma  = oldres_FWHM/(2.*np.sqrt(2.*np.log(2.)))
+    newres_sigma  = newres_FWHM/(2.*np.sqrt(2.*np.log(2.)))
     # construct kernel
     kernel_arcmin = np.sqrt(newres_sigma**2.-oldres_sigma**2.) # convolution theorem
     pixelsize     = header["CDELT2"]*60.                       # in arcminutes
