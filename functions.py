@@ -131,26 +131,33 @@ def freproj2D_EQ_GAL(filedir_in,filedir_out,order="nearest-neighbor",overwrite=T
     '''
 
     # extract data and headers
-    data_EQ,header_EQ   = fits.getdata(filedir_in,header=True)
-    data_GAL,header_GAL = fits.getdata(filedir_in,header=True)
+    data_EQ,header_EQ    = fits.getdata(filedir_in,header=True)
+    w_EQ                 = wcs.WCS(fits.open(filedir_in)[0].header)
+    data_GAL,header_GAL  = fits.getdata(filedir_in,header=True)
 
     # change WCS from equatorial to Galactic
     header_GAL["CTYPE1"],header_GAL["CTYPE2"] = ("GLON-CAR","GLAT-CAR")
 
+    # change center pixel values to the physical center of the image
+    crpix1_EQ,crpix2_EQ  = (int(header_EQ["NAXIS1"]*0.5),int(header_EQ["NAXIS2"]*0.5))
+
+    header_GAL["CRPIX1"],header_GAL["CRPIX2"] = crpix1_EQ,crpix2_EQ
+    crpix1_crpix2_radec  = w_EQ.all_pix2world(crpix1_EQ,crpix2_EQ,0)
+    crpix1_ra,crpix2_dec = np.float(crpix1_crpix2_radec[0]),np.float(crpix1_crpix2_radec[1])
+
     # transform center pixel values from (ra,dec) to (l,b)
-    coords = SkyCoord(ra=header_GAL["CRVAL1"]*u.degree, dec=header_GAL["CRVAL2"]*u.degree, frame='fk5')
+    coords = SkyCoord(ra=crpix1_ra*u.degree, dec=crpix2_dec*u.degree, frame='fk5')
     header_GAL["CRVAL1"],header_GAL["CRVAL2"] = (coords.galactic.l.deg,coords.galactic.b.deg)
 
     # transform delta pixel values to (l,b) by measuring change in position between two adjacent pixels
-    w = wcs.WCS(fits.open(filedir_in)[0].header)
-    ra_dec_11_eq       = w.all_pix2world(1,1,0)
-    ra_dec_22_eq       = w.all_pix2world(2,2,0)
-    ra_11_eq,dec_11_eq = np.float(ra_dec_11_eq[0]),np.float(ra_dec_11_eq[1])
-    ra_22_eq,dec_22_eq = np.float(ra_dec_22_eq[0]),np.float(ra_dec_22_eq[1])
+    ra_dec_11_eq         = w_EQ.all_pix2world(1,1,0)
+    ra_dec_22_eq         = w_EQ.all_pix2world(2,2,0)
+    ra_11_eq,dec_11_eq   = np.float(ra_dec_11_eq[0]),np.float(ra_dec_11_eq[1])
+    ra_22_eq,dec_22_eq   = np.float(ra_dec_22_eq[0]),np.float(ra_dec_22_eq[1])
 
     # convert pixel locations to proper (ra,dec) objects for transformation
-    coords_11_eq = SkyCoord(ra=ra_11_eq*u.degree, dec=dec_11_eq*u.degree, frame='fk5')
-    coords_22_eq = SkyCoord(ra=ra_22_eq*u.degree, dec=dec_22_eq*u.degree, frame='fk5')
+    coords_11_eq         = SkyCoord(ra=ra_11_eq*u.degree, dec=dec_11_eq*u.degree, frame='fk5')
+    coords_22_eq         = SkyCoord(ra=ra_22_eq*u.degree, dec=dec_22_eq*u.degree, frame='fk5')
 
     # transform pixel (ra,dec) positions to (l,b) positions
     ra_11_gal,dec_11_gal = coords_11_eq.galactic.l.deg,coords_11_eq.galactic.b.deg
@@ -162,66 +169,11 @@ def freproj2D_EQ_GAL(filedir_in,filedir_out,order="nearest-neighbor",overwrite=T
     header_GAL["CDELT1"],header_GAL["CDELT2"] = (delta_ra_gal,delta_dec_gal)
 
     # perform reprojection
-    data_GAL,footprint = reproject_interp((data_EQ, header_EQ), header_GAL,order=order)
+    data_GAL,footprint   = reproject_interp((data_EQ, header_EQ), header_GAL,order=order)
 
     fits.writeto(filedir_out,data_GAL,header_GAL,overwrite=overwrite)
 
     return (data_GAL,footprint)
-
-def freproj2D_GAL_EQ(filedir_in,filedir_out,order="nearest-neighbor",overwrite=True):
-
-    '''
-    Reprojects an input 2D image from Galactic to equatorial coordinates.
-
-    Inputs
-    filedir_in   : input file in equatorial coordinates
-    filedir_out  : output file in Galactic coordinates
-    order        : reprojection order (default=nearest-neighbor)
-    overwrite    : overwrite FITS file boolean (default=True)
-
-    Outputs
-    data_EQ     : reprojected data in equatorial coordinates
-    footprint    : footprint from reprojection
-    '''
-
-    # extract data and headers
-    data_GAL,header_GAL = fits.getdata(filedir_in,header=True)
-    data_EQ,header_EQ   = fits.getdata(filedir_in,header=True)
-
-    # change WCS from Galactic to equatorial
-    header_EQ["CTYPE1"],header_EQ["CTYPE2"] = ("RA---CAR","DEC---CAR")
-
-    # transform center pixel values from (l,b) to (ra,dec)
-    coords = SkyCoord(l=header_EQ["CRVAL1"]*u.degree, b=header_EQ["CRVAL2"]*u.degree, frame='galactic')
-    header_EQ["CRVAL1"],header_EQ["CRVAL2"] = (coords.fk5.ra.deg,coords.fk5.dec.deg)
-
-    # transform delta pixel values to (ra,dec) by measuring change in position between two adjacent pixels
-    w                 = wcs.WCS(fits.open(filedir_in)[0].header)
-    l_b_11_gal        = w.all_pix2world(1,1,0)
-    l_b_22_gal        = w.all_pix2world(2,2,0)
-    l_11_gal,b_11_gal = np.float(l_b_11_gal[0]),np.float(l_b_11_gal[1])
-    l_22_gal,b_22_gal = np.float(l_b_22_gal[0]),np.float(l_b_22_gal[1])
-
-    # convert pixel locations to proper (ra,dec) objects for transformation
-    coords_11_gal = SkyCoord(l=l_11_gal*u.degree, b=dec_11_gal*u.degree, frame='galactic')
-    coords_22_gal = SkyCoord(l=l_22_gal*u.degree, b=dec_22_gal*u.degree, frame='galactic')
-
-    # transform pixel (l,b) positions to (ra,dec) positions
-    l_11_eq,b_11_eq = coords_11_gal.fk5.ra.deg,coords_11_gal.fk5.dec.deg
-    l_22_eq,b_22_eq = coords_22_gal.fk5.ra.deg,coords_22_gal.fk5.dec.deg
-    delta_l_eq      = l_22_eq-l_11_eq
-    delta_b_eq      = b_11_eq-b_22_eq
-
-    # change CDELTs from Galactic to equatorial values
-    header_EQ["CDELT1"],header_EQ["CDELT2"] = (delta_l_eq,delta_b_eq)
-
-
-    # perform reprojection
-    data_EQ,footprint = reproject_interp((data_GAL, header_GAL), header_EQ,order=order)
-
-    fits.writeto(filedir_out,data_EQ,header_EQ,overwrite=overwrite)
-
-    return (data_EQ,footprint)
 
 def fdegtosexa(ra_deg,dec_deg):
     '''
