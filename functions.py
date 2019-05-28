@@ -170,6 +170,105 @@ def freproj2D_EQ_GAL(filedir_in,filedir_out,order="nearest-neighbor",overwrite=T
 
     return (data_GAL,footprint)
 
+def freproj3D_EQ_GAL(filedir_in,filedir_out,header_file,order="nearest-neighbor",overwrite=True):
+
+    '''
+    Reprojects an input 3D image from equatorial to Galactic coordinates by iterating over each image slice.
+
+    Inputs
+    filedir_in   : input file in equatorial coordinates
+    filedir_out  : output file in Galactic coordinates
+    header_file  : contains the reference header used for reprojection
+    order        : reprojection order (default=nearest-neighbor)
+    overwrite    : overwrite FITS file boolean (default=True)
+
+    Outputs
+    data_GAL_3D  : reprojected data cube in Galactic coordinates
+    footprint_2D : footprint from reprojection
+    '''
+
+    # extract data and headers
+    data_EQ_3D,header_EQ_3D  = fits.getdata(filedir_in,header=True)
+    
+    # create 2D headers for reprojecting each 2D image slice
+    header_EQ_2D             = fits.getheader(filedir_in)
+    header_GAL_2D            = fits.getheader(filedir_in)
+
+    # remove 3D keys from FITS header
+    header_EQ_2D["NAXIS"]  = 2
+    header_GAL_2D["NAXIS"] = 2
+    keys_3D                = ["NAXIS3","CTYPE3","CRVAL3","CRPIX3","CDELT3","CROTA3"]
+    for key in keys_3D:
+        del header_EQ_2D[key]
+        del header_GAL_2D[key]
+
+    w_EQ_2D = wcs.WCS(header_EQ_2D)
+
+    # change WCS from equatorial to Galactic
+    header_GAL_2D["CTYPE1"],header_GAL_2D["CTYPE2"] = ("GLON-CAR","GLAT-CAR")
+
+    ############################## make Galactic footprint larger ########################################
+    #header_GAL_2D["NAXIS1"],header_GAL_2D["NAXIS2"] = (6000,6000)                                   # N1
+    #header_GAL_2D["NAXIS1"],header_GAL_2D["NAXIS2"] = (1500,4000)                                   # N2
+    #header_GAL_2D["NAXIS1"],header_GAL_2D["NAXIS2"] = (6000,6000)                                   # N3
+    ######################################################################################################
+
+    ################################ change center pixel values ##########################################
+    #crpix1_EQ_2D,crpix2_EQ_2D  = (int(header_EQ_2D["NAXIS1"]*1),int(header_EQ_2D["NAXIS2"]*0))      # N1
+    #crpix1_EQ_2D,crpix2_EQ_2D  = (int(header_EQ_2D["NAXIS1"]*0.1),int(header_EQ_2D["NAXIS2"]*0.5))  # N2
+    #crpix1_EQ_2D,crpix2_EQ_2D  = (int(header_EQ_2D["NAXIS1"]*0.5),int(header_EQ_2D["NAXIS2"]*1))    # N3
+    ######################################################################################################
+
+    # create empty array of 3D image to fill in later with reprojected data
+    data_GAL_3D = np.zeros((header_EQ_3D["NAXIS3"],header_GAL_2D["NAXIS1"],header_GAL_2D["NAXIS2"]),dtype=float)
+
+    header_GAL_2D["CRPIX1"],header_GAL_2D["CRPIX2"] = crpix1_EQ_2D,crpix2_EQ_2D
+    crpix1_crpix2_radec_2D     = w_EQ_2D.all_pix2world(crpix1_EQ_2D,crpix2_EQ_2D,0)
+    crpix1_ra_2D,crpix2_dec_2D = np.float(crpix1_crpix2_radec_2D[0]),np.float(crpix1_crpix2_radec_2D[1])
+
+    # transform center pixel values from (ra,dec) to (l,b)
+    coords = SkyCoord(ra=crpix1_ra_2D*u.degree, dec=crpix2_dec_2D*u.degree, frame='fk5')
+    header_GAL_2D["CRVAL1"],header_GAL_2D["CRVAL2"] = (coords.galactic.l.deg,coords.galactic.b.deg)
+
+    # transform delta pixel values to (l,b) by measuring change in position between two adjacent pixels
+    ra_dec_11_eq_2D            = w_EQ_2D.all_pix2world(1,1,0)
+    ra_dec_22_eq_2D            = w_EQ_2D.all_pix2world(2,2,0)
+    ra_11_eq_2D,dec_11_eq_2D   = np.float(ra_dec_11_eq_2D[0]),np.float(ra_dec_11_eq_2D[1])
+    ra_22_eq_2D,dec_22_eq_2D   = np.float(ra_dec_22_eq_2D[0]),np.float(ra_dec_22_eq_2D[1])
+
+    # convert pixel locations to proper (ra,dec) objects for transformation
+    coords_11_eq_2D            = SkyCoord(ra=ra_11_eq_2D*u.degree, dec=dec_11_eq_2D*u.degree, frame='fk5')
+    coords_22_eq_2D            = SkyCoord(ra=ra_22_eq_2D*u.degree, dec=dec_22_eq_2D*u.degree, frame='fk5')
+
+    # transform pixel (ra,dec) positions to (l,b) positions
+    ra_11_gal_2D,dec_11_gal_2D = coords_11_eq_2D.galactic.l.deg,coords_11_eq_2D.galactic.b.deg
+    ra_22_gal_2D,dec_22_gal_2D = coords_22_eq_2D.galactic.l.deg,coords_22_eq_2D.galactic.b.deg
+    delta_ra_gal_2D            = ra_22_gal_2D-ra_11_gal_2D
+    delta_dec_gal_2D           = dec_11_gal_2D - dec_22_gal_2D
+
+    # change CDELTs from equatorial to Galactic values
+    header_GAL_2D["CDELT1"],header_GAL_2D["CDELT2"] = (delta_ra_gal_2D,delta_dec_gal_2D)
+
+    # perform reprojection by iterating over image slices
+    for i in range(header_EQ_3D["NAXIS3"]):
+        data_EQ_2D_i               = np.copy(data_EQ_3D[i])
+        print "reprojecting "+str(i)+"th image slice"
+        data_GAL_2D,footprint_2D   = reproject_interp((data_EQ_2D_i, header_EQ_2D), header_GAL_2D,order=order)
+        data_GAL_3D[i]             = np.copy(data_GAL_2D)
+
+    # add 3D keywords to reprojected FITS header
+    header_GAL_3D = fits.Header.copy(header_EQ_2D)
+    header_GAL_3D.insert("NAXIS2",("NAXIS3",header_EQ_3D["NAXIS3"]),after=True)
+    header_GAL_3D.insert("CROTA2",("CTYPE3",header_EQ_3D["CTYPE3"]),after=True)
+    header_GAL_3D.insert("CTYPE3",("CRVAL3",header_EQ_3D["CRVAL3"]),after=True)
+    header_GAL_3D.insert("CRVAL3",("CRPIX3",header_EQ_3D["CRPIX3"]),after=True)
+    header_GAL_3D.insert("CRPIX3",("CDELT3",header_EQ_3D["CDELT3"]),after=True)
+    header_GAL_3D.insert("CDELT3",("CROTA3",header_EQ_3D["CROTA3"]),after=True)
+
+    fits.writeto(filedir_out,data_GAL_3D,header_GAL_3D,overwrite=overwrite)
+
+    return (data_GAL_3D,footprint_2D)
+
 def fdegtosexa(ra_deg,dec_deg):
     '''
     Converts Right Ascension and Declination from decimal degrees to sexagismal format. Inputs integers, floats, lists, or arrays.
