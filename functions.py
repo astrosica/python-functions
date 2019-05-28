@@ -269,6 +269,30 @@ def freproj3D_EQ_GAL(filedir_in,filedir_out,header_file,order="nearest-neighbor"
 
     return (data_GAL_3D,footprint_2D)
 
+def fheader_3Dto2D(filedir_in,filedir_out,keys,overwrite=True):
+    '''
+    Transforms a 3D FITS header to a 2D FITS header by changing the appropriate keywords.
+
+    Inputs
+    filedir_in  : input file directory
+    filedir_out : output file directory
+    overwrite   : overwrite file boolean (default=True)
+    
+    '''
+
+    data,header = fits.getdata(filedir_in,header=True)
+
+    header_keys = header.keys()
+    header["NAXIS"]=2
+
+    keys_3D = ["NAXIS3","CDELT3","CROTA3","CRPIX3","CRVAL3","CTYPE3"]
+
+    for key in keys_3D:
+        if key in header_keys:
+            del header[key]
+
+    fits.writeto(filedir_out,data,header,overwrite=overwrite)
+
 def fdegtosexa(ra_deg,dec_deg):
     '''
     Converts Right Ascension and Declination from decimal degrees to sexagismal format. Inputs integers, floats, lists, or arrays.
