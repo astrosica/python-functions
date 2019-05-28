@@ -269,7 +269,7 @@ def freproj3D_EQ_GAL(filedir_in,filedir_out,header_file,order="nearest-neighbor"
 
     return (data_GAL_3D,footprint_2D)
 
-def fheader_3Dto2D(filedir_in,filedir_out,keys,overwrite=True):
+def fheader_3Dto2D(filedir_in,filedir_out,keys,write=False):
     '''
     Transforms a 3D FITS header to a 2D FITS header by changing the appropriate keywords.
 
@@ -291,7 +291,8 @@ def fheader_3Dto2D(filedir_in,filedir_out,keys,overwrite=True):
         if key in header_keys:
             del header[key]
 
-    fits.writeto(filedir_out,data,header,overwrite=overwrite)
+    if write==True:
+	    fits.writeto(filedir_out,data,header,overwrite=True)
 
     return header
 
