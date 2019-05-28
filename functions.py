@@ -265,6 +265,13 @@ def freproj3D_EQ_GAL(filedir_in,filedir_out,header_file,order="nearest-neighbor"
     header_GAL_3D.insert("CRPIX3",("CDELT3",header_EQ_3D["CDELT3"]),after=True)
     header_GAL_3D.insert("CDELT3",("CROTA3",header_EQ_3D["CROTA3"]),after=True)
 
+    # copy transformed header keywords over to 3D header
+    header_GAL_3D["CTYPE1"],header_GAL_3D["CTYPE2"] = header_GAL_2D["CTYPE1"],header_GAL_2D["CTYPE2"]
+    header_GAL_3D["NAXIS1"],header_GAL_3D["NAXIS2"] = header_GAL_2D["NAXIS1"],header_GAL_2D["NAXIS2"]
+    header_GAL_3D["CRPIX1"],header_GAL_3D["CRPIX2"] = header_GAL_2D["CRPIX1"],header_GAL_2D["CRPIX2"]
+    header_GAL_3D["CRVAL1"],header_GAL_3D["CRVAL2"] = header_GAL_2D["CRVAL1"],header_GAL_2D["CRVAL2"]
+    header_GAL_3D["CDELT1"],header_GAL_3D["CDELT2"] = header_GAL_2D["CDELT1"],header_GAL_2D["CDELT2"]
+
     fits.writeto(filedir_out,data_GAL_3D,header_GAL_3D,overwrite=overwrite)
 
     return (data_GAL_3D,footprint_2D)
