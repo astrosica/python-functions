@@ -28,7 +28,7 @@ def ffreqaxis(file):
 	NAXIS3 = header["NAXIS3"]
 
 	#construct pixel array
-	freqpixels = np.arange(NAXIS3)
+	freqpixels = np.arange(NAXIS3)+1
 
 	# transform pixels to frequency
 	freqaxis   =  CRVAL3 + (freqpixels-CRPIX3)*CDELT3
