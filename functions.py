@@ -293,6 +293,8 @@ def fheader_3Dto2D(filedir_in,filedir_out,keys,overwrite=True):
 
     fits.writeto(filedir_out,data,header,overwrite=overwrite)
 
+    return header
+
 def fdegtosexa(ra_deg,dec_deg):
     '''
     Converts Right Ascension and Declination from decimal degrees to sexagismal format. Inputs integers, floats, lists, or arrays.
