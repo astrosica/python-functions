@@ -13,20 +13,6 @@ from astropy.coordinates import SkyCoord
 h = constants.h # Planck's constant
 c = constants.c # speed of light
 
-def fEjoules(wavel):
-	'''
-	Calculates photon energy in Joules using wavelength in meters.
-	'''
-	Ejoules = h*c/wavel
-	return Ejoules
-
-def fEjoules2ergs(Ejoules):
-	'''
-	Convert energy in joules to energy in ergs.
-	'''
-	Eergs = Ejoules * 1E7
-	return Eergs
-
 def ffreqaxis(file):
 	'''
 	Extracts the frequency axis from a FITS file using the header.
@@ -138,8 +124,17 @@ def freproj2D_EQ_GAL(filedir_in,filedir_out,order="nearest-neighbor",overwrite=T
     # change WCS from equatorial to Galactic
     header_GAL["CTYPE1"],header_GAL["CTYPE2"] = ("GLON-CAR","GLAT-CAR")
 
-    # change center pixel values to the physical center of the image
-    crpix1_EQ,crpix2_EQ  = (int(header_EQ["NAXIS1"]*0.5),int(header_EQ["NAXIS2"]*0.5))
+    ############################## make Galactic footprint larger ##############################
+    #header_GAL["NAXIS1"],header_GAL["NAXIS2"] = (6000,6000)                                # N1
+    #header_GAL["NAXIS1"],header_GAL["NAXIS2"] = (1500,4000)                                # N2
+    #header_GAL["NAXIS1"],header_GAL["NAXIS2"] = (9000,4500)                                # N3
+    ############################################################################################
+
+    ################################ change center pixel values ################################
+    #crpix1_EQ,crpix2_EQ  = (int(header_EQ["NAXIS1"]*1),int(header_EQ["NAXIS2"]*0))         # N1
+    #crpix1_EQ,crpix2_EQ  = (int(header_EQ["NAXIS1"]*0.1),int(header_EQ["NAXIS2"]*0.5))     # N2
+    #crpix1_EQ,crpix2_EQ  = (int(header_EQ["NAXIS1"]*0.88),int(header_EQ["NAXIS2"]*0.65))   # N3
+    ############################################################################################
 
     header_GAL["CRPIX1"],header_GAL["CRPIX2"] = crpix1_EQ,crpix2_EQ
     crpix1_crpix2_radec  = w_EQ.all_pix2world(crpix1_EQ,crpix2_EQ,0)
