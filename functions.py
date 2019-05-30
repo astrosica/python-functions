@@ -220,7 +220,7 @@ def freproj3D_EQ_GAL(filedir_in,filedir_out,header_file,order="nearest-neighbor"
     ######################################################################################################
 
     # create empty array of 3D image to fill in later with reprojected data
-    data_GAL_3D = np.zeros((header_EQ_3D["NAXIS3"],header_GAL_2D["NAXIS1"],header_GAL_2D["NAXIS2"]),dtype=float)
+    data_GAL_3D = np.zeros((header_EQ_3D["NAXIS3"],header_GAL_2D["NAXIS2"],header_GAL_2D["NAXIS1"]),dtype=float)
 
     header_GAL_2D["CRPIX1"],header_GAL_2D["CRPIX2"] = crpix1_EQ_2D,crpix2_EQ_2D
     crpix1_crpix2_radec_2D     = w_EQ_2D.all_pix2world(crpix1_EQ_2D,crpix2_EQ_2D,0)
