@@ -103,7 +103,7 @@ def freproject_2D(image1_dir,image2_dir,clean=False,order="nearest-neighbor"):
 def freproj2D_EQ_GAL(filedir_in,filedir_out,order="nearest-neighbor",overwrite=True,Montage=True):
 
     '''
-    Reprojects an input 2D image from equatorial to Galactic coordinates using reproject_interp().
+    Reprojects an input 2D image from equatorial to Galactic coordinates using either Montage (default) or reproject_interp().
 
     Inputs
     filedir_in   : input file in equatorial coordinates
