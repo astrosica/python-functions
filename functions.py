@@ -100,10 +100,10 @@ def freproject_2D(image1_dir,image2_dir,clean=False,order="nearest-neighbor"):
 
 	return (image1_data,image1_header,image1_data_reproj,image1_header_reproj,image2_data,image2_header_reproj,footprint)
 
-def freproj2D_EQ_GAL(filedir_in,filedir_out,order="nearest-neighbor",overwrite=True):
+def freproj2D_EQ_GAL(filedir_in,filedir_out,order="nearest-neighbor",overwrite=True,Montage=True):
 
     '''
-    Reprojects an input 2D image from equatorial to Galactic coordinates.
+    Reprojects an input 2D image from equatorial to Galactic coordinates using reproject_interp().
 
     Inputs
     filedir_in   : input file in equatorial coordinates
@@ -117,58 +117,68 @@ def freproj2D_EQ_GAL(filedir_in,filedir_out,order="nearest-neighbor",overwrite=T
     '''
 
     # extract data and headers
-    data_EQ,header_EQ    = fits.getdata(filedir_in,header=True)
-    w_EQ                 = wcs.WCS(fits.open(filedir_in)[0].header)
-    data_GAL,header_GAL  = fits.getdata(filedir_in,header=True)
+    data_EQ,header_EQ = fits.getdata(filedir_in,header=True)
+    w_EQ              = wcs.WCS(fits.open(filedir_in)[0].header)
+    header_GAL        = fits.getheader(filedir_in)
 
     # change WCS from equatorial to Galactic
     header_GAL["CTYPE1"],header_GAL["CTYPE2"] = ("GLON-CAR","GLAT-CAR")
+    header_GAL["CUNIT1"],header_GAL["CUNIT2"] = ("deg","deg")
+    header_GAL["CROTA1"],header_GAL["CROTA2"] = (0,0)
 
     ############################## make Galactic footprint larger ##############################
-    #header_GAL["NAXIS1"],header_GAL["NAXIS2"] = (6000,6000)                                # N1
+    header_GAL["NAXIS1"],header_GAL["NAXIS2"] = (6000,6000)                                # N1
     #header_GAL["NAXIS1"],header_GAL["NAXIS2"] = (1500,4000)                                # N2
     #header_GAL["NAXIS1"],header_GAL["NAXIS2"] = (9000,4500)                                # N3
     ############################################################################################
 
     ################################ change center pixel values ################################
-    #crpix1_EQ,crpix2_EQ  = (int(header_EQ["NAXIS1"]*1),int(header_EQ["NAXIS2"]*0))         # N1
+    crpix1_GAL,crpix2_GAL  = (int(header_GAL["NAXIS1"]*1.0),int(header_GAL["NAXIS2"]*0.0))   # N1
     #crpix1_EQ,crpix2_EQ  = (int(header_EQ["NAXIS1"]*0.1),int(header_EQ["NAXIS2"]*0.5))     # N2
     #crpix1_EQ,crpix2_EQ  = (int(header_EQ["NAXIS1"]*0.88),int(header_EQ["NAXIS2"]*0.65))   # N3
     ############################################################################################
 
-    header_GAL["CRPIX1"],header_GAL["CRPIX2"] = crpix1_EQ,crpix2_EQ
-    crpix1_crpix2_radec  = w_EQ.all_pix2world(crpix1_EQ,crpix2_EQ,0)
-    crpix1_ra,crpix2_dec = np.float(crpix1_crpix2_radec[0]),np.float(crpix1_crpix2_radec[1])
+    header_GAL["CRPIX1"],header_GAL["CRPIX2"] = crpix1_GAL,crpix2_GAL
+    crpix1_crpix2_radec                       = w_EQ.all_pix2world(crpix1_GAL,crpix2_GAL,0)
+    crpix1_ra,crpix2_dec                      = np.float(crpix1_crpix2_radec[0]),np.float(crpix1_crpix2_radec[1])
 
     # transform center pixel values from (ra,dec) to (l,b)
-    coords = SkyCoord(ra=crpix1_ra*u.degree, dec=crpix2_dec*u.degree, frame='fk5')
-    header_GAL["CRVAL1"],header_GAL["CRVAL2"] = (coords.galactic.l.deg,coords.galactic.b.deg)
+    coords_EQ                                 = SkyCoord(ra=crpix1_ra*u.degree, dec=crpix2_dec*u.degree, frame="fk5")
+    header_GAL["CRVAL1"],header_GAL["CRVAL2"] = (coords_EQ.galactic.l.deg,coords_EQ.galactic.b.deg)
 
     # transform delta pixel values to (l,b) by measuring change in position between two adjacent pixels
-    ra_dec_11_eq         = w_EQ.all_pix2world(1,1,0)
-    ra_dec_22_eq         = w_EQ.all_pix2world(2,2,0)
-    ra_11_eq,dec_11_eq   = np.float(ra_dec_11_eq[0]),np.float(ra_dec_11_eq[1])
-    ra_22_eq,dec_22_eq   = np.float(ra_dec_22_eq[0]),np.float(ra_dec_22_eq[1])
+    radec_11_EQ         = w_EQ.all_pix2world(1,1,0)
+    radec_22_EQ         = w_EQ.all_pix2world(2,2,0)
+    ra_11_EQ,dec_11_EQ  = np.float(radec_11_EQ[0]),np.float(radec_11_EQ[1])
+    ra_22_EQ,dec_22_EQ  = np.float(radec_22_EQ[0]),np.float(radec_22_EQ[1])
 
     # convert pixel locations to proper (ra,dec) objects for transformation
-    coords_11_eq         = SkyCoord(ra=ra_11_eq*u.degree, dec=dec_11_eq*u.degree, frame='fk5')
-    coords_22_eq         = SkyCoord(ra=ra_22_eq*u.degree, dec=dec_22_eq*u.degree, frame='fk5')
+    coords_11_EQ        = SkyCoord(ra=ra_11_EQ*u.degree, dec=dec_11_EQ*u.degree, frame='fk5')
+    coords_22_EQ        = SkyCoord(ra=ra_22_EQ*u.degree, dec=dec_22_EQ*u.degree, frame='fk5')
 
     # transform pixel (ra,dec) positions to (l,b) positions
-    ra_11_gal,dec_11_gal = coords_11_eq.galactic.l.deg,coords_11_eq.galactic.b.deg
-    ra_22_gal,dec_22_gal = coords_22_eq.galactic.l.deg,coords_22_eq.galactic.b.deg
-    delta_ra_gal         = ra_22_gal-ra_11_gal
-    delta_dec_gal        = dec_11_gal - dec_22_gal
+    l_11,b_11 = (coords_11_EQ.galactic.l.deg,coords_11_EQ.galactic.b.deg)
+    l_22,b_22 = (coords_22_EQ.galactic.l.deg,coords_22_EQ.galactic.b.deg)
+    delta_l   = np.abs(l_22-l_11)*(-1)
+    delta_b   = np.abs(b_22-b_11)
 
     # change CDELTs from equatorial to Galactic values
-    header_GAL["CDELT1"],header_GAL["CDELT2"] = (delta_ra_gal,delta_dec_gal)
+    header_GAL["CDELT1"],header_GAL["CDELT2"] = (delta_l,delta_b)
 
-    # perform reprojection
-    data_GAL,footprint   = reproject_interp((data_EQ, header_EQ), header_GAL,order=order)
-
-    fits.writeto(filedir_out,data_GAL,header_GAL,overwrite=overwrite)
-
-    return (data_GAL,footprint)
+    if Montage==True:
+        # perform reprojection with Montage
+        data_GAL     = np.zeros(shape=(header_GAL["NAXIS2"],header_GAL["NAXIS1"]))
+        header_file  = "/Users/campbell/Documents/PhD/data/GALFACTS/N1/GAL/header_GAL.fits"
+        mheader_file = "/Users/campbell/Documents/PhD/data/GALFACTS/N1/GAL/mheader_GAL.txt"
+        fits.writeto(header_file,data_GAL,header_GAL,overwrite=True)
+        montage.mGetHdr(header_file,mheader_file)
+        os.remove(header_file)
+        montage.reproject(filedir_in,filedir_out,header=mheader_file,exact_size=True)
+    else:
+        # perform reprojection with reproject.interp()
+        data_GAL,footprint   = reproject_interp((data_EQ,header_EQ),header_GAL,order=order)
+        fits.writeto(filedir_out,data_GAL,header_GAL,overwrite=overwrite)
+        #return (data_GAL,header_GAL,footprint)
 
 def freproj3D_EQ_GAL(filedir_in,filedir_out,header_file,order="nearest-neighbor",overwrite=True):
 
