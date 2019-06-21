@@ -235,13 +235,12 @@ def freproj3D_EQ_GAL(filedir_in,filedir_out,header_file,order="nearest-neighbor"
 
     ############################## make Galactic footprint larger ###################################
     header_GAL_2D_NAXIS1,header_GAL_2D_NAXIS2 = (6000,6000)                                      # N1
+    #header_GAL_2D_NAXIS1,header_GAL_2D_NAXIS2 = (3000,6500)                                      # N2
+    #header_GAL_2D_NAXIS1,header_GAL_2D_NAXIS2 = (4000,7500)                                      # N3
     #################################################################################################
 
     header_GAL_2D_CRPIX1,header_GAL_2D_CRPIX2 = header_GAL_2D_NAXIS1*0.5,header_GAL_2D_NAXIS2*0.5
-
-    ################################ change center pixel values #####################################
-    crpix1_GAL_2D,crpix2_GAL_2D  = (int(header_GAL_2D_NAXIS1*0.5),int(header_GAL_2D_NAXIS2*0.5)) # N1
-    #################################################################################################
+    crpix1_GAL_2D,crpix2_GAL_2D  = (int(header_GAL_2D_NAXIS1*0.5),int(header_GAL_2D_NAXIS2*0.5))
 
     # create empty array of 3D image to fill in later with reprojected data
     data_GAL_3D = np.zeros((header_EQ_3D_NAXIS3,header_GAL_2D_NAXIS2,header_GAL_2D_NAXIS1),dtype=float)
@@ -302,6 +301,26 @@ def freproj3D_EQ_GAL(filedir_in,filedir_out,header_file,order="nearest-neighbor"
     	    data_GAL_2D,footprint_2D   = reproject_interp((data_EQ_2D_i, header_EQ_2D), header_GAL_2D,order=order)
         	data_GAL_3D[i]             = np.copy(data_GAL_2D)
         	'''
+
+    # add 3D keywords to reprojected FITS header
+    header_GAL_3D = fits.Header.copy(header_EQ_2D)
+    header_GAL_3D.insert("NAXIS2",("NAXIS3",header_EQ_3D["NAXIS3"]),after=True)
+    header_GAL_3D.insert("CROTA2",("CTYPE3",header_EQ_3D["CTYPE3"]),after=True)
+    header_GAL_3D.insert("CTYPE3",("CRVAL3",header_EQ_3D["CRVAL3"]),after=True)
+    header_GAL_3D.insert("CRVAL3",("CRPIX3",header_EQ_3D["CRPIX3"]),after=True)
+    header_GAL_3D.insert("CRPIX3",("CDELT3",header_EQ_3D["CDELT3"]),after=True)
+    header_GAL_3D.insert("CDELT3",("CROTA3",header_EQ_3D["CROTA3"]),after=True)
+
+    # copy transformed header keywords over to 3D header
+    header_GAL_3D["CTYPE1"],header_GAL_3D["CTYPE2"] = header_GAL_2D["CTYPE1"],header_GAL_2D["CTYPE2"]
+    header_GAL_3D["NAXIS1"],header_GAL_3D["NAXIS2"] = header_GAL_2D["NAXIS1"],header_GAL_2D["NAXIS2"]
+    header_GAL_3D["CRPIX1"],header_GAL_3D["CRPIX2"] = header_GAL_2D["CRPIX1"],header_GAL_2D["CRPIX2"]
+    header_GAL_3D["CRVAL1"],header_GAL_3D["CRVAL2"] = header_GAL_2D["CRVAL1"],header_GAL_2D["CRVAL2"]
+    header_GAL_3D["CDELT1"],header_GAL_3D["CDELT2"] = header_GAL_2D["CDELT1"],header_GAL_2D["CDELT2"]
+    header_GAL_3D["CUNIT1"],header_GAL_3D["CUNIT2"] = header_GAL_2D["CUNIT1"],header_GAL_2D["CUNIT2"]
+    header_GAL_3D["CROTA1"],header_GAL_3D["CROTA2"] = header_GAL_2D["CROTA1"],header_GAL_2D["CROTA2"]
+
+    fits.writeto(filedir_out,data_GAL_3D,header_GAL_3D,overwrite=overwrite)
 
 def fheader_3Dto2D(filedir_in,filedir_out,keys,write=False):
     '''
