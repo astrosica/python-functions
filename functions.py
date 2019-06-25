@@ -184,7 +184,7 @@ def freproj2D_EQ_GAL(filedir_in,filedir_out,order="nearest-neighbor",overwrite=T
         fits.writeto(filedir_out,data_GAL,header_GAL,overwrite=overwrite)
         return (data_GAL,header_GAL,footprint)
 
-def freproj3D_EQ_GAL(filedir_in,filedir_out,header_file,order="nearest-neighbor",overwrite=True,Montage=True):
+def freproj3D_EQ_GAL(filedir_in,filedir_out,header_file):
 
     '''
     Reprojects an input 3D image from equatorial to Galactic coordinates by iterating over each image slice.
@@ -193,134 +193,60 @@ def freproj3D_EQ_GAL(filedir_in,filedir_out,header_file,order="nearest-neighbor"
     filedir_in   : input file in equatorial coordinates
     filedir_out  : output file in Galactic coordinates
     header_file  : contains the reference header used for reprojection
-    order        : reprojection order (default=nearest-neighbor)
-    overwrite    : overwrite FITS file boolean (default=True)
-
-    Outputs
-    data_GAL_3D  : reprojected data cube in Galactic coordinates
-    footprint_2D : footprint from reprojection
     '''
 
     # extract data and headers
     data_EQ_3D,header_EQ_3D  = fits.getdata(filedir_in,header=True)
-    header_EQ_3D_NAXIS1      = header_EQ_3D["NAXIS1"]
-    header_EQ_3D_NAXIS2      = header_EQ_3D["NAXIS2"]
-    header_EQ_3D_NAXIS3      = header_EQ_3D["NAXIS3"]
-    header_EQ_3D_CDELT1      = header_EQ_3D["CDELT1"]
-    header_EQ_3D_CDELT2      = header_EQ_3D["CDELT2"]
-    
-    # create 2D headers for reprojecting each 2D image slice
-    header_EQ_2D             = fits.getheader(filedir_in)
-    header_GAL_2D            = fits.getheader(filedir_in)
-
-    # remove 3D keys from FITS header
-    header_EQ_2D["NAXIS"]    = 2
-    header_EQ_2D["WCSAXES"]  = 2
-    header_GAL_2D["NAXIS"]   = 2
-    header_GAL_2D["WCSAXES"] = 2
-    keys_3D                  = ["NAXIS3","CTYPE3","CRVAL3","CRPIX3","CDELT3","CUNIT3","CROTA3","SPECSYS"]
-    for key in keys_3D:
-        try:
-            del header_EQ_2D[key]
-            del header_GAL_2D[key]
-        except KeyError:
-            continue
-    
-    w_EQ_2D = wcs.WCS(header_EQ_2D)
+    header_EQ_3D_NAXIS1,header_EQ_3D_NAXIS2,header_EQ_3D_NAXIS3 = header_EQ_3D["NAXIS1"],header_EQ_3D["NAXIS2"],header_EQ_3D["NAXIS3"]
+    header_EQ_3D_CTYPE1,header_EQ_3D_CTYPE2,header_EQ_3D_CTYPE3 = header_EQ_3D["CTYPE1"],header_EQ_3D["CTYPE2"],header_EQ_3D["CTYPE3"]
+    header_EQ_3D_CRPIX1,header_EQ_3D_CRPIX2,header_EQ_3D_CRPIX3 = header_EQ_3D["CRPIX1"],header_EQ_3D["CRPIX2"],header_EQ_3D["CRPIX3"]
+    header_EQ_3D_CRVAL1,header_EQ_3D_CRVAL2,header_EQ_3D_CRVAL3 = header_EQ_3D["CRVAL1"],header_EQ_3D["CRVAL2"],header_EQ_3D["CRVAL3"]
+    header_EQ_3D_CDELT1,header_EQ_3D_CDELT2,header_EQ_3D_CDELT3 = header_EQ_3D["CDELT1"],header_EQ_3D["CDELT2"],header_EQ_3D["CDELT3"]
 
     # change WCS from equatorial to Galactic
-    header_GAL_2D_CTYPE1,header_GAL_2D_CTYPE2  = ("GLON-TAN","GLAT-TAN")
-    header_GAL_2D_CUNIT1,header_GAL_2D_CUNIT2  = ("deg","deg")
-    header_GAL_2D_CROTA1,header_GAL_2D_CROTA2 = (0,0)
+    header_GAL_3D_CTYPE1,header_GAL_3D_CTYPE2 = ("GLON-TAN","GLAT-TAN")
+    header_GAL_3D_CUNIT1,header_GAL_3D_CUNIT2 = ("deg","deg")
+    header_GAL_3D_CROTA1,header_GAL_3D_CROTA2 = (0,0)
 
     ############################## make Galactic footprint larger ###################################
-    header_GAL_2D_NAXIS1,header_GAL_2D_NAXIS2 = (6000,6000)                                      # N1
+    #header_GAL_3D_NAXIS1,header_GAL_3D_NAXIS2 = (6000,6000)                                      # N1
     #header_GAL_2D_NAXIS1,header_GAL_2D_NAXIS2 = (3000,6500)                                      # N2
     #header_GAL_2D_NAXIS1,header_GAL_2D_NAXIS2 = (4000,7500)                                      # N3
     #################################################################################################
 
-    header_GAL_2D_CRPIX1,header_GAL_2D_CRPIX2 = header_GAL_2D_NAXIS1*0.5,header_GAL_2D_NAXIS2*0.5
-    crpix1_GAL_2D,crpix2_GAL_2D  = (int(header_GAL_2D_NAXIS1*0.5),int(header_GAL_2D_NAXIS2*0.5))
+    header_GAL_3D_CRPIX1,header_GAL_3D_CRPIX2 = header_GAL_3D_NAXIS1*0.5,header_GAL_3D_NAXIS2*0.5
+    crpix1_GAL_3D,crpix2_GAL_3D               = (int(header_GAL_3D_NAXIS1*0.5),int(header_GAL_3D_NAXIS2*0.5))
 
-    # create empty array of 3D image to fill in later with reprojected data
-    data_GAL_3D = np.zeros((header_EQ_3D_NAXIS3,header_GAL_2D_NAXIS2,header_GAL_2D_NAXIS1),dtype=float)
+    w_EQ_3D                                   = wcs.WCS(fits.open(filedir_in)[0].header)
 
     crpix1_EQ_2D,crpix2_EQ_2D  = header_EQ_3D_NAXIS1*0.5,header_EQ_3D_NAXIS2*0.5
-    crpix1_crpix2_radec_2D     = w_EQ_2D.all_pix2world(crpix1_EQ_2D,crpix2_EQ_2D,0)
+    crpix1_crpix2_radec_2D     = w_EQ_3D.all_pix2world(crpix1_EQ_2D,crpix2_EQ_2D,0,0)
     crpix1_ra_2D,crpix2_dec_2D = np.float(crpix1_crpix2_radec_2D[0]),np.float(crpix1_crpix2_radec_2D[1])
 
     # transform center pixel values from (ra,dec) to (l,b)
     coords                                    = SkyCoord(ra=crpix1_ra_2D*u.degree, dec=crpix2_dec_2D*u.degree, frame='fk5')
-    header_GAL_2D_CRVAL1,header_GAL_2D_CRVAL2 = (coords.galactic.l.deg,coords.galactic.b.deg)
+    header_GAL_3D_CRVAL1,header_GAL_3D_CRVAL2 = (coords.galactic.l.deg,coords.galactic.b.deg)
 
     # change CDELTs from equatorial to Galactic values
-    header_GAL_2D_CDELT1,header_GAL_2D_CDELT2 = (header_EQ_3D_CDELT1,header_EQ_3D_CDELT2)
+    header_GAL_3D_CDELT1,header_GAL_3D_CDELT2 = (header_EQ_3D_CDELT1,header_EQ_3D_CDELT2)
 
-    # write GAL header
-    data_GAL_2D              = np.zeros(shape=(header_GAL_2D_NAXIS2,header_GAL_2D_NAXIS1))
-    header_GAL_2D            = fits.PrimaryHDU(data=data_GAL_2D).header
-    header_GAL_2D["NAXIS"]   = 2
-    header_GAL_2D["NAXIS1"]  = header_GAL_2D_NAXIS1
-    header_GAL_2D["NAXIS2"]  = header_GAL_2D_NAXIS2
-    # NAXIS1
-    header_GAL_2D["CTYPE1"]  = header_GAL_2D_CTYPE1
-    header_GAL_2D["CRPIX1"]  = header_GAL_2D_CRPIX1
-    header_GAL_2D["CRVAL1"]  = header_GAL_2D_CRVAL1
-    header_GAL_2D["CDELT1"]  = header_GAL_2D_CDELT1
-    header_GAL_2D["CROTA1"]  = header_GAL_2D_CROTA1
-    # NAXIS2
-    header_GAL_2D["CTYPE2"]  = header_GAL_2D_CTYPE2
-    header_GAL_2D["CRPIX2"]  = header_GAL_2D_CRPIX2
-    header_GAL_2D["CRVAL2"]  = header_GAL_2D_CRVAL2
-    header_GAL_2D["CDELT2"]  = header_GAL_2D_CDELT2
-    header_GAL_2D["CROTA2"]  = header_GAL_2D_CROTA2
-    # other
-    header_GAL_2D["EQUINOX"] = 2000.
-    header_GAL_2D["CUNIT1"]  = header_GAL_2D_CUNIT1
-    header_GAL_2D["CUNIT2"]  = header_GAL_2D_CUNIT2
+    # create 3D GAL header
+    data_GAL_3D                                     = np.zeros(shape=data_EQ_3D.shape)
+    header_GAL_3D                                   = fits.PrimaryHDU(data=data_GAL_3D).header
+    header_GAL_3D["CTYPE1"],header_GAL_3D["CTYPE2"],header_GAL_3D["CTYPE3"] = header_GAL_3D_CTYPE1,header_GAL_3D_CTYPE2,header_EQ_3D_CTYPE3
+    header_GAL_3D["NAXIS1"],header_GAL_3D["NAXIS2"],header_GAL_3D["NAXIS3"] = header_GAL_3D_NAXIS1,header_GAL_3D_NAXIS2,header_EQ_3D_NAXIS3
+    header_GAL_3D["CRPIX1"],header_GAL_3D["CRPIX2"],header_GAL_3D["CRPIX3"] = header_GAL_3D_CRPIX1,header_GAL_3D_CRPIX2,header_EQ_3D_CRPIX3
+    header_GAL_3D["CRVAL1"],header_GAL_3D["CRVAL2"],header_GAL_3D["CRVAL3"] = header_GAL_3D_CRVAL1,header_GAL_3D_CRVAL2,header_EQ_3D_CRVAL3
+    header_GAL_3D["CDELT1"],header_GAL_3D["CDELT2"],header_GAL_3D["CDELT3"] = header_GAL_3D_CDELT1,header_GAL_3D_CDELT2,header_EQ_3D_CDELT3
+    header_GAL_3D["CUNIT1"],header_GAL_3D["CUNIT2"] = header_GAL_3D_CUNIT1,header_GAL_3D_CUNIT2
+    header_GAL_3D["CROTA1"],header_GAL_3D["CROTA2"],header_GAL_3D["CROTA3"] = 0.0,0.0,0.0
 
-    # perform reprojection by iterating over image slices
-    for i in range(header_EQ_3D_NAXIS3):
-    	if Montage==True:
-    		# perform reprojection with Montage
-    		print "reprojecting "+str(i)+"th image slice"
-    		header_file  = "/Users/campbell/Documents/PhD/data/GALFA-HI/N1/v_-10_+10_kms/GAL/header_GAL.fits"
-    		mheader_file = "/Users/campbell/Documents/PhD/data/GALFA-HI/N1/v_-10_+10_kms/GAL/mheader_GAL.txt"
-    		fits.writeto(header_file,data_GAL_2D,header_GAL_2D,overwrite=True)
-    		montage.mGetHdr(header_file,mheader_file)
-    		os.remove(header_file)
-    		filedir_out_temp = filedir_out.split(".fits")[0]+"_temp.fits"
-    		montage.reproject(filedir_in,filedir_out_temp,header=mheader_file,exact_size=True)
-    		data_GAL_2D = fits.getdata(filedir_out_temp)
-    		os.remove(filedir_out_temp)
-    		data_GAL_3D[i] = np.copy(data_GAL_2D)
-    	else:
-    		'''
-    		data_EQ_2D_i               = np.copy(data_EQ_3D[i])
-	        print "reprojecting "+str(i)+"th image slice"
-    	    data_GAL_2D,footprint_2D   = reproject_interp((data_EQ_2D_i, header_EQ_2D), header_GAL_2D,order=order)
-        	data_GAL_3D[i]             = np.copy(data_GAL_2D)
-        	'''
-
-    # add 3D keywords to reprojected FITS header
-    header_GAL_3D = fits.Header.copy(header_EQ_2D)
-    header_GAL_3D.insert("NAXIS2",("NAXIS3",header_EQ_3D["NAXIS3"]),after=True)
-    header_GAL_3D.insert("CROTA2",("CTYPE3",header_EQ_3D["CTYPE3"]),after=True)
-    header_GAL_3D.insert("CTYPE3",("CRVAL3",header_EQ_3D["CRVAL3"]),after=True)
-    header_GAL_3D.insert("CRVAL3",("CRPIX3",header_EQ_3D["CRPIX3"]),after=True)
-    header_GAL_3D.insert("CRPIX3",("CDELT3",header_EQ_3D["CDELT3"]),after=True)
-    header_GAL_3D.insert("CDELT3",("CROTA3",header_EQ_3D["CROTA3"]),after=True)
-
-    # copy transformed header keywords over to 3D header
-    header_GAL_3D["CTYPE1"],header_GAL_3D["CTYPE2"] = header_GAL_2D["CTYPE1"],header_GAL_2D["CTYPE2"]
-    header_GAL_3D["NAXIS1"],header_GAL_3D["NAXIS2"] = header_GAL_2D["NAXIS1"],header_GAL_2D["NAXIS2"]
-    header_GAL_3D["CRPIX1"],header_GAL_3D["CRPIX2"] = header_GAL_2D["CRPIX1"],header_GAL_2D["CRPIX2"]
-    header_GAL_3D["CRVAL1"],header_GAL_3D["CRVAL2"] = header_GAL_2D["CRVAL1"],header_GAL_2D["CRVAL2"]
-    header_GAL_3D["CDELT1"],header_GAL_3D["CDELT2"] = header_GAL_2D["CDELT1"],header_GAL_2D["CDELT2"]
-    header_GAL_3D["CUNIT1"],header_GAL_3D["CUNIT2"] = header_GAL_2D["CUNIT1"],header_GAL_2D["CUNIT2"]
-    header_GAL_3D["CROTA1"],header_GAL_3D["CROTA2"] = header_GAL_2D["CROTA1"],header_GAL_2D["CROTA2"]
-
-    fits.writeto(filedir_out,data_GAL_3D,header_GAL_3D,overwrite=overwrite)
+    header_file  = "/Users/campbell/Documents/PhD/data/GALFA-HI/N1/v_-10_+10_kms/GAL/header_GAL.fits"
+    mheader_file = "/Users/campbell/Documents/PhD/data/GALFA-HI/N1/v_-10_+10_kms/GAL/mheader_GAL.txt"
+    fits.writeto(header_file,data_GAL_3D,header_GAL_3D,overwrite=True)
+    montage.mGetHdr(header_file,mheader_file)
+    os.remove(header_file)
+    montage.reproject_cube(filedir_in,filedir_out,header=mheader_file,clobber=True)
 
 def fheader_3Dto2D(filedir_in,filedir_out,keys,write=False):
     '''
