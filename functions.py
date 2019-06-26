@@ -71,8 +71,9 @@ def fcoordgrid_GAL(filedir):
 	
 	# create grid in Galactic coordinates
 	lgrid,bgrid   = w.all_pix2world(xgrid,ygrid,0)
+	lb_coords     = SkyCoord(lgrid,bgrid,frame="galactic",unit="deg")
 
-	return lgrid,bgrid
+	return lb_coords
 
 def fcoordgrid_EQtoGAL(filedir):
 	'''
