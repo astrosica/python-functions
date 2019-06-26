@@ -73,6 +73,54 @@ def fcoordgrid_GAL(filedir):
 
 	return lgrid,bgrid
 
+def fcoordgrid_EQtoGAL(filedir):
+	'''
+	Creates a grid of equatorial coordinates for the input file which are then transformed to Galactic coordinates.
+	'''
+
+	data,header    = fits.getdata(filedir,header=True)
+	w              = wcs.WCS(header)
+
+	# create grid in pixels
+	NAXIS1,NAXIS2  = header["NAXIS1"],header["NAXIS2"]
+	xarray         = np.arange(NAXIS1+1)-0.5
+	yarray         = np.arange(NAXIS2+1)-0.5
+	xgrid,ygrid    = np.meshgrid(xarray,yarray)
+	
+	# create grid in equatorial coordinates
+	ragrid,decgrid = w.all_pix2world(xgrid,ygrid,0)
+	radec_coords   = SkyCoord(ragrid,decgrid,frame="fk5",unit="deg")
+
+	# transform to Galactic coordinates
+	lb_coords      = radec_coords.galactic
+	lgrid,bgrid    = lb_coords.l.deg,lb_coords.b.deg
+
+	return lgrid,bgrid
+
+def fcoordgrid_GALtoEQ(filedir):
+	'''
+	Creates a grid of Galactic coordinates for the input file which are then transformed to equatorial coordinates.
+	'''
+
+	data,header    = fits.getdata(filedir,header=True)
+	w              = wcs.WCS(header)
+
+	# create grid in pixels
+	NAXIS1,NAXIS2  = header["NAXIS1"],header["NAXIS2"]
+	xarray         = np.arange(NAXIS1+1)-0.5
+	yarray         = np.arange(NAXIS2+1)-0.5
+	xgrid,ygrid    = np.meshgrid(xarray,yarray)
+	
+	# create grid in Galactic coordinates
+	lgrid,bgrid    = w.all_pix2world(xgrid,ygrid,0)
+	lb_coords      = SkyCoord(lgrid,bgrid,frame="galactic",unit="deg")
+
+	# transform to equatorial coordinates
+	radec_coords   = lb_coords.fk5
+	ragrid,decgrid = radec_coords.ra.deg,radec_coords.dec.deg
+
+	return ragrid,decgrid
+
 def freproject_2D(image1_dir,image2_dir,clean=False,order="nearest-neighbor"):
     '''
     Reprojects image1 to image2 using their FITS headers.
