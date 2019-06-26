@@ -45,8 +45,8 @@ def fcoordgrid_EQ(filedir):
 
 	# create grid in pixels
 	NAXIS1,NAXIS2  = header["NAXIS1"],header["NAXIS2"]
-	xarray         = np.arange(NAXIS1+1)-0.5
-	yarray         = np.arange(NAXIS2+1)-0.5
+	xarray         = np.arange(NAXIS1)-0.5
+	yarray         = np.arange(NAXIS2)-0.5
 	xgrid,ygrid    = np.meshgrid(xarray,yarray)
 	
 	# create grid in equatorial coordinates
@@ -65,8 +65,8 @@ def fcoordgrid_GAL(filedir):
 
 	# create grid in pixels
 	NAXIS1,NAXIS2 = header["NAXIS1"],header["NAXIS2"]
-	xarray        = np.arange(NAXIS1+1)-0.5
-	yarray        = np.arange(NAXIS2+1)-0.5
+	xarray        = np.arange(NAXIS1)-0.5
+	yarray        = np.arange(NAXIS2)-0.5
 	xgrid,ygrid   = np.meshgrid(xarray,yarray)
 	
 	# create grid in Galactic coordinates
@@ -85,8 +85,8 @@ def fcoordgrid_EQtoGAL(filedir):
 
 	# create grid in pixels
 	NAXIS1,NAXIS2  = header["NAXIS1"],header["NAXIS2"]
-	xarray         = np.arange(NAXIS1+1)-0.5
-	yarray         = np.arange(NAXIS2+1)-0.5
+	xarray         = np.arange(NAXIS1)-0.5
+	yarray         = np.arange(NAXIS2)-0.5
 	xgrid,ygrid    = np.meshgrid(xarray,yarray)
 	
 	# create grid in equatorial coordinates
@@ -108,8 +108,8 @@ def fcoordgrid_GALtoEQ(filedir):
 
 	# create grid in pixels
 	NAXIS1,NAXIS2  = header["NAXIS1"],header["NAXIS2"]
-	xarray         = np.arange(NAXIS1+1)-0.5
-	yarray         = np.arange(NAXIS2+1)-0.5
+	xarray         = np.arange(NAXIS1)-0.5
+	yarray         = np.arange(NAXIS2)-0.5
 	xgrid,ygrid    = np.meshgrid(xarray,yarray)
 	
 	# create grid in Galactic coordinates
