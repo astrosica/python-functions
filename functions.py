@@ -35,6 +35,44 @@ def ffreqaxis(file):
 
 	return freqaxis
 
+def fcoordgrid_EQ(filedir):
+	'''
+	Creates a grid of equatorial coordinates for the input file.
+	'''
+
+	data,header    = fits.getdata(filedir,header=True)
+	w              = wcs.WCS(header)
+
+	# create grid in pixels
+	NAXIS1,NAXIS2  = header["NAXIS1"],header["NAXIS2"]
+	xarray         = np.arange(NAXIS1+1)-0.5
+	yarray         = np.arange(NAXIS2+1)-0.5
+	xgrid,ygrid    = np.meshgrid(xarray,yarray)
+	
+	# create grid in equatorial coordinates
+	ragrid,decgrid = w.all_pix2world(xgrid,ygrid,0)
+
+	return ragrid,decgrid
+
+def fcoordgrid_GAL(filedir):
+	'''
+	Creates a grid of Galactic coordinates for the input file.
+	'''
+
+	data,header   = fits.getdata(filedir,header=True)
+	w             = wcs.WCS(header)
+
+	# create grid in pixels
+	NAXIS1,NAXIS2 = header["NAXIS1"],header["NAXIS2"]
+	xarray        = np.arange(NAXIS1+1)-0.5
+	yarray        = np.arange(NAXIS2+1)-0.5
+	xgrid,ygrid   = np.meshgrid(xarray,yarray)
+	
+	# create grid in Galactic coordinates
+	lgrid,bgrid   = w.all_pix2world(xgrid,ygrid,0)
+
+	return lgrid,bgrid
+
 def freproject_2D(image1_dir,image2_dir,clean=False,order="nearest-neighbor"):
     '''
     Reprojects image1 to image2 using their FITS headers.
