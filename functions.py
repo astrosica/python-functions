@@ -118,9 +118,8 @@ def fcoordgrid_GALtoEQ(filedir):
 
 	# transform to equatorial coordinates
 	radec_coords   = lb_coords.fk5
-	ragrid,decgrid = radec_coords.ra.deg,radec_coords.dec.deg
 
-	return ragrid,decgrid
+	return radec_coords
 
 def freproject_2D(image1_dir,image2_dir,clean=False,order="nearest-neighbor"):
     '''
