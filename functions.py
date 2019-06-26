@@ -100,7 +100,7 @@ def freproject_2D(image1_dir,image2_dir,clean=False,order="nearest-neighbor"):
 
 	return (image1_data,image1_header,image1_data_reproj,image1_header_reproj,image2_data,image2_header_reproj,footprint)
 
-def freproj2D_EQ_GAL(filedir_in,filedir_out,order="nearest-neighbor",overwrite=True,Montage=True):
+def freproj2D_EQ_GAL(filedir_in,filedir_out):
 
     '''
     Reprojects an input 2D image from equatorial to Galactic coordinates using reproject_interp().
@@ -108,8 +108,6 @@ def freproj2D_EQ_GAL(filedir_in,filedir_out,order="nearest-neighbor",overwrite=T
     Inputs
     filedir_in   : input file in equatorial coordinates
     filedir_out  : output file in Galactic coordinates
-    order        : reprojection order (default=nearest-neighbor)
-    overwrite    : overwrite FITS file boolean (default=True)
 
     Outputs
     data_GAL     : reprojected data in Galactic coordinates
@@ -127,14 +125,13 @@ def freproj2D_EQ_GAL(filedir_in,filedir_out,order="nearest-neighbor",overwrite=T
     header_GAL_CROTA1,header_GAL_CROTA2 = (0,0)
 
     ############################## make Galactic footprint larger ##############################
-    header_GAL_NAXIS1,header_GAL_NAXIS2 = (6000,6000)                                       # N1
+    #header_GAL_NAXIS1,header_GAL_NAXIS2 = (6000,6000)                                       # N1
+    #header_GAL_NAXIS1,header_GAL_NAXIS2 = (3000,6500)                                       # N2
+    #header_GAL_NAXIS1,header_GAL_NAXIS2 = (4000,7500)                                       # N3
     ############################################################################################
 
     header_GAL_CRPIX1,header_GAL_CRPIX2 = header_GAL_NAXIS1/2.,header_GAL_NAXIS2/2.
-
-    ################################ change center pixel values ################################
-    crpix1_GAL,crpix2_GAL  = (header_GAL_NAXIS1*0.5,header_GAL_NAXIS2*0.5)                  # N1
-    ############################################################################################
+    crpix1_GAL,crpix2_GAL               = (header_GAL_NAXIS1*0.5,header_GAL_NAXIS2*0.5)
 
     crpix1_EQ,crpix2_EQ  = header_EQ_NAXIS1/2.,header_EQ_NAXIS2/2.
     crpix1_crpix2_radec  = w_EQ.all_pix2world(crpix1_EQ,crpix2_EQ,0)
@@ -170,19 +167,13 @@ def freproj2D_EQ_GAL(filedir_in,filedir_out,order="nearest-neighbor",overwrite=T
     header_GAL["CUNIT1"]  = header_GAL_CUNIT1
     header_GAL["CUNIT2"]  = header_GAL_CUNIT2
 
-    if Montage==True:
-        # perform reprojection with Montage
-        header_file  = "/Users/campbell/Documents/PhD/data/GALFACTS/N1/GAL/header_GAL.fits"
-        mheader_file = "/Users/campbell/Documents/PhD/data/GALFACTS/N1/GAL/mheader_GAL.txt"
-        fits.writeto(header_file,data_GAL,header_GAL,overwrite=True)
-        montage.mGetHdr(header_file,mheader_file)
-        os.remove(header_file)
-        montage.reproject(filedir_in,filedir_out,header=mheader_file,exact_size=True)
-    else:
-        # perform reprojection with reproject.interp()
-        data_GAL,footprint   = reproject_interp((data_EQ,header_EQ),header_GAL,order=order)
-        fits.writeto(filedir_out,data_GAL,header_GAL,overwrite=overwrite)
-        return (data_GAL,header_GAL,footprint)
+    # perform reprojection with Montage
+    header_file  = "/Users/campbell/Documents/PhD/data/GALFACTS/N1/GAL/header_GAL.fits"
+    mheader_file = "/Users/campbell/Documents/PhD/data/GALFACTS/N1/GAL/mheader_GAL.txt"
+    fits.writeto(header_file,data_GAL,header_GAL,overwrite=True)
+    montage.mGetHdr(header_file,mheader_file)
+    os.remove(header_file)
+    montage.reproject(filedir_in,filedir_out,header=mheader_file,clobber=True)
 
 def freproj3D_EQ_GAL(filedir_in,filedir_out,header_file):
 
