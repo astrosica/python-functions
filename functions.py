@@ -51,8 +51,9 @@ def fcoordgrid_EQ(filedir):
 	
 	# create grid in equatorial coordinates
 	ragrid,decgrid = w.all_pix2world(xgrid,ygrid,0)
+	radec_coords   = SkyCoord(ragrid,decgrid,frame="fk5",unit="deg")
 
-	return ragrid,decgrid
+	return radec_coords
 
 def fcoordgrid_GAL(filedir):
 	'''
