@@ -95,9 +95,8 @@ def fcoordgrid_EQtoGAL(filedir):
 
 	# transform to Galactic coordinates
 	lb_coords      = radec_coords.galactic
-	lgrid,bgrid    = lb_coords.l.deg,lb_coords.b.deg
 
-	return lgrid,bgrid
+	return lb_coords
 
 def fcoordgrid_GALtoEQ(filedir):
 	'''
