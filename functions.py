@@ -121,6 +121,25 @@ def fcoordgrid_GALtoEQ(filedir):
 
 	return radec_coords
 
+def fhighlatmask(lb_coords,blim):
+	'''
+	Creates a mased on the input limit of Galactic latitude blim.
+
+	Inputs
+	lb_coords   : Galactic coordinates (l,b) in degrees
+	blim        : lower-limit on Galactic latitude where masked data satisfies |b|>=blim
+	'''
+
+	# construct coordinate grids
+	lgrid,bgrid    = lb_coords.l.deg,lb_coords.b.deg
+
+	# create mask
+	mask           = np.ones(shape=bgrid.shape)
+	ii             = np.abs(bgrid)<blim
+	mask[ii]       = float("NaN")
+
+	return mask
+
 def freproject_2D(image1_dir,image2_dir,clean=False,order="nearest-neighbor"):
     '''
     Reprojects image1 to image2 using their FITS headers.
