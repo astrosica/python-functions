@@ -39,35 +39,6 @@ def fconvolve(oldres_FWHM,newres_FWHM,data,header):
     
     return data_smoothed
 
-def fslice3DFITS(filedir_in,dir_out,units="kms",verbose=True):
-	'''
-	Slices a 3D FITS data cube along the third axis and saves each 2D image as a separate FITS file.
-
-	Inputs
-	filedir_in : file directory of input FITS data cube
-	dir_out    : directory where 2D image slices will be stored
-	units      : units of third axis in FITS data cube
-	'''
-
-	# extract FITS data
-	data,header=fits.getdata(filedir_in,header=True)
-
-	# create velocity axis
-	third_axis       = ffreqaxis(filedir_in)
-
-	# remove 3D information from FITS header
-	header_2D = fheader_3Dto2D(filedir_in,None)
-
-	# iterate through each channel
-	for i in range(data.shape[0]):
-		third_axis_i = third_axis[i]*1E-3
-		data_i       = data[i]
-		fname        = os.path.basename(filedir_in)+"_"+str(third_axis_i)+"_"+units+".fits"
-		fdir         = dir_out+fname
-		if verbose==True:
-			print "writing "+fdir+"..."
-		fits.writeto(fdir,data_i,header_2D,overwrite=True)
-
 def fmask(data,noise,snr):
 	'''
 	Creates a mask used to clip data based on SNR level.
