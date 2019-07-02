@@ -9,27 +9,6 @@ import montage_wrapper as montage
 from reproject import reproject_interp
 from astropy.coordinates import SkyCoord
 
-def ffreqaxis(file):
-	'''
-	Extracts the frequency axis from a FITS file using the header.
-	file : location of FITS file
-	'''
-
-	# extract header information
-	header = fits.getheader(file)
-	CRVAL3 = header["CRVAL3"]
-	CRPIX3 = header["CRPIX3"]
-	CDELT3 = header["CDELT3"]
-	NAXIS3 = header["NAXIS3"]
-
-	#construct pixel array
-	freqpixels = np.arange(NAXIS3)+1
-
-	# transform pixels to frequency
-	freqaxis   =  CRVAL3 + (freqpixels-CRPIX3)*CDELT3
-
-	return freqaxis
-
 def fconvolve(oldres_FWHM,newres_FWHM,data,header):
     '''
     Convolves data from oldres to newres using standard FFT convolution.
