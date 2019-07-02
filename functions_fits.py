@@ -336,3 +336,18 @@ def fhighlatmask(lb_coords,blim):
 	mask[ii]       = float("NaN")
 
 	return mask
+
+def fmask2DEQhighlat(filedir,blim):
+    '''
+    '''
+
+    data      = fits.getdata(filedir)
+
+    # create Galactic coordinate grid
+    lb_coords = fcoordgrid_EQtoGAL(filedir)
+    # create mask
+    mask      = fhighlatmask(lb_coords,blim)
+    # mask data
+    data_masked = data*mask
+
+    return data_masked
