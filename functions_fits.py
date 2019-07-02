@@ -351,3 +351,30 @@ def fmask2DEQhighlat(filedir,blim):
     data_masked = data*mask
 
     return data_masked
+
+def fheader_3Dto2D(filedir_in,filedir_out,write=False):
+    '''
+    Transforms a 3D FITS header to a 2D FITS header by changing the appropriate keywords.
+
+    Inputs
+    filedir_in  : input file directory
+    filedir_out : output file directory
+    overwrite   : overwrite file boolean (default=True)
+    
+    '''
+
+    data,header = fits.getdata(filedir_in,header=True)
+
+    header_keys = header.keys()
+    header["NAXIS"]=2
+
+    keys_3D = ["NAXIS3","CDELT3","CROTA3","CRPIX3","CRVAL3","CTYPE3"]
+
+    for key in keys_3D:
+        if key in header_keys:
+            del header[key]
+
+    if write==True:
+	    fits.writeto(filedir_out,data,header,overwrite=True)
+
+    return header
