@@ -318,3 +318,21 @@ def freproj3D_EQ_GAL(filedir_in,filedir_out,header_file):
     os.remove(header_file)
     montage.reproject_cube(filedir_in,filedir_out,header=mheader_file,clobber=True)
 
+def fhighlatmask(lb_coords,blim):
+	'''
+	Creates a mased on the input limit of Galactic latitude blim.
+
+	Inputs
+	lb_coords   : Galactic coordinates (l,b) in degrees
+	blim        : lower-limit on Galactic latitude where masked data satisfies |b|>=blim
+	'''
+
+	# construct coordinate grids
+	lgrid,bgrid    = lb_coords.l.deg,lb_coords.b.deg
+
+	# create mask
+	mask           = np.ones(shape=bgrid.shape)
+	ii             = np.abs(bgrid)<blim
+	mask[ii]       = float("NaN")
+
+	return mask
