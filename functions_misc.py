@@ -39,21 +39,6 @@ def fconvolve(oldres_FWHM,newres_FWHM,data,header):
     
     return data_smoothed
 
-def fmask2DEQhighlat(filedir,blim):
-	'''
-	'''
-
-	data      = fits.getdata(filedir)
-
-	# create Galactic coordinate grid
-	lb_coords = fcoordgrid_EQtoGAL(filedir)
-	# create mask
-	mask      = fhighlatmask(lb_coords,blim)
-	# mask data
-	data_masked = data*mask
-
-	return data_masked
-
 def fheader_3Dto2D(filedir_in,filedir_out,write=False):
     '''
     Transforms a 3D FITS header to a 2D FITS header by changing the appropriate keywords.
