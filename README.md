@@ -25,7 +25,7 @@ Computes the following using input Stokes maps:
 * slices a 3D data cube along its third axis and saves each 2D image as a separate image file
 
 ## Rolling Hough Transform
-
+See the [Rolling Hough Transform](https://github.com/seclark/RHT).
 * executes the RHT on all FITS files within a given directory
 * creates a dictionary of RHT angles for each pixel in the image plane
 * computes the distribution in RHT angle differences between two images
