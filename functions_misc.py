@@ -80,3 +80,18 @@ def fmaptheta_halfpolar_rad(angles):
 	angles_rad[angles_rad==2.] -= 2.
 
 	return angles_rad
+
+def fmaptheta_halfpolar_deg(angles):
+	'''
+	Maps angles from [0,360) to [0,180).
+
+	Input
+	angles : array of angles in degrees to be mapped
+	'''
+
+	# map angles within [180,360) to [0,180)
+	angles_deg[(angles_deg>=180.) & (angles_deg!=360.)] -= 180.
+	# map 360 to 0
+	angles_deg[angles_deg==360.] -= 360.
+
+	return angles_deg
