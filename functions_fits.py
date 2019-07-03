@@ -83,7 +83,7 @@ def fcoordgrid_EQtoGAL(filedir):
 	xarray         = np.arange(NAXIS1)-0.5
 	yarray         = np.arange(NAXIS2)-0.5
 	xgrid,ygrid    = np.meshgrid(xarray,yarray)
-	
+    	
 	# create grid in equatorial coordinates
 	ragrid,decgrid = w.all_pix2world(xgrid,ygrid,0)
 	radec_coords   = SkyCoord(ragrid,decgrid,frame="fk5",unit="deg")
@@ -106,7 +106,7 @@ def fcoordgrid_GALtoEQ(filedir):
 	xarray         = np.arange(NAXIS1)-0.5
 	yarray         = np.arange(NAXIS2)-0.5
 	xgrid,ygrid    = np.meshgrid(xarray,yarray)
-	
+    	
 	# create grid in Galactic coordinates
 	lgrid,bgrid    = w.all_pix2world(xgrid,ygrid,0)
 	lb_coords      = SkyCoord(lgrid,bgrid,frame="galactic",unit="deg")
@@ -319,23 +319,23 @@ def freproj3D_EQ_GAL(filedir_in,filedir_out,header_file):
     montage.reproject_cube(filedir_in,filedir_out,header=mheader_file,clobber=True)
 
 def fhighlatmask(lb_coords,blim):
-	'''
-	Creates a mased on the input limit of Galactic latitude blim.
+    '''
+    Creates a mased on the input limit of Galactic latitude blim.
 
-	Inputs
-	lb_coords   : Galactic coordinates (l,b) in degrees
-	blim        : lower-limit on Galactic latitude where masked data satisfies |b|>=blim
-	'''
+    Inputs
+    lb_coords   : Galactic coordinates (l,b) in degrees
+    blim        : lower-limit on Galactic latitude where masked data satisfies |b|>=blim
+    '''
 
-	# construct coordinate grids
-	lgrid,bgrid    = lb_coords.l.deg,lb_coords.b.deg
+    # construct coordinate grids
+    lgrid,bgrid    = lb_coords.l.deg,lb_coords.b.deg
 
-	# create mask
-	mask           = np.ones(shape=bgrid.shape)
-	ii             = np.abs(bgrid)<blim
-	mask[ii]       = float("NaN")
+    # create mask
+    mask           = np.ones(shape=bgrid.shape)
+    ii             = np.abs(bgrid)<blim
+    mask[ii]       = float("NaN")
 
-	return mask
+    return mask
 
 def fmask2DEQhighlat(filedir,blim):
     '''
@@ -375,35 +375,35 @@ def fheader_3Dto2D(filedir_in,filedir_out,write=False):
             del header[key]
 
     if write==True:
-	    fits.writeto(filedir_out,data,header,overwrite=True)
+        fits.writeto(filedir_out,data,header,overwrite=True)
 
     return header
 
 def fslice3DFITS(filedir_in,dir_out,units="kms",verbose=True):
-	'''
-	Slices a 3D FITS data cube along the third axis and saves each 2D image as a separate FITS file.
+    '''
+    Slices a 3D FITS data cube along the third axis and saves each 2D image as a separate FITS file.
 
-	Inputs
-	filedir_in : file directory of input FITS data cube
-	dir_out    : directory where 2D image slices will be stored
-	units      : units of third axis in FITS data cube
-	'''
+    Inputs
+    filedir_in : file directory of input FITS data cube
+    dir_out    : directory where 2D image slices will be stored
+    units      : units of third axis in FITS data cube
+    '''
 
-	# extract FITS data
-	data,header=fits.getdata(filedir_in,header=True)
+    # extract FITS data
+    data,header=fits.getdata(filedir_in,header=True)
 
-	# create velocity axis
-	third_axis       = ffreqaxis(filedir_in)
+    # create velocity axis
+    third_axis       = ffreqaxis(filedir_in)
 
-	# remove 3D information from FITS header
-	header_2D = fheader_3Dto2D(filedir_in,None)
+    # remove 3D information from FITS header
+    header_2D = fheader_3Dto2D(filedir_in,None)
 
-	# iterate through each channel
-	for i in range(data.shape[0]):
-		third_axis_i = third_axis[i]*1E-3
-		data_i       = data[i]
-		fname        = os.path.basename(filedir_in)+"_"+str(third_axis_i)+"_"+units+".fits"
-		fdir         = dir_out+fname
-		if verbose==True:
-			print "writing "+fdir+"..."
-		fits.writeto(fdir,data_i,header_2D,overwrite=True)
+    # iterate through each channel
+    for i in range(data.shape[0]):
+        third_axis_i = third_axis[i]*1E-3
+        data_i       = data[i]
+        fname        = os.path.basename(filedir_in)+"_"+str(third_axis_i)+"_"+units+".fits"
+        fdir         = dir_out+fname
+        if verbose==True:
+            print "writing "+fdir+"..."
+        fits.writeto(fdir,data_i,header_2D,overwrite=True)
