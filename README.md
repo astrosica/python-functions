@@ -1,11 +1,11 @@
 # Python functions
 
-Useful functions written in Python. Strikethroughs indicate those that are not yet available.
+Useful functions written in Python.
 
 ## Polarization
 
 Computes the following using input Stokes maps:
-* polarized intensity
+* [x] polarized intensity
 * de-biased polarized intensity
 * polarization gradient (with and without cross-terms)
 * normalized polarization gradient
