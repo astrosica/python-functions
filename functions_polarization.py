@@ -152,6 +152,35 @@ def fpolgradnorm_crossterms(Q,U):
     
     return polgrad_norm
 
+def fpolgradarg(Q,U):
+	'''
+	Computes the argument of the maximum complete spatial polarization gradient with the cross-terms included given Stokes Q and U maps.
+	
+	Note: this is the angle *perpendicular* to polarization gradient structures.
+
+	Q : Stokes Q data
+    U : Stokes U data
+	'''
+	
+	# compute Stokes spatial gradients
+	Q_grad   = np.gradient(Q)
+	U_grad   = np.gradient(U)
+	
+	# define components of spatial gradients
+	Q_grad_x = Q_grad[0]
+	Q_grad_y = Q_grad[1]
+	U_grad_x = U_grad[0]
+	U_grad_y = U_grad[1]
+
+	# compute argument of polarization gradient
+	a = np.sign(Q_grad_x*Q_grad_y + U_grad_x*U_grad_y)
+	b = np.sqrt(Q_grad_y**2.+U_grad_y**2.)
+	c = np.sqrt(Q_grad_x**2.+U_grad_x**2.)
+
+	polgrad_arg = np.arctan(a*b/c)
+
+	return polgrad_arg
+
 def fgradient(x):
     '''
     Constructs the spatial gradient.
