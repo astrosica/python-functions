@@ -184,25 +184,6 @@ def fpolgradnorm_crossterms(Q,U):
 	
 	return polgrad_norm
 
-def fgradient(x):
-	'''
-	Constructs the spatial gradient.
-	
-	x : 2-dimensional input map
-	'''
-	
-	# compute spatial gradients
-	grad_xy = np.gradient(x)
-	
-	# define components of spatial gradient
-	grad_x = grad_xy[0]
-	grad_y = grad_xy[1]
-	
-	# compute total spatial gradient map
-	grad = np.sqrt(grad_x**2. + grad_y**2.)
-	
-	return grad
-
 def fpolgrad_rad(Q,U):
 	'''
 	Constructs the radial component of the spatial polarization gradient given Stokes Q and U maps.
