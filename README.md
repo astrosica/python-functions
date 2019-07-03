@@ -4,7 +4,7 @@ Useful functions written in Python. Strikethroughs indicate those that are not y
 
 ## Polarization
 
-Compute the following using input Stokes maps:
+Computes the following using input Stokes maps:
 * polarized intensity
 * polarization gradient
 * argument of polarization gradient
