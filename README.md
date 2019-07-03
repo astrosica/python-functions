@@ -20,8 +20,10 @@ Computes the following using input Stokes maps:
 * [x] transforms a coordinate grid from Galactic to equatorial coordinates
 * [x] reprojects a 2D image to a specified header
 * [ ] reprojects a 3D image to a specified header
-* [x] reprojects a 2D or 3D image from equatorial to Galactic coordinates
-* [ ] reprojects a 2D or 3D image from Galactix to equatorial coordinates
+* [x] reprojects a 2D image from equatorial to Galactic coordinates
+* [x] reprojects a 3D image from equatorial to Galactic coordinates
+* [ ] reprojects a 2D image from Galactix to equatorial coordinates
+* [ ] reprojects a 3D image from Galactix to equatorial coordinates
 * [x] transforms a 3D header to a 2D header
 * [x] slices a 3D data cube along its third axis and saves each 2D image as a separate image file
 
