@@ -38,6 +38,6 @@ See the [Rolling Hough Transform](https://github.com/seclark/RHT).
 
 * [x] convolves a 2D image to a specified angular resolution using FFT convolution
 * [x] masks a 2D image based on a specified signal-to-noise threshold
-* [x] maps angles in radians from \[0,2*pi) to \[0,pi) (i.e., half-polar plot)
-* [x] maps angles in degrees from \[0,360) to \[0,180) (i.e., half-polar plot)
+* [x] maps angles in radians from \[0,2*pi) to \[0,pi) (i.e., to a half-polar plot)
+* [x] maps angles in degrees from \[0,360) to \[0,180) (i.e., to a half-polar plot)
 * [x] computes the spatial gradients of a 2D image
