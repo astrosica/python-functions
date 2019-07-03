@@ -14,7 +14,7 @@ Computes the following using input Stokes maps:
 
 ## FITS files
 
-* [x] construct the frequency axis using the header
+* [x] construct the frequency axis of a 3D data cube using the header
 * [x] constructs a coordinate grid using the header
 * [x] transforms a coordinate grid from equatorial to Galactic coordinates
 * [x] transforms a coordinate grid from Galactic to equatorial coordinates
