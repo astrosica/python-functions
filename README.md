@@ -1,6 +1,6 @@
 # Python functions
 
-Useful functions written in Python.
+Possibly useful functions written in Python.
 
 ## Polarization
 
@@ -18,7 +18,8 @@ Computes the following using input Stokes maps:
 * [x] constructs a coordinate grid using the header
 * [x] transforms a coordinate grid from equatorial to Galactic coordinates
 * [x] transforms a coordinate grid from Galactic to equatorial coordinates
-* [x] reprojects a 2D ~~or 3D~~ image to a specified header
+* [x] reprojects a 2D image to a specified header
+* [ ] reprojects a 3D image to a specified header
 * [x] reprojects a 2D or 3D image from equatorial to Galactic coordinates
 * [ ] reprojects a 2D or 3D image from Galactix to equatorial coordinates
 * [x] transforms a 3D header to a 2D header
