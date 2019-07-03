@@ -153,6 +153,21 @@ def fpolgradarg(Q,U,deg=True):
 
 	return polgrad_arg
 
+def fmaptheta_halfpolar_rad(angles):
+	'''
+	Maps angles from [0,2*pi) to [0,pi).
+
+	Input
+	angles : array of angles in radians to be mapped
+	'''
+
+	# map angles within [pi,2*pi) to [0,pi)
+	angles_rad[(angles_rad>=1.) & (angles_rad!=2.)] -= 1.0
+	# map 2*pi to 0
+	angles_rad[angles_rad==2.] -= 2.0
+
+	return angles_rad
+
 def fpolgradnorm_crossterms(Q,U):
 	'''
 	Constructs the complete normalized spatial polarization gradient with the cross-terms included given Stokes Q and U maps.
