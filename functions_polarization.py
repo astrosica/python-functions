@@ -159,6 +159,24 @@ def fpolgradarg(Q,U,deg=True):
 
 	return polgrad_arg
 
+def fmaskpolgradarg(angles,min,max):
+	'''
+	Masks the argument of polarization gradient.
+	'''
+
+	mask = np.ones(shape=angles.shape) # initialize mask
+
+	for i in range(len(min)):
+		min_i             = min[i]
+		max_i             = max[i]
+		mask_angles       = np.where((angles>=min_i) & (angles<=max_i))
+		mask[mask_angles] = np.nan
+
+	# mask angles
+	angles_masked = angles*mask
+
+	return mask,angles_masked
+
 def fpolgradnorm_crossterms(Q,U):
 	'''
 	Constructs the complete normalized spatial polarization gradient with the cross-terms included given Stokes Q and U maps.
