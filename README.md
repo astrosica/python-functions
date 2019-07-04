@@ -46,3 +46,4 @@ See the [Rolling Hough Transform](https://github.com/seclark/RHT).
 * [x] convert photometric magnitude uncertainty to signal-to-noise ratio
 * [x] convert photometric signal-to-noise ratio to magnitude uncertainty
 * [x] convert AB magnitudes to the Vega magnitude scale
+* [x] compute photometric colour and its uncertainty
