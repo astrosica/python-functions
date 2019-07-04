@@ -178,3 +178,17 @@ def fgradient(x):
 	grad = np.sqrt(grad_x**2. + grad_y**2.)
 	
 	return grad
+
+def fmagerrtosnr(magerr):
+    '''
+    Converts magnitude uncertainty to signal-to-noise ratio.
+    '''
+    magsnr = 1./magerr
+    return magsnr
+
+def fmagsnrtoerr(magsnr):
+    '''
+    Converts magnitude signal-to-noise ratio to uncertainty.
+    '''
+    magerr = 1./abs(magsnr)
+    return magerr
