@@ -1,13 +1,19 @@
 import os
 import numpy as np
 import rht, RHT_tools
-from scipy import signal
 import astropy.wcs as wcs
 from astropy.io import fits
+from PyAstronomy import pyasl
+from pytpm import tpm, convert
 from astropy import units as u
+import matplotlib.pyplot as plt
 import montage_wrapper as montage
+from scipy import signal, spatial
 from reproject import reproject_interp
 from astropy.coordinates import SkyCoord
+
+from matplotlib import rc
+rc("text", usetex=True)
 
 def fdegtosexa(ra_deg,dec_deg):
 	'''
