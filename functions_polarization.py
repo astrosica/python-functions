@@ -9,6 +9,8 @@ import montage_wrapper as montage
 from reproject import reproject_interp
 from astropy.coordinates import SkyCoord
 
+from functions_rht import *
+
 def fPI(Q,U):
 	'''
 	Constructs the polarized intensity given Stokes Q and U maps.
