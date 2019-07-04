@@ -47,3 +47,4 @@ See the [Rolling Hough Transform](https://github.com/seclark/RHT).
 * [x] convert photometric signal-to-noise ratio to magnitude uncertainty
 * [x] convert AB magnitudes to the Vega magnitude scale
 * [x] compute photometric colour and its uncertainty
+* [x] convert Right Ascension and Declination coordinates from the sexagismal in the B1959 system to decimal degrees in the J2000 system.
