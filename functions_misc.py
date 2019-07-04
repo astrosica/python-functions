@@ -138,6 +138,24 @@ def fmask(data,noise,snr):
 	
 	return (mask,data_clean)
 
+def fmaptheta_halfpolar_to_halfpolar(angles,deg=False):
+	'''
+	Maps angles from [-pi/2,pi/2) to [0,pi) or from [-90,90) to [0,180).
+
+	Input
+	angles : array of angles to be mapped
+	deg    : boolean which specifies units of input angles (default unit is radian)
+	'''
+
+	if deg==False:
+		# map angles within [pi,2*pi) to [0,pi)
+		angles += np.pi/2.
+	elif deg==True:
+		# map angles within [-90,90) to [0,180)
+		angles += 90.
+
+	return angles
+
 def fmaptheta_halfpolar_rad(angles):
 	'''
 	Maps angles from [0,2*pi) to [0,pi).
