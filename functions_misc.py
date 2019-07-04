@@ -156,33 +156,25 @@ def fmaptheta_halfpolar_to_halfpolar(angles,deg=False):
 
 	return angles
 
-def fmaptheta_halfpolar_rad(angles):
+def fmaptheta_halfpolar(angles,deg=False):
 	'''
-	Maps angles from [0,2*pi) to [0,pi).
+	Maps angles from [0,2*pi) to [0,pi) or from [0,360) to [0,180).
 
 	Input
-	angles : array of angles in radians to be mapped
+	angles : array of angles to be mapped
+	deg    : boolean which specifies units of input angles (default unit is radian)
 	'''
 
-	# map angles within [pi,2*pi) to [0,pi)
-	angles[(angles>=1.) & (angles!=2.)] -= 1.
-	# map 2*pi to 0
-	angles[angles==2.] -= 2.
-
-	return angles
-
-def fmaptheta_halfpolar_deg(angles):
-	'''
-	Maps angles from [0,360) to [0,180).
-
-	Input
-	angles : array of angles in degrees to be mapped
-	'''
-
-	# map angles within [180,360) to [0,180)
-	angles[(angles>=180.) & (angles!=360.)] -= 180.
-	# map 360 to 0
-	angles[angles==360.] -= 360.
+	if deg==False:
+		# map angles within [pi,2*pi) to [0,pi)
+		angles[(angles>=1.) & (angles!=2.)] -= 1.
+		# map 2*pi to 0
+		angles[angles==2.] -= 2.
+	elif deg==True:
+		# map angles within [180,360) to [0,180)
+		angles[(angles>=180.) & (angles!=360.)] -= 180.
+		# map 360 to 0
+		angles[angles==360.] -= 360.
 
 	return angles
 
