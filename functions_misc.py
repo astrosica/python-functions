@@ -289,3 +289,103 @@ def fB1950toJ2000(ra_B1950,dec_B1950):
 		dec_J2000 = dec_new_deg
 	
 	return ra_J2000, dec_J2000
+
+def fmatchpos(names,ra1,dec1,ra2,dec2,minarcsec,fdir=None,fname=None,N1=None,N2=None,x1min=None,x1max=None,x2min=None,x2max=None,xlabel1=None,xlabel2=None,ylabel1=None,ylabel2=None,deg=True):
+	'''
+	Match two sets of pointing positions by projectings (ra1,dec1) onto (ra2,dec2).
+	
+	Usage :
+	ra1_matches       = ra1[indices]     # matched by position
+	ra1_matches_clean = ra1[indices][ii] # matched by position and cleaned by separation requirement
+	ra2_clean         = ra2[ii]          # matched by position and cleaned by separation requirement
+	
+	Input:
+	names     : IDs names of objects in second array array
+	ra1       : first array of right ascension coordinates (either decimal degrees or sexagismal)
+	dec1      : first array of declination coordinates (either decimal degrees or sexagismal)
+	ra2       : second array of right ascension coordinates (either decimal degrees or sexagismal)
+	dec2      : second array of declination coordinates (either decimal degrees or sexagismal)
+	minarcsec : minimum pointing offset for matching criterium
+	fdir      : output directory name for plotting offset distribution (otherwise=="None")
+	fname     : output filename for plotting offset distribution (otherwise=="None")
+	N1        : number of x-axis bins for plotting offset distribution (otherwise=="None")
+	N2        : number of y-axis bins for plotting offset distribution (otherwise=="None")
+	deg       : True if input coordinates are in decimal degrees; False if sexagismal
+	
+	Output:
+	dist_deg_clean         : array of distances between cleaned (ra1,dec1) and (ra2,dec2) in degrees
+	dist_arcsec_clean      : array of distances between cleaned (ra1,dec1) and (ra2,dec2) in arcseconds
+	indices                : array of indices that match (ra1,dec1) to (ra2,dec2)
+	ii                     : array of indices that clean matched (ra1,dec1) and (ra2,dec2) positions
+	ii_nomatch             : array of indices that clean non-matched (ra1,dec1) positions
+	ra1_deg_matches_clean  : array of ra1 positions matched to (ra2,dec2) and cleaned using minarcsec in degrees
+	dec1_deg_matches_clean : array of dec1 positions matched to (ra2,dec2) and cleaned using minarcsec in degrees
+	ra2_deg_clean          : array of ra2 positions matched to (ra1,dec1) and cleaned using minarcsec in degrees
+	dec2_deg_clean         : array of dec2 positions matched to (ra1,dec1) and cleaned using minarcsec in degrees
+	'''
+	
+	if deg==False:
+		# convert sexagismal format to decimal degrees
+		ra1_deg  = []
+		dec1_deg = []
+		for i in range(len(ra1)):
+			ra1_i                = ra1[i]
+			dec1_i               = dec1[i]
+			ra1_deg_i,dec1_deg_i = sexatodeg(ra1_i,dec1_i)
+			ra1_deg.append(ra1_deg_i)
+			dec1_deg.append(dec1_deg_i)
+		ra2_deg  = []
+		dec2_deg = []
+		for i in range(len(ra2)):
+			ra2_i                = ra2[i]
+			dec2_i               = dec2[i]
+			ra2_deg_i,dec2_deg_i = sexatodeg(ra2_i,dec2_i)
+			ra2_deg.append(ra2_deg_i)
+			dec2_deg.append(dec2_deg_i)
+	else:
+		ra1_deg,dec1_deg = ra1,dec1
+		ra2_deg,dec2_deg = ra2,dec2
+
+	radec1                    = np.transpose([ra1_deg,dec1_deg])
+	radec2                    = np.transpose([ra2_deg,dec2_deg])
+	kdtree                    = spatial.KDTree(radec1)
+	matches                   = kdtree.query(radec2)
+	
+	dist_deg                  = np.array(matches[0])
+	dist_arcsec               = dist_deg * 3600.
+	indices                   = np.array(matches[1])
+	
+	ra1_deg_matches           = ra1_deg[indices]
+	dec1_deg_matches          = dec1_deg[indices]
+	
+	# matching sources
+	conditions                = np.array(dist_arcsec<=minarcsec)
+	ii                        = np.array(np.where(conditions)[0])
+	
+	dist_deg_clean            = dist_deg[ii]
+	dist_arcsec_clean         = dist_arcsec[ii]
+	indices_clean             = indices[ii]
+	ra1_deg_matches_clean     = ra1_deg_matches[ii]
+	dec1_deg_matches_clean    = dec1_deg_matches[ii]
+	ra2_deg_clean             = ra2_deg[ii]
+	dec2_deg_clean            = dec2_deg[ii]
+	
+	# non-matching sources
+	conditions_nomatch        = np.array(dist_arcsec>minarcsec)
+	ii_nomatch                = np.array(np.where(conditions_nomatch)[0])
+	
+	dist_deg_nomatch          = dist_deg[ii_nomatch]
+	dist_arcsec_nomacth       = dist_arcsec[ii_nomatch]
+	indices_nomatch           = indices[ii_nomatch]
+	ra1_deg_matches_nomatch   = ra1_deg_matches[ii_nomatch]
+	dec1_deg_matches_nomatch  = dec1_deg_matches[ii_nomatch]
+	ra2_deg_nomatch           = ra2_deg[ii_nomatch]
+	dec2_deg_nomatch          = dec2_deg[ii_nomatch]
+	
+	if fdir is not None:
+		'''
+		Plot resulting distribution of position offsets.
+		'''
+		plothist(fdir=fdir,fname=fname,hist1=dist_arcsec,N1=N1,xlabel1=xlabel1,ylabel1=ylabel1,x1min=x1min,x1max=x1max,hist2=None,N2=None,xlabel2=None,ylabel2=None,x2min=None,x2max=None,common_xaxis=False,flipx1=False,flipx2=False)
+	
+	return dist_deg_clean,dist_arcsec_clean,indices,ii,ii_nomatch,ra1_deg_matches_clean,dec1_deg_matches_clean,ra2_deg_clean,dec2_deg_clean
