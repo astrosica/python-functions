@@ -8,8 +8,7 @@ from astropy import units as u
 import montage_wrapper as montage
 from reproject import reproject_interp
 from astropy.coordinates import SkyCoord
-
-from functions_rht import *
+from functions_misc import fmaptheta_halfpolar_rad
 
 def fPI(Q,U):
 	'''
