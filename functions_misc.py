@@ -147,11 +147,11 @@ def fmaptheta_halfpolar_rad(angles):
 	'''
 
 	# map angles within [pi,2*pi) to [0,pi)
-	angles_rad[(angles_rad>=1.) & (angles_rad!=2.)] -= 1.
+	angles[(angles>=1.) & (angles!=2.)] -= 1.
 	# map 2*pi to 0
-	angles_rad[angles_rad==2.] -= 2.
+	angles[angles==2.] -= 2.
 
-	return angles_rad
+	return angles
 
 def fmaptheta_halfpolar_deg(angles):
 	'''
@@ -162,11 +162,11 @@ def fmaptheta_halfpolar_deg(angles):
 	'''
 
 	# map angles within [180,360) to [0,180)
-	angles_deg[(angles_deg>=180.) & (angles_deg!=360.)] -= 180.
+	angles[(angles>=180.) & (angles!=360.)] -= 180.
 	# map 360 to 0
-	angles_deg[angles_deg==360.] -= 360.
+	angles[angles==360.] -= 360.
 
-	return angles_deg
+	return angles
 
 def fgradient(x):
 	'''
