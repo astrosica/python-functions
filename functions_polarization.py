@@ -122,11 +122,12 @@ def fpolgrad_crossterms(Q,U):
 	
 	return polgrad
 
-def fpolgradarg(Q,U,RHTrange=True,deg=True):
+
+def fpolgradarg(Q,U,deg=True):
 	'''
 	Computes the argument of the maximum complete spatial polarization gradient with the cross-terms included given Stokes Q and U maps.
 	
-	Note: this is the angle *perpendicular* to polarization gradient structures.
+	Note: this is the angle *parallel* to polarization gradient structures.
 	
 	Q : Stokes Q data
 	U : Stokes U data
@@ -149,10 +150,9 @@ def fpolgradarg(Q,U,RHTrange=True,deg=True):
 
 	polgrad_arg = np.arctan(a*b/c)
 
-	if RHTrange==True:
-		# map angles from [-pi/2,pi/2) to [0,pi)
-		polgrad_arg = fmaptheta_halfpolar_to_halfpolar(polgrad_arg)
-
+	# map angles from [-pi/2,pi/2) to [0,pi)
+	polgrad_arg = fmaptheta_halfpolar_to_halfpolar(polgrad_arg,deg=False)
+	
 	if deg==True:
 		# convert from radians to degrees
 		polgrad_arg = np.degrees(polgrad_arg)
