@@ -180,15 +180,29 @@ def fgradient(x):
 	return grad
 
 def fmagerrtosnr(magerr):
-    '''
-    Converts magnitude uncertainty to signal-to-noise ratio.
-    '''
-    magsnr = 1./magerr
-    return magsnr
+	'''
+	Converts photometric magnitude uncertainty to signal-to-noise ratio.
+	'''
+	magsnr = 1./magerr
+	return magsnr
 
 def fmagsnrtoerr(magsnr):
+	'''
+	Converts photometric magnitude signal-to-noise ratio to uncertainty.
+	'''
+	magerr = 1./abs(magsnr)
+	return magerr
+
+def fconvert_AB_vega(mag_AB,zeropoint):
     '''
-    Converts magnitude signal-to-noise ratio to uncertainty.
+    Converts AB to Vega magnitude scale.
     '''
-    magerr = 1./abs(magsnr)
-    return magerr
+    mag_Vega = mag_AB - zeropoint
+    return mag_Vega
+
+def fconvert_AB_vega(mag_AB,zeropoint):
+	'''
+	Converts AB magnitudes to the Vega magnitude scale.
+	'''
+	mag_Vega = mag_AB - zeropoint
+	return mag_Vega
