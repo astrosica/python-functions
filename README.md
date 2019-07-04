@@ -36,12 +36,13 @@ See the [Rolling Hough Transform](https://github.com/seclark/RHT).
 
 ## Miscellaneous
 
-* [x] converts Right Ascension and Declination coordinates from decimal degrees to the sexagismal system
-* [x] converts Right Ascension and Declination coordinates from the sexagismal system to decimal degrees
-* [x] convolves a 2D image to a specified angular resolution using FFT convolution
-* [x] masks a 2D image based on a specified signal-to-noise threshold
-* [x] maps angles in radians from \[0,2*pi) to \[0,pi) (i.e., to a half-polar plot)
-* [x] maps angles in degrees from \[0,360) to \[0,180) (i.e., to a half-polar plot)
-* [x] computes the spatial gradients of a 2D image
-* [x] converts photometric magnitude uncertainty to signal-to-noise ratio
-* [x] converts photometric signal-to-noise ratio to magnitude uncertainty
+* [x] convert Right Ascension and Declination coordinates from decimal degrees to the sexagismal system
+* [x] convert Right Ascension and Declination coordinates from the sexagismal system to decimal degrees
+* [x] convolve a 2D image to a specified angular resolution using FFT convolution
+* [x] mask a 2D image based on a specified signal-to-noise threshold
+* [x] map angles in radians from \[0,2*pi) to \[0,pi) (i.e., to a half-polar plot)
+* [x] map angles in degrees from \[0,360) to \[0,180) (i.e., to a half-polar plot)
+* [x] compute the spatial gradients of a 2D image
+* [x] convert photometric magnitude uncertainty to signal-to-noise ratio
+* [x] convert photometric signal-to-noise ratio to magnitude uncertainty
+* [x] convert AB magnitudes to the Vega magnitude scale
