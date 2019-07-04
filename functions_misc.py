@@ -194,13 +194,6 @@ def fmagsnrtoerr(magsnr):
 	return magerr
 
 def fconvert_AB_vega(mag_AB,zeropoint):
-    '''
-    Converts AB to Vega magnitude scale.
-    '''
-    mag_Vega = mag_AB - zeropoint
-    return mag_Vega
-
-def fconvert_AB_vega(mag_AB,zeropoint):
 	'''
 	Converts AB magnitudes to the Vega magnitude scale.
 	'''
