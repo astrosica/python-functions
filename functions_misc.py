@@ -199,3 +199,13 @@ def fconvert_AB_vega(mag_AB,zeropoint):
 	'''
 	mag_Vega = mag_AB - zeropoint
 	return mag_Vega
+
+def fcolour_err(mag1,mag1err,mag2,mag2err):
+	'''
+	Returns photometric colour (mag1-mag2) with uncertainties.
+	'''
+	
+	colour = mag1 - mag2
+	colour_err = np.sqrt(mag1err**2. + mag2err**2.)
+	
+	return colour,colour_err
