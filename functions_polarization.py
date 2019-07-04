@@ -8,7 +8,7 @@ from astropy import units as u
 import montage_wrapper as montage
 from reproject import reproject_interp
 from astropy.coordinates import SkyCoord
-from functions_misc import fmaptheta_halfpolar_rad
+from functions_misc import fmaptheta_halfpolar_to_halfpolar
 
 def fPI(Q,U):
 	'''
@@ -122,7 +122,7 @@ def fpolgrad_crossterms(Q,U):
 	
 	return polgrad
 
-def fpolgradarg(Q,U,deg=True):
+def fpolgradarg(Q,U,RHTrange=True,deg=True):
 	'''
 	Computes the argument of the maximum complete spatial polarization gradient with the cross-terms included given Stokes Q and U maps.
 	
@@ -149,7 +149,12 @@ def fpolgradarg(Q,U,deg=True):
 
 	polgrad_arg = np.arctan(a*b/c)
 
+	if RHTrange==True:
+		# map angles from [-pi/2,pi/2) to [0,pi)
+		polgrad_arg = fmaptheta_halfpolar_to_halfpolar(polgrad_arg)
+
 	if deg==True:
+		# convert from radians to degrees
 		polgrad_arg = np.degrees(polgrad_arg)
 
 	return polgrad_arg
