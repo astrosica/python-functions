@@ -49,3 +49,4 @@ See the [Rolling Hough Transform](https://github.com/seclark/RHT).
 * [x] compute photometric colour and its uncertainty
 * [x] convert Right Ascension and Declination coordinates from the sexagismal in the B1959 system to decimal degrees in the J2000 system
 * [x] match two sets of catalogue positions in equatorial coordinates
+* [x] masks a 2D image and interpolates over invalid numbers
