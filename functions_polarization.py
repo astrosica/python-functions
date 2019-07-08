@@ -1,14 +1,4 @@
-import os
 import numpy as np
-import rht, RHT_tools
-from scipy import signal
-import astropy.wcs as wcs
-from astropy.io import fits
-from astropy import units as u
-import montage_wrapper as montage
-from reproject import reproject_interp
-from astropy.coordinates import SkyCoord
-from functions_misc import fmaptheta_halfpolar_to_halfpolar
 
 def fPI(Q,U):
 	'''
