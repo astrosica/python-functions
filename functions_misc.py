@@ -138,6 +138,33 @@ def fmask(data,noise,snr):
 	
 	return (mask,data_clean)
 
+def fmaskinterp(image,mask):
+	'''
+	Masks and interpolates an image.
+
+	Inputs
+	image : 2D array
+	mask  : 2D array of the same size as image whose masked values for invalid pixels are NaNs
+	'''
+
+	# create pixel grid
+	x = np.arange(0, image.shape[1])
+	y = np.arange(0, image.shape[0])
+	xx, yy = np.meshgrid(x,y)
+
+	# create boolean mask for invalid numbers
+	mask_invalid = np.isnan(mask)
+
+	#get only the valid values
+	x1        = xx[~mask_invalid]
+	y1        = yy[~mask_invalid]
+	image_new = image[~mask_invalid]
+
+	# interpolate 
+	image_interp = interpolate.griddata((x1, y1), image_new.ravel(),(xx, yy),method="cubic")
+
+	return image_interp
+
 def fmaptheta_halfpolar_to_halfpolar(angles,deg=False):
 	'''
 	Maps angles from [-pi/2,pi/2) to [0,pi) or from [-90,90) to [0,180).
