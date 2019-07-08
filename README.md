@@ -27,6 +27,13 @@ Computes the following using input Stokes maps:
 * [x] transforms a 3D header to a 2D header
 * [x] slices a 3D data cube along its third axis and saves each 2D image as a separate image file
 
+## Sky Coordinates
+
+* [x] convert Right Ascension and Declination coordinates from decimal degrees to the sexagismal system
+* [x] convert Right Ascension and Declination coordinates from the sexagismal system to decimal degrees
+* [x] convert Right Ascension and Declination coordinates from the sexagismal in the B1959 system to decimal degrees in the J2000 system
+* [x] match two sets of catalogue positions in equatorial coordinates
+
 ## Photometry
 
 * [x] convert photometric magnitude uncertainty to signal-to-noise ratio
@@ -43,13 +50,9 @@ See the [Rolling Hough Transform](https://github.com/seclark/RHT).
 
 ## Miscellaneous
 
-* [x] convert Right Ascension and Declination coordinates from decimal degrees to the sexagismal system
-* [x] convert Right Ascension and Declination coordinates from the sexagismal system to decimal degrees
 * [x] convolve a 2D image to a specified angular resolution using FFT convolution
 * [x] mask a 2D image based on a specified signal-to-noise threshold
 * [x] map angles in radians from \[0,2*pi) to \[0,pi) (i.e., to a half-polar plot)
 * [x] map angles in degrees from \[0,360) to \[0,180) (i.e., to a half-polar plot)
 * [x] compute the spatial gradients of a 2D image
-* [x] convert Right Ascension and Declination coordinates from the sexagismal in the B1959 system to decimal degrees in the J2000 system
-* [x] match two sets of catalogue positions in equatorial coordinates
 * [x] masks a 2D image and interpolates over invalid numbers
