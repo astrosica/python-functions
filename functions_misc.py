@@ -45,7 +45,7 @@ def fconvolve(oldres_FWHM,newres_FWHM,data,header):
 	
 	return data_smoothed
 
-def fmask(data,noise,snr):
+def fmask_snr(data,noise,snr):
 	'''
 	Creates a mask used to clip data based on SNR level.
 	
