@@ -72,6 +72,29 @@ def fmask_snr(data,noise,snr):
 	
 	return (mask,data_clean)
 
+def fmask_signal(data,signal):
+	'''
+	Creates a mask used to clip data based on signal level.
+	
+	Inputs
+	data   : data to be clipped
+	signal : signal used for data clipping
+	
+	Outputs
+	mask         : bitmask used for data clipping
+	data_cleaned : masked data
+	'''
+
+	# create mask
+	mask             = np.ones(shape=data.shape) # initialize mask
+	low_signal       = np.where(data<signal)     # find signal less than input requirement
+	mask[low_signal] = np.nan                    # set low signal to nan
+	
+	# mask data
+	data_clean    = data * mask
+
+	return (mask,data_clean)
+
 def fmaskinterp(image,mask):
 	'''
 	Masks and interpolates an image.
