@@ -1,4 +1,6 @@
 import numpy as np
+from scipy import interpolate
+from functions_misc import fmaptheta_halfpolar_to_halfpolar
 
 def fPI(Q,U):
 	'''
@@ -149,9 +151,15 @@ def fpolgradarg(Q,U,deg=True):
 
 	return polgrad_arg
 
-def fmaskpolgradarg(angles,min,max):
+def fmaskpolgradarg(angles,min,max,interp=False):
 	'''
 	Masks the argument of polarization gradient.
+
+	Inputs
+	angles : 
+	min    : 
+	max    : 
+	interp : boolean to determine if masked pixels will be interpolated over (default=False)
 	'''
 
 	mask = np.ones(shape=angles.shape) # initialize mask
@@ -165,7 +173,23 @@ def fmaskpolgradarg(angles,min,max):
 	# mask angles
 	angles_masked = angles*mask
 
-	return mask,angles_masked
+	if interp==True:
+		# create pixel grid
+		x      = np.arange(0, angles.shape[1])
+		y      = np.arange(0, angles.shape[0])
+		xx, yy = np.meshgrid(x, y)
+		# collect valid values
+		nanmask      = np.ma.masked_invalid(mask).mask
+		x1_valid     = xx[~nanmask]
+		y1_valid     = yy[~nanmask]
+		angles_valid = angles_masked[~nanmask]
+		# interpolate
+		angles_masked_interp = interpolate.griddata((x1_valid, y1_valid), angles_valid.ravel(),(xx, yy),method="cubic")
+
+		return mask,angles_masked_interp
+
+	else:
+		return mask,angles_masked
 
 def fpolgradnorm_crossterms(Q,U):
 	'''
