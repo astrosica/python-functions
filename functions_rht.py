@@ -25,6 +25,24 @@ def fRHTdir(dir,wlen,smr,frac):
 			print "Executing the RHT on file "+filedir
 			rht.main(filedir,wlen=wlen,smr=smr,frac=frac)
 
+def faddrhtheader(rhtfile,rhtheader,file=False):
+	'''
+	Adds a FITS header to the RHT backprojection file.
+
+	Inputs
+	rhtfile   : RHT backprojection file
+	rhtheader : FITS header to be added to RHT file
+	file      : boolean to determine if input is a header object or a file directory (default=False)
+	'''
+
+	rhtdata = fits.getdata(rhtfile)
+
+	if file==False:
+		fits.writeto(rhtfile,rhtdata,rhtheader,overwrite=True)
+	else:
+		header = fits.getheader(rhtheader)
+		fits.writeto(rhtfile,rhtdata,header,overwrite=True)
+
 def RHTanglediff(ijpoints_polgrad_HI,RHT_polgrad_dict,RHT_HI_dict,hthets_polgrad,hthets_HI,angles_polgrad,angles_HI):
 	'''
 	'''
