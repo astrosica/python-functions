@@ -44,6 +44,7 @@ Computes the following using input Stokes maps:
 ## Rolling Hough Transform
 See the [Rolling Hough Transform](https://github.com/seclark/RHT).
 * [x] execute the RHT on all FITS files within a given directory
+* [x] add contents of a FITS header to an RHT file
 * [x] collect all RHT angles for each pixel in the image plane
 * [x] compute the distribution in RHT angle differences between two images
 * [x] construct the RHT backprojection allowing one to mask specific angles
