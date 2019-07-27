@@ -114,11 +114,9 @@ def fpolgrad_crossterms(Q,U):
 	
 	return polgrad
 
-def fpolgradarg(Q,U,deg=True,parallel=True):
+def fpolgradarg(Q,U,fromnorth=True,parallel=True,deg=True):
 	'''
 	Computes the argument of the maximum complete spatial polarization gradient with the cross-terms included given Stokes Q and U maps.
-	
-	Note: this is the angle *perpendicular* to polarization gradient structures measured from North.
 	
 	Q        : Stokes Q data
 	U        : Stokes U data
@@ -141,20 +139,32 @@ def fpolgradarg(Q,U,deg=True,parallel=True):
 	b = np.sqrt(Q_grad_y**2.+U_grad_y**2.)
 	c = np.sqrt(Q_grad_x**2.+U_grad_x**2.)
 
-	polgrad_arg = np.arctan(a*b/c) 
+	polgrad_arg = np.arctan(a*b/c)
+
+	if fromnorth==True:
+		# compute argument from North (as the RHT does)
+		polgrad_arg = fmaptheta_halfpolar_to_halfpolar(polgrad_arg)
 
 	if parallel==True:
-		# angle parallel to polarization gradients
-		polgrad_arg_from_north = np.mod(polgrad_arg+np.pi,np.pi)
-	else:
-		# angle perpendicular to polarization gradients
-		polgrad_arg_from_north = np.mod(polgrad_arg+np.pi/2.,np.pi)
-	
-	if deg==True:
-		# convert from radians to degrees
-		polgrad_arg_from_north = np.degrees(polgrad_arg_from_north)
+		# compute argument parallel (rather than perpendicular) to polarization gradients
+		polgrad_arg_lower_cond                  = np.where(polgrad_arg<np.pi/2.)
+		polgrad_arg_upper_cond                  = np.where(polgrad_arg>=np.pi/2.)
+		polgrad_arg_lower_x,polgrad_arg_lower_y = polgrad_arg_lower_cond[0],polgrad_arg_lower_cond[1]
+		polgrad_arg_upper_x,polgrad_arg_upper_y = polgrad_arg_upper_cond[0],polgrad_arg_upper_cond[1]
+		polgrad_arg_lower_xy                    = np.array(zip(polgrad_arg_lower_x,polgrad_arg_lower_y))
+		polgrad_arg_upper_xy                    = np.array(zip(polgrad_arg_upper_x,polgrad_arg_upper_y))
+		# iterate through each pixel and compute orthogonal angle
+		for xy in polgrad_arg_lower_xy:
+			x,y = xy[0],xy[1]
+			polgrad_arg[x,y]+=np.pi/2.
+		for xy in polgrad_arg_upper_xy:
+			x,y = xy[0],xy[1]
+			polgrad_arg[x,y]-=np.pi/2.
 
-	return polgrad_arg_from_north
+	# convert to degrees
+	polgrad_arg = np.degrees(polgrad_arg)
+
+	return polgrad_arg
 
 def fmaskpolgradarg(angles,min,max,interp=False):
 	'''
