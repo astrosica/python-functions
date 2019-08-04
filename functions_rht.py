@@ -1,20 +1,20 @@
 import os
 import numpy as np
 import rht, RHT_tools
-from scipy import signal
-import astropy.wcs as wcs
 from astropy.io import fits
-from astropy import units as u
-import montage_wrapper as montage
-from reproject import reproject_interp
-from astropy.coordinates import SkyCoord
 
 def fRHTdir(dir,wlen,smr,frac):
 	'''
 	Executes the RHT on all FITS files within a given directory.
 	
 	Input
-	dir : the directory within which the RHT will perform.
+	dir  : the directory within which the RHT will perform
+	wlen : the window length (D_W) which sets the length of a structure
+	smr  : the unsharp mask smoothing radius (D_K)
+	frac : fraction/percent of one angle that must be 'lit up' to be counted
+
+	Output
+	saves the RHT FITS table to the input dir directory
 	'''
 
 	# get list of files within the directory
@@ -27,9 +27,9 @@ def fRHTdir(dir,wlen,smr,frac):
 
 def faddtoRHTheader(rhtfile,newheader):
 	'''
-	Adds a FITS header to the RHT output file.
+	Adds a FITS header to the RHT FITS table.
 
-	Inputs
+	Input
 	rhtfile   : file directory to RHT file
 	newheader : header to be saved to RHT file
 	'''
@@ -58,8 +58,23 @@ def faddtoRHTheader(rhtfile,newheader):
 	thdulist = fits.HDUList([priHDU,tblHDU])                # table HDUlist
 	thdulist.writeto(rhtfile,output_verify="silentfix",overwrite=True,checksum=True)
 
+
 def RHTanglediff(ijpoints_polgrad_HI,RHT_polgrad_dict,RHT_HI_dict,hthets_polgrad,hthets_HI,angles_polgrad,angles_HI):
 	'''
+	Computes the RHT angle difference between two maps.
+
+	Input
+	ijpoints_polgrad_HI : list or array of pixel positions (i,j)
+	RHT_polgrad_dict    : dictionary of RHT angles for each pixel position (i,j)
+	RHT_HI_dict         : dictionary of RHT angles for each pixel position (i,j)
+	hthets_polgrad      : list or array of RHT angle intensities
+	hthets_HI           : list or array of RHT angle intensities
+	angles_polgrad      : list or array of RHT angles
+	angles_HI           : list or array of RHT angles
+
+	Output
+	theta_diff_polgrad_HI : array of RHT angle differences
+	intensity_diff_HI     : array of intensities 
 	'''
 	theta_diff_polgrad_HI  = []
 	intensity_diff_HI      = []
@@ -78,19 +93,27 @@ def RHTanglediff(ijpoints_polgrad_HI,RHT_polgrad_dict,RHT_HI_dict,hthets_polgrad
 		# find RHT intensities at each spatial pixel
 		intensity_polgrad  = np.sum(hthets_polgrad)
 		intensity_HI       = np.sum(hthets_HI)
-		#intensity_diff_polgrad.append(intensity_polgrad)
+		intensity_diff_polgrad.append(intensity_polgrad)
 		intensity_diff_HI.append(intensity_HI)
 		# take difference between average RHT angles
 		theta_diff         = thetas_polgrad_avg-thetas_HI_avg
 		theta_diff_polgrad_HI.append(theta_diff)
 
-	theta_diff_polgrad_HI = np.array(theta_diff_polgrad_HI)
-	intensity_diff_HI     = np.array(intensity_diff_HI)
+	theta_diff_polgrad_HI  = np.array(theta_diff_polgrad_HI)
+	intensity_diff_HI      = np.array(intensity_diff_HI)
 
 	return theta_diff_polgrad_HI, intensity_diff_HI
 
 def fRHTthetadict(ijpoints,hthets):
 	'''
+	Creates a dictionary of RHT angle intensities for each pixel in the image plane.
+
+	Input 
+	ijpoints : list or array of pixel positions (i,j)
+	hthets   : list or array of RHT angles
+
+	Output
+	RHT_theta_dict : dictionary of RHT angles for each pixel position (i,j)
 	'''
 
 	RHT_theta_dict = {}
@@ -102,19 +125,19 @@ def fRHTthetadict(ijpoints,hthets):
 
 	return RHT_theta_dict
 
-def fRHTbackprojection(ipoints,jpoints,hthets,naxis1,naxis2,wlen,smr,thresh):
+def fRHTbackprojection(ipoints,jpoints,hthets,naxis1,naxis2):
 	'''
 	Creates the RHT backprojection.
 	
 	Inputs
-	ipoints : 
-	jpoints : 
-	hthets  : 
-	naxis1  : 
-	naxis2  : 
-	wlen    : 
-	smr     : 
-	thresh  :
+	ipoints : y- pixel positions in the image plane
+	jpoints : x- pixel positions in the image plane
+	hthets  : RHT angle intensities
+	naxis1  : length of image x-axis
+	naxis2  : length of image y-axis
+
+	Output
+	backproj : RHT backprojection
 	'''
 
 	backproj    = np.zeros(shape=(naxis2,naxis1))

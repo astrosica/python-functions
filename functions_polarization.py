@@ -1,13 +1,21 @@
+import sys
+import aplpy
 import numpy as np
-from scipy import interpolate
-from functions_misc import fmaptheta_halfpolar_to_halfpolar
+import astropy.wcs as wcs
+from astropy.io import fits
+import matplotlib.pyplot as plt
+from matplotlib.collections import LineCollection
 
 def fPI(Q,U):
 	'''
-	Constructs the polarized intensity given Stokes Q and U maps.
+	Coomputes the polarized intensity.
 	
-	Q : Stokes Q data
-	U : Stokes U data
+	Input
+	Q  : Stokes Q map
+	U  : Stokes U map
+	
+	Output
+	PI : polarized intensity
 	'''
 	
 	# compute polarized intensity
@@ -17,12 +25,16 @@ def fPI(Q,U):
 
 def fPI_debiased(Q,U,Q_std,U_std):
 	'''
-	Constructs the de-biased polarized intensity given Stokes Q and U maps along with estimates of their noise.
+	Compute the de-biased polarized intensity.
 	
-	Q     : Stokes Q data
-	U     : Stokes U data
-	Q_std : Stokes Q noise standard deviation
-	U_std : Stokes U noise standard deviation
+	Input
+	Q     : Stokes Q map
+	U     : Stokes U map
+	Q_std : standard deviation of Stokes Q noise
+	U_std : standard deviation of Stokes U noise
+
+	Output
+	PI_debiased : debiased polarized intensity
 	'''
 
 	# compute effective Q/U noise standard deviation
@@ -37,10 +49,15 @@ def fPI_debiased(Q,U,Q_std,U_std):
 
 def fpolgrad(Q,U):
 	'''
-	Constructs the spatial polarization gradient given Stokes Q and U maps.
+	Computes the polarization gradient.
+	See Equation 1 in Gaensler et al. (2011).
 	
-	Q : Stokes Q data
-	U : Stokes U data
+	Input
+	Q : Stokes Q map
+	U : Stokes U map
+
+	Output
+	polgrad : polarization gradient
 	'''
 	
 	# compute Stokes spatial gradients
@@ -60,10 +77,15 @@ def fpolgrad(Q,U):
 
 def fpolgradnorm(Q,U):
 	'''
-	Constructs the normalized spatial polarization gradient given Stokes Q and U maps.
+	Computes the normalized polarization gradient.
+	See Iacobelli et al. (2014).
 	
-	Q : Stokes Q data
-	U : Stokes U data
+	Input
+	Q : Stokes Q map
+	U : Stokes U map
+	
+	Output
+	polgrad_norm : normalized polarization gradient
 	'''
 	
 	# compute Stokes spatial gradients
@@ -89,10 +111,15 @@ def fpolgradnorm(Q,U):
 
 def fpolgrad_crossterms(Q,U):
 	'''
-	Constructs the complete spatial polarization gradient with the cross-terms included given Stokes Q and U maps.
+	Computes the polarization gradient with cross-terms.
+	See Equation 15 in Herron et al. (2018).
 	
+	Input
 	Q : Stokes Q data
 	U : Stokes U data
+
+	Output
+	polgrad : polarization gradient with cross-terms
 	'''
 	
 	# compute Stokes spatial gradients
@@ -110,18 +137,23 @@ def fpolgrad_crossterms(Q,U):
 	b       = a**2. - 4.*(Q_grad_x*U_grad_y - Q_grad_y*U_grad_x)**2.
 	
 	# compute polarization gradient
-	polgrad = np.sqrt(0.5*a + 0.5*np.sqrt(b) )
+	polgrad = np.sqrt(0.5*a + 0.5*np.sqrt(b))
 	
 	return polgrad
 
-def fpolgradarg(Q,U,fromnorth=True,parallel=True,deg=True):
+def fpolgradarg(Q,U,parallel=False,deg=True):
 	'''
-	Computes the argument of the maximum complete spatial polarization gradient with the cross-terms included given Stokes Q and U maps.
+	Computes the argument of the polarization gradient.
+	See the equation in the caption of Figure 2 in Gaensler et al. (2011).
 	
+	Input
 	Q        : Stokes Q data
 	U        : Stokes U data
-	deg      : if True, converts to degrees at the end
-	parallel : if True, compute angle parallel (rather then perpendicular) to polarization gradient structures
+	parallel : if True, compute angle parallel (rather then perpendicular) to polarization gradient structures (default=False)
+	deg      : if True, converts the argument to degrees for output
+
+	Output
+	polgrad_arg : argument of polarization gradient
 	'''
 	
 	# compute Stokes spatial gradients
@@ -139,79 +171,105 @@ def fpolgradarg(Q,U,fromnorth=True,parallel=True,deg=True):
 	b = np.sqrt(Q_grad_y**2.+U_grad_y**2.)
 	c = np.sqrt(Q_grad_x**2.+U_grad_x**2.)
 
-	polgrad_arg = np.arctan(a*b/c)
-
-	if fromnorth==True:
-		# compute argument from North (as the RHT does)
-		polgrad_arg = fmaptheta_halfpolar_to_halfpolar(polgrad_arg)
+	polgrad_arg = np.arctan(a*b/c) # angle measured from the x-axis on [-pi/2,+pi/2] in radians
 
 	if parallel==True:
-		# compute argument parallel (rather than perpendicular) to polarization gradients
-		polgrad_arg_lower_cond                  = np.where(polgrad_arg<np.pi/2.)
-		polgrad_arg_upper_cond                  = np.where(polgrad_arg>=np.pi/2.)
-		polgrad_arg_lower_x,polgrad_arg_lower_y = polgrad_arg_lower_cond[0],polgrad_arg_lower_cond[1]
-		polgrad_arg_upper_x,polgrad_arg_upper_y = polgrad_arg_upper_cond[0],polgrad_arg_upper_cond[1]
-		polgrad_arg_lower_xy                    = np.array(zip(polgrad_arg_lower_x,polgrad_arg_lower_y))
-		polgrad_arg_upper_xy                    = np.array(zip(polgrad_arg_upper_x,polgrad_arg_upper_y))
-		# iterate through each pixel and compute orthogonal angle
-		for xy in polgrad_arg_lower_xy:
-			x,y = xy[0],xy[1]
-			polgrad_arg[x,y]+=np.pi/2.
-		for xy in polgrad_arg_upper_xy:
-			x,y = xy[0],xy[1]
-			polgrad_arg[x,y]-=np.pi/2.
+		# compute argument angle parallel to filaments from North (like the RHT)
+		polgrad_arg += np.pi/2. # angle measured from the y-axis on [0,pi] in radians
 
-	# convert to degrees
-	polgrad_arg = np.degrees(polgrad_arg)
+	if deg==True:
+		# convert to degrees
+		polgrad_arg = np.degrees(polgrad_arg)
 
 	return polgrad_arg
 
-def fmaskpolgradarg(angles,min,max,interp=False):
+def fpolgradarg_crossterms(Q,U,parallel=True,deg=True):
 	'''
-	Masks the argument of polarization gradient.
+	Computes the argument of the polarization gradint with cross-terms.
+	See Equations 13 and 14 in Herron et al. (2018).
+	
+	Input
+	Q        : Stokes Q map
+	U        : Stokes U map
+	parallel : if True, compute angle parallel (rather then perpendicular) to polarization gradient structures
+	deg      : if True, converts to degrees at the end
+	
+	Output
+	polgrad_arg : argument of polarization gradient
+	'''
+	
+	# compute Stokes spatial gradients
+	Q_grad   = np.gradient(Q)
+	U_grad   = np.gradient(U)
+	
+	# define components of spatial gradients
+	Q_grad_x = Q_grad[0]
+	Q_grad_y = Q_grad[1]
+	U_grad_x = U_grad[0]
+	U_grad_y = U_grad[1]
+
+	# compute the cos(2*theta) term
+	cos2theta_num = -(Q_grad_y**2. - Q_grad_x**2. + U_grad_y**2. - U_grad_x**2.)
+	cos2theta_den = np.sqrt((Q_grad_x**2. + Q_grad_y**2. + U_grad_x**2. + U_grad_y**2.)**2. - 4.*(Q_grad_x*U_grad_y - Q_grad_y*U_grad_x)**2.)
+	cos2theta     = cos2theta_num/cos2theta_den
+
+	# compute the sin(2*theta) term
+	sin2theta_num = 2.*(Q_grad_x*Q_grad_y + U_grad_x*U_grad_y)
+	sin2theta_den = np.sqrt((Q_grad_x**2. + Q_grad_y**2. + U_grad_x**2. + U_grad_y**2.)**2. - 4.*(Q_grad_x*U_grad_y - Q_grad_y*U_grad_x)**2.)
+	sin2theta     = sin2theta_num/sin2theta_den
+
+	# compute tan(theta)
+	tantheta      = sin2theta/(1.+cos2theta)
+	# take inverse tan tocompute argument
+	polgrad_arg = np.arctan(tantheta) # angle measured from the x-axis on [-pi/2,+pi/2] in radians
+
+	if parallel==True:
+		# compute argument angle parallel to filaments from North (like the RHT)
+		polgrad_arg += np.pi/2. # angle measures from the y-axis on [0,pi] in radians
+
+	if deg==True:
+		# convert to degrees
+		polgrad_arg = np.degrees(polgrad_arg)
+
+	return polgrad_arg
+
+def fargmask(angles,min,max):
+	'''
+	Creates a mask for the argument of polarization gradient based on an input of angle range(s).
 
 	Inputs
-	angles : 
-	min    : 
-	max    : 
-	interp : boolean to determine if masked pixels will be interpolated over (default=False)
+	angles : angle map
+	min    : minimum of the range of angles to be masked (can be single-valued or a list/array)
+	max    : maximum of the range of angles to be masked (can be single-valued or a list/array)
+
+	Output
+	mask : a mask the same size as the angle map
 	'''
 
-	mask = np.ones(shape=angles.shape) # initialize mask
+	# initialize mask
+	mask = np.ones(shape=angles.shape)
 
+	# fill in mask using input angles
 	for i in range(len(min)):
-		min_i             = min[i]
-		max_i             = max[i]
-		mask_angles       = np.where((angles>=min_i) & (angles<=max_i))
-		mask[mask_angles] = np.nan
+		mask_i              = np.copy(mask)
+		min_i               = min[i]
+		max_i               = max[i]
+		mask_angles         = np.where((angles>=min_i) & (angles<=max_i))
+		mask_i[mask_angles] = np.nan
+		mask               *=mask_i
 
-	# mask angles
-	angles_masked = angles*mask
-
-	if interp==True:
-		# create pixel grid
-		x      = np.arange(0, angles.shape[1])
-		y      = np.arange(0, angles.shape[0])
-		xx, yy = np.meshgrid(x, y)
-		# collect valid values
-		nanmask      = np.ma.masked_invalid(mask).mask
-		x1_valid     = xx[~nanmask]
-		y1_valid     = yy[~nanmask]
-		angles_valid = angles_masked[~nanmask]
-		# interpolate
-		angles_masked_interp = interpolate.griddata((x1_valid, y1_valid), angles_valid.ravel(),(xx, yy),method="cubic")
-
-		return mask,angles_masked_interp
-
-	else:
-		return mask,angles_masked
+	return mask
 
 def fpolgradnorm_crossterms(Q,U):
 	'''
-	Constructs the complete normalized spatial polarization gradient with the cross-terms included given Stokes Q and U maps.
+	Computes the complete normalized polarization gradient with cross-terms.
 	
+	Input
 	Q : Stokes Q data
 	U : Stokes U data
+
+	Output
+	polgrad_norm : normalized polarization gradient with cross-terms
 	'''
 	
 	# compute Stokes spatial gradients
@@ -239,10 +297,15 @@ def fpolgradnorm_crossterms(Q,U):
 
 def fpolgrad_rad(Q,U):
 	'''
-	Constructs the radial component of the spatial polarization gradient given Stokes Q and U maps.
+	Computes the radial component of the polarization gradient.
+	See Equation 22 in Herron et al. (2018).
 	
-	Q : Stokes Q data
-	U : Stokes U data
+	Input
+	Q : Stokes Q map
+	U : Stokes U map
+
+	Output
+	polgrad_rad : radial component of the polarization gradient
 	'''
 	
 	# compute Stokes spatial gradients
@@ -265,10 +328,15 @@ def fpolgrad_rad(Q,U):
     
 def fpolgrad_tan(Q,U):
 	'''
-	Constructs the tangential component of the spatial polarization gradient given Stokes Q and U maps.
+	Computes the radial component of the polarization gradient.
+	See Equation 25 in Herron et al. (2018).
 	
-	Q : Stokes Q data
-	U : Stokes U data
+	Input
+	Q : Stokes Q map
+	U : Stokes U map
+
+	Output
+	polgrad_tan : tangential component of the polarization gradient
 	'''
 	
 	# compute Stokes spatial gradients
@@ -288,3 +356,87 @@ def fpolgrad_tan(Q,U):
 	polgrad_tan = np.sqrt(polgrad_tan_num/polgrad_tan_den)
 	
 	return polgrad_tan
+
+def fplotvectors(imagefile,anglefile,deltapix=5,scale=2.,angleunit="deg",coords="wcs",figsize=(20,10)):
+	'''
+	Plots an image with pseudovectors.
+	
+	Input
+	imagefile : image directory
+	anglefile : angle map directory
+	deltapix  : the spacing of image pixels to draw pseudovectors
+	scale     : a scalefactor for the length of the pseudovectors
+	angleunit : the unit of the input angle map (can be deg/degree/degrees or rad/radian/radians)
+
+	Output
+	Saves the image in the same directory as imagefile with "_angles.pdf" as the filename extension
+	'''
+
+	# extract image data and WCS header
+	image,header   = fits.getdata(imagefile,header=True)
+	NAXIS1,NAXIS2  = header["NAXIS1"],header["NAXIS2"]
+	w              = wcs.WCS(header)
+	# extract angle data
+	angles         = fits.getdata(anglefile)
+
+	linelist_pix   = []
+	linelist_wcs   = []
+
+	degree_units   = ["deg","degree","degrees"]
+	radian_units   = ["rad","radian","radians"]
+
+	wcs_units      = ["wcs","WCS","world"]
+	pixel_units    = ["pix","pixel","pixels"]
+
+	for y in range(0,NAXIS2,deltapix):
+		# iterate through y pixels
+		for x in range(0,NAXIS1,deltapix):
+			# iterate through x pixels
+			image_xy = image[y,x]
+			if np.isnan(image_xy)==False:
+				# do not plot angle if image data is NaN
+				if angleunit in degree_units:
+					# convert angles to radians
+					angles_deg = np.copy(angles)
+					angles_rad = np.radians(angles)
+				elif angleunit in radian_units:
+					# convert angles to degrees
+					angles_deg = np.degrees(angles)
+					angles_rad = np.copy(angles)
+				else:
+					# raise error
+					print "Input angleunit is not defined."
+					sys.exit()
+				angle_rad = angles_rad[y,x]
+				angle_deg = angles_deg[y,x]
+				# create line segment in pixel coordinates
+				(x1_pix,y1_pix) = (x-scale*np.cos(angle_rad),y-scale*np.sin(angle_rad))
+				(x2_pix,y2_pix) = (x+scale*np.cos(angle_rad),y+scale*np.sin(angle_rad))
+				line_pix        = np.array([(x1_pix,y1_pix),(x2_pix,y2_pix)])
+				linelist_pix.append(line_pix)
+				# create line segment in WCS coordinates (units of degrees)
+				x1_wcs,y1_wcs   = w.wcs_pix2world(x1_pix,y1_pix,0)
+				x2_wcs,y2_wcs   = w.wcs_pix2world(x2_pix,y2_pix,0)
+				line_wcs        = np.array([(x1_wcs,x2_wcs),(y1_wcs,y2_wcs)])
+				linelist_wcs.append(line_wcs)
+
+	# plot figure
+	fig = plt.figure(figsize=figsize)
+	f = aplpy.FITSFigure(imagefile,figure=fig)
+	f.show_grayscale()
+	if coords in wcs_units:
+		# plot angles in pixel coordinates
+		f.show_lines(linelist_wcs,layer="vectors",color="red")
+	# colour bar
+	f.add_colorbar()
+	# scale bar
+	f.add_scalebar(1.)
+	f.scalebar.set_corner("top left")
+	f.scalebar.set_color("white")
+	f.scalebar.set_label("1 degree")
+	if coords in pixel_units:
+		# plot angles in pixel coordinates
+		lc = LineCollection(linelist_pix,color="red")
+		plt.gca().add_collection(lc)
+	fig.canvas.draw()
+	f.save(imagefile.split(".fits")[0]+"_angles.pdf")

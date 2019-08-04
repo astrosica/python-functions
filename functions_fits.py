@@ -1,7 +1,5 @@
 import os
 import numpy as np
-import rht, RHT_tools
-from scipy import signal
 import astropy.wcs as wcs
 from astropy.io import fits
 from astropy import units as u
@@ -11,8 +9,13 @@ from astropy.coordinates import SkyCoord
 
 def ffreqaxis(file):
     '''
-    Extracts the frequency axis from a FITS file using the header.
+    Constructs the frequency axis for a FITS file.
+
+    Input
     file : location of FITS file
+
+    Output
+    freqaxis : frequency axis in units defined by the FITS header
     '''
 
     # extract header information
@@ -32,19 +35,25 @@ def ffreqaxis(file):
 
 def fcoordgrid_EQ(filedir):
 	'''
-	Creates a grid of equatorial coordinates for the input file.
+	Creates a grid of equatorial coordinates for a FITS file in decimal degrees.
+    
+    Input
+    filedir : path to FITS file
+    
+    Output
+    radec_coords : equatorial coordinate grid in decimal degrees
 	'''
 
 	data,header    = fits.getdata(filedir,header=True)
 	w              = wcs.WCS(header)
 
-	# create grid in pixels
+	# create pixel grid
 	NAXIS1,NAXIS2  = header["NAXIS1"],header["NAXIS2"]
 	xarray         = np.arange(NAXIS1)-0.5
 	yarray         = np.arange(NAXIS2)-0.5
 	xgrid,ygrid    = np.meshgrid(xarray,yarray)
 	
-	# create grid in equatorial coordinates
+	# create equatorial coordinate grid
 	ragrid,decgrid = w.all_pix2world(xgrid,ygrid,0)
 	radec_coords   = SkyCoord(ragrid,decgrid,frame="fk5",unit="deg")
 
@@ -52,19 +61,25 @@ def fcoordgrid_EQ(filedir):
 
 def fcoordgrid_GAL(filedir):
 	'''
-	Creates a grid of Galactic coordinates for the input file.
+	Creates a grid of Galactic coordinates for a FITS file in decimal degrees.
+
+    Input
+    filedir : path to FITS file
+    
+    Output
+    lb_coords : Galactic coordinate grid in decimal degrees
 	'''
 
 	data,header   = fits.getdata(filedir,header=True)
 	w             = wcs.WCS(header)
 
-	# create grid in pixels
+	# create pixel grid
 	NAXIS1,NAXIS2 = header["NAXIS1"],header["NAXIS2"]
 	xarray        = np.arange(NAXIS1)-0.5
 	yarray        = np.arange(NAXIS2)-0.5
 	xgrid,ygrid   = np.meshgrid(xarray,yarray)
 	
-	# create grid in Galactic coordinates
+	# create grid Galactic coordinate grid
 	lgrid,bgrid   = w.all_pix2world(xgrid,ygrid,0)
 	lb_coords     = SkyCoord(lgrid,bgrid,frame="galactic",unit="deg")
 
@@ -72,7 +87,13 @@ def fcoordgrid_GAL(filedir):
 
 def fcoordgrid_EQtoGAL(filedir):
 	'''
-	Creates a grid of equatorial coordinates for the input file which are then transformed to Galactic coordinates.
+	Creates a grid of Galactic coordinates in decimal degrees for a FITS file with a native equatorial projection.
+    
+    Input
+    filedir : path to FITS file
+    
+    Output
+    lb_coords : Galactic coordinate grid in decimal degrees
 	'''
 
 	data,header    = fits.getdata(filedir,header=True)
@@ -95,7 +116,13 @@ def fcoordgrid_EQtoGAL(filedir):
 
 def fcoordgrid_GALtoEQ(filedir):
 	'''
-	Creates a grid of Galactic coordinates for the input file which are then transformed to equatorial coordinates.
+	Creates a grid of equaorial coordinates in decimal degrees for a FITS file that with a native Galactic projection.
+
+    Input
+    filedir : path to FITS file
+    
+    Output
+    radec_coords : equatorial coordinate grid in decimal degrees
 	'''
 
 	data,header    = fits.getdata(filedir,header=True)
@@ -118,13 +145,15 @@ def fcoordgrid_GALtoEQ(filedir):
 
 def freproject_2D(image1_dir,image2_dir,clean=False,order="nearest-neighbor"):
     '''
-    Reprojects image1 to image2 using their FITS headers.
-    Inputs:
+    Reprojects one FITS image to another.
+
+    Input
     image1_dir : directory to image that will be reprojected
     image2_dir : directory to template image used for reprojection
     clean      : if True, creates new minimal headers based off inputs
     order      : order of interpolation (alternative options are 'bilinear', 'biquadratic', 'bicubic')
-    Outputs:
+
+    Output
     image1_data          : data to be reprojected
     image1_header        : header of image to be reprojected
     image1_data_reproj   : data of reprojected image
@@ -182,21 +211,20 @@ def freproject_2D(image1_dir,image2_dir,clean=False,order="nearest-neighbor"):
 def freproj2D_EQ_GAL(filedir_in,filedir_out):
 
     '''
-    Reprojects an input 2D image from equatorial to Galactic coordinates using reproject_interp().
+    Reprojects a two-dimensional FITS image from equatorial to Galactic coordinates using Montage.
 
-    Inputs
+    Input
     filedir_in   : input file in equatorial coordinates
     filedir_out  : output file in Galactic coordinates
 
-    Outputs
-    data_GAL     : reprojected data in Galactic coordinates
-    footprint    : footprint from reprojection
+    Output
+    saves the reprojected FITS image to the input path filedir_out
     '''
 
     # extract data and headers
-    data_EQ,header_EQ                 = fits.getdata(filedir_in,header=True)
-    w_EQ                              = wcs.WCS(fits.open(filedir_in)[0].header)
-    header_EQ_NAXIS1,header_EQ_NAXIS2 = header_EQ["NAXIS1"],header_EQ["NAXIS2"]
+    data_EQ,header_EQ                   = fits.getdata(filedir_in,header=True)
+    w_EQ                                = wcs.WCS(fits.open(filedir_in)[0].header)
+    header_EQ_NAXIS1,header_EQ_NAXIS2   = header_EQ["NAXIS1"],header_EQ["NAXIS2"]
 
     # change WCS from equatorial to Galactic
     header_GAL_CTYPE1,header_GAL_CTYPE2 = ("GLON-TAN","GLAT-TAN")
@@ -212,16 +240,16 @@ def freproj2D_EQ_GAL(filedir_in,filedir_out):
     header_GAL_CRPIX1,header_GAL_CRPIX2 = header_GAL_NAXIS1/2.,header_GAL_NAXIS2/2.
     crpix1_GAL,crpix2_GAL               = (header_GAL_NAXIS1*0.5,header_GAL_NAXIS2*0.5)
 
-    crpix1_EQ,crpix2_EQ  = header_EQ_NAXIS1/2.,header_EQ_NAXIS2/2.
-    crpix1_crpix2_radec  = w_EQ.all_pix2world(crpix1_EQ,crpix2_EQ,0)
-    crpix1_ra,crpix2_dec = np.float(crpix1_crpix2_radec[0]),np.float(crpix1_crpix2_radec[1])
+    crpix1_EQ,crpix2_EQ                 = header_EQ_NAXIS1/2.,header_EQ_NAXIS2/2.
+    crpix1_crpix2_radec                 = w_EQ.all_pix2world(crpix1_EQ,crpix2_EQ,0)
+    crpix1_ra,crpix2_dec                = np.float(crpix1_crpix2_radec[0]),np.float(crpix1_crpix2_radec[1])
 
     # transform center pixel values from (ra,dec) to (l,b)
     coords_EQ                           = SkyCoord(ra=crpix1_ra*u.degree, dec=crpix2_dec*u.degree, frame="fk5")
     header_GAL_CRVAL1,header_GAL_CRVAL2 = (coords_EQ.galactic.l.deg,coords_EQ.galactic.b.deg)
 
-    header_GAL_CDELT1 = header_EQ["CDELT1"]
-    header_GAL_CDELT2 = header_EQ["CDELT2"]
+    header_GAL_CDELT1     = header_EQ["CDELT1"]
+    header_GAL_CDELT2     = header_EQ["CDELT2"]
 
     # write GAL header
     data_GAL              = np.zeros(shape=(header_GAL_NAXIS2,header_GAL_NAXIS1))
@@ -257,16 +285,19 @@ def freproj2D_EQ_GAL(filedir_in,filedir_out):
 def freproj3D_EQ_GAL(filedir_in,filedir_out,header_file):
 
     '''
-    Reprojects an input 3D image from equatorial to Galactic coordinates by iterating over each image slice.
+    Reprojects a three-dimensional FITS image from equatorial to Galactic coordinates.
 
-    Inputs
+    Input
     filedir_in   : input file in equatorial coordinates
     filedir_out  : output file in Galactic coordinates
     header_file  : contains the reference header used for reprojection
+
+    Output
+    saves the reprojected FITS image to the input path filedir_out
     '''
 
     # extract data and headers
-    data_EQ_3D,header_EQ_3D  = fits.getdata(filedir_in,header=True)
+    data_EQ_3D,header_EQ_3D                                     = fits.getdata(filedir_in,header=True)
     header_EQ_3D_NAXIS1,header_EQ_3D_NAXIS2,header_EQ_3D_NAXIS3 = header_EQ_3D["NAXIS1"],header_EQ_3D["NAXIS2"],header_EQ_3D["NAXIS3"]
     header_EQ_3D_CTYPE1,header_EQ_3D_CTYPE2,header_EQ_3D_CTYPE3 = header_EQ_3D["CTYPE1"],header_EQ_3D["CTYPE2"],header_EQ_3D["CTYPE3"]
     header_EQ_3D_CRPIX1,header_EQ_3D_CRPIX2,header_EQ_3D_CRPIX3 = header_EQ_3D["CRPIX1"],header_EQ_3D["CRPIX2"],header_EQ_3D["CRPIX3"]
@@ -320,11 +351,14 @@ def freproj3D_EQ_GAL(filedir_in,filedir_out,header_file):
 
 def fhighlatmask(lb_coords,blim):
     '''
-    Creates a mased on the input limit of Galactic latitude blim.
+    Creates a two-dimensional FITS image mask for low Galactic latitudes.
 
-    Inputs
-    lb_coords   : Galactic coordinates (l,b) in degrees
-    blim        : lower-limit on Galactic latitude where masked data satisfies |b|>=blim
+    Input
+    lb_coords   : Galactic coordinate grid in decimal degrees
+    blim        : lower-limit on Galactic latitude where |b|<blim will be masked
+
+    Output
+    mask : mask for low Galactic latitudes
     '''
 
     # construct coordinate grids
@@ -354,13 +388,15 @@ def fmask2DEQhighlat(filedir,blim):
 
 def fheader_3Dto2D(filedir_in,filedir_out,write=False):
     '''
-    Transforms a 3D FITS header to a 2D FITS header by changing the appropriate keywords.
+    Transforms a three-dimensional FITS header to a two-dimensional FITS header.
 
-    Inputs
-    filedir_in  : input file directory
-    filedir_out : output file directory
-    overwrite   : overwrite file boolean (default=True)
-    
+    Input
+    filedir_in  : path to three-dimensional FITS file
+    filedir_out : path to save the two-dimensional FITS file
+    write       : if True, will save the two-dimensional FITS file to the input filedir_out path (default=False)
+
+    Output
+    header : two-dimensional FITS header
     '''
 
     data,header = fits.getdata(filedir_in,header=True)
@@ -381,12 +417,13 @@ def fheader_3Dto2D(filedir_in,filedir_out,write=False):
 
 def fslice3DFITS(filedir_in,dir_out,units="kms",verbose=True):
     '''
-    Slices a 3D FITS data cube along the third axis and saves each 2D image as a separate FITS file.
+    Slices a three-dimensional FITS data cube along the third axis and saves each two-dimensional image as a separate FITS file.
 
-    Inputs
+    Input
     filedir_in : file directory of input FITS data cube
     dir_out    : directory where 2D image slices will be stored
     units      : units of third axis in FITS data cube
+    verbose    : if True, will print each file in progress
     '''
 
     # extract FITS data
