@@ -9,7 +9,7 @@ Computes the following using input Stokes maps:
 * [x] de-biased polarized intensity
 * [x] polarization gradient (with and without cross-terms)
 * [x] normalized polarization gradient
-* [x] argument of polarization gradient
+* [x] argument of polarization gradient (with and without cross-terms)
 * [x] radial and tangential components of polarization gradient
 
 ## FITS files
