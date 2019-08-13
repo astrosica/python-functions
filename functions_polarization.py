@@ -372,21 +372,26 @@ def fplotvectors(imagefile,anglefile,deltapix=5,scale=2.,angleunit="deg",coords=
 	Saves the image in the same directory as imagefile with "_angles.pdf" as the filename extension
 	'''
 
-	# extract image data and WCS header
-	image,header   = fits.getdata(imagefile,header=True)
-	NAXIS1,NAXIS2  = header["NAXIS1"],header["NAXIS2"]
-	w              = wcs.WCS(header)
-	# extract angle data
-	angles         = fits.getdata(anglefile)
-
-	linelist_pix   = []
-	linelist_wcs   = []
-
 	degree_units   = ["deg","degree","degrees"]
 	radian_units   = ["rad","radian","radians"]
 
 	wcs_units      = ["wcs","WCS","world"]
 	pixel_units    = ["pix","pixel","pixels"]
+
+	if coords in wcs_units:
+		# extract image data and WCS header
+		image,header   = fits.getdata(imagefile,header=True)
+		NAXIS1,NAXIS2  = header["NAXIS1"],header["NAXIS2"]
+		w              = wcs.WCS(header)
+	elif coords in pixel_units:
+		# extract image data
+		image          = fits.getdata(imagefile)
+		NAXIS2,NAXIS1  = image.shape
+	# extract angle data
+	angles         = fits.getdata(anglefile)
+
+	linelist_pix   = []
+	linelist_wcs   = []
 
 	for y in range(0,NAXIS2,deltapix):
 		# iterate through y pixels
@@ -413,30 +418,37 @@ def fplotvectors(imagefile,anglefile,deltapix=5,scale=2.,angleunit="deg",coords=
 				(x1_pix,y1_pix) = (x-scale*np.cos(angle_rad),y-scale*np.sin(angle_rad))
 				(x2_pix,y2_pix) = (x+scale*np.cos(angle_rad),y+scale*np.sin(angle_rad))
 				line_pix        = np.array([(x1_pix,y1_pix),(x2_pix,y2_pix)])
-				linelist_pix.append(line_pix)
-				# create line segment in WCS coordinates (units of degrees)
-				x1_wcs,y1_wcs   = w.wcs_pix2world(x1_pix,y1_pix,0)
-				x2_wcs,y2_wcs   = w.wcs_pix2world(x2_pix,y2_pix,0)
-				line_wcs        = np.array([(x1_wcs,x2_wcs),(y1_wcs,y2_wcs)])
-				linelist_wcs.append(line_wcs)
+				if coords in pixel_units:
+					linelist_pix.append(line_pix)
+				elif coords in wcs_units:
+					# create line segment in WCS coordinates (units of degrees)
+					x1_wcs,y1_wcs   = w.wcs_pix2world(x1_pix,y1_pix,0)
+					x2_wcs,y2_wcs   = w.wcs_pix2world(x2_pix,y2_pix,0)
+					line_wcs        = np.array([(x1_wcs,x2_wcs),(y1_wcs,y2_wcs)])
+					linelist_wcs.append(line_wcs)
 
 	# plot figure
-	fig = plt.figure(figsize=figsize)
-	f = aplpy.FITSFigure(imagefile,figure=fig)
-	f.show_grayscale()
-	if coords in wcs_units:
-		# plot angles in pixel coordinates
-		f.show_lines(linelist_wcs,layer="vectors",color="red")
-	# colour bar
-	f.add_colorbar()
-	# scale bar
-	f.add_scalebar(1.)
-	f.scalebar.set_corner("top left")
-	f.scalebar.set_color("white")
-	f.scalebar.set_label("1 degree")
 	if coords in pixel_units:
-		# plot angles in pixel coordinates
+		fig = plt.figure(figsize=figsize)
+		ax = fig.add_subplot(111)
+		im = ax.imshow(image,vmax=0.05,cmap="Greys_r",origin="lower")
+		plt.xlabel("pixels")
+		plt.ylabel("pixels")
 		lc = LineCollection(linelist_pix,color="red")
 		plt.gca().add_collection(lc)
-	fig.canvas.draw()
-	f.save(imagefile.split(".fits")[0]+"_angles.pdf")
+		plt.colorbar(im, ax=ax, orientation="vertical")
+		plt.show()
+		plt.savefig(imagefile.split(".fits")[0]+"_angles.pdf")
+
+	elif coords in wcs_units:
+		fig = plt.figure(figsize=figsize)
+		f = aplpy.FITSFigure(imagefile,figure=fig)
+		f.show_grayscale()
+		f.show_lines(linelist_wcs,layer="vectors",color="red")
+		f.add_scalebar(1.)
+		f.scalebar.set_corner("top left")
+		f.scalebar.set_color("white")
+		f.scalebar.set_label("1 degree")
+		f.add_colorbar()
+		fig.canvas.draw()
+		f.save(imagefile.split(".fits")[0]+"_angles.pdf")
