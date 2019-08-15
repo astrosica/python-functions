@@ -381,6 +381,9 @@ def fplotvectors(imagefile,anglefile,deltapix=5,scale=2.,angleunit="deg",coords=
 
 	# plot figure
 	if coords in pixel_units:
+		# replace NaNs with zeros just for plotting visuals
+		image[np.isnan(image)==True] = 0.0
+		
 		fig = plt.figure(figsize=figsize)
 		ax = fig.add_subplot(111)
 		im = ax.imshow(image,vmax=0.05,cmap="Greys_r",origin="lower")
@@ -396,6 +399,7 @@ def fplotvectors(imagefile,anglefile,deltapix=5,scale=2.,angleunit="deg",coords=
 		fig = plt.figure(figsize=figsize)
 		f = aplpy.FITSFigure(imagefile,figure=fig)
 		f.show_grayscale()
+		f.set_nan_color("black")
 		f.show_lines(linelist_wcs,layer="vectors",color="red")
 		f.add_scalebar(1.)
 		f.scalebar.set_corner("top left")
