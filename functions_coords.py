@@ -261,3 +261,63 @@ def fmatchpos(names,ra1,dec1,ra2,dec2,minarcsec,fdir=None,fname=None,N1=None,N2=
 		plothist(fdir=fdir,fname=fname,hist1=dist_arcsec,N1=N1,xlabel1=xlabel1,ylabel1=ylabel1,x1min=x1min,x1max=x1max,hist2=None,N2=None,xlabel2=None,ylabel2=None,x2min=None,x2max=None,common_xaxis=False,flipx1=False,flipx2=False)
 	
 	return dist_deg_clean,dist_arcsec_clean,indices,ii,ii_nomatch,ra1_deg_matches_clean,dec1_deg_matches_clean,ra2_deg_clean,dec2_deg_clean
+
+def fannregfiles(names,ra,dec,fdir,color="RED",size=0.001,deg=True,writenames=True):
+	'''
+	Write annotation (for kvis) and region (for ds9) files for input coordinates. If coordinates are in sexagismal format (i.e., if deg==False), will convert the positions to decimal degrees first.
+	
+	names      : object IDs
+	ra         : Right Ascension either in decimal degrees or sexagismal format
+	dec        : Declination either in decimal degrees or sexagismal format
+	fdir       : directory where output annotation files will be stored
+	color      : colour of annotation circles
+	size       : size of annotation circles
+	deg        : if True, input positions are in decimal degrees; if false, sexagismal format (default=True)
+	'''
+	
+	if deg==False:
+		ra_deg   = []
+		dec_deg  = []
+		# convert sexagismal format to decimal degrees
+		for i in range(len(ra)):
+			ra_sexa   = ra[i]
+			dec_sexa  = dec[i]
+			ra_deg_i,dec_deg_i = fsexatodeg(ra_sexa,dec_sexa)
+			ra_deg.append(ra_deg_i)
+			dec_deg.append(dec_deg_i)
+	else:
+		ra_deg  = ra
+		dec_deg = dec
+	
+	# define files
+	if writenames==True:
+		file_kvis        = fdir+"positions.ann"
+		file_ds9         = fdir+"positions.reg"
+	elif writenames==False:
+		file_kvis_names  = fdir+"positions_names.ann"
+		file_ds9_names   = fdir+"positions_names.reg"
+
+	print "writing files...."
+	print file_kvis
+	print file_ds9
+	
+	# open files
+	f_kvis           = open(file_kvis,"w+")
+	f_ds9            = open(file_ds9, "w+")
+	
+	# write to files
+	f_kvis.writelines("COLOR "+color+"\n\n")
+	for i in range(len(ra_deg)):
+		ra_deg_i  = ra_deg[i]
+		dec_deg_i = dec_deg[i]
+		if writenames==True:
+			name = names[i]
+			f_kvis.writelines("TEXT "+str(ra_deg_i)+" "+str(dec_deg_i)+" "+str(name)+"\n\n")
+			f_kvis.writelines("CIRCLE "+str(ra_deg_i)+" "+str(dec_deg_i)+" "+str(size)+"\n\n")
+			f_ds9.writelines("fk5;circle "+str(ra_deg_i)+" "+str(dec_deg_i)+" "+str(size)+" # color="+str(color.lower())+" text={"+str(name)+"}\n\n")
+		elif writenames==False:
+			f_kvis.writelines("CIRCLE "+str(ra_deg_i)+" "+str(dec_deg_i)+" "+str(size)+"\n\n")
+			f_ds9.writelines("fk5;circle "+str(ra_deg_i)+" "+str(dec_deg_i)+" "+str(size)+" # color="+str(color.lower())+"\n\n")
+		
+	f_kvis.close()
+	f_ds9.close()
