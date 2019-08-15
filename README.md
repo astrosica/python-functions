@@ -34,6 +34,8 @@ Possibly useful functions written in Python.
 * [x] transform Right Ascension and Declination coordinates from the sexagismal system to decimal degrees
 * [x] precess Right Ascension and Declination coordinates from the sexagismal system in the B1959 equinox to decimal degrees in the J2000 equinox
 * [x] match two sets of catalogue positions in equatorial coordinates
+* [x] write a set of cooridinates to an annotation file for kvis
+* [x] write a set of cooridinates to a region file for ds9
 
 ## Photometry
 
