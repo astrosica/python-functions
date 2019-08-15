@@ -309,7 +309,7 @@ def fpolgrad_tan(Q,U):
 	
 	return polgrad_tan
 
-def fplotvectors(imagefile,anglefile,deltapix=5,scale=2.,angleunit="deg",coords="wcs",figsize=(20,10)):
+def fplotvectors(imagefile,anglefile,deltapix=5,scale=1.,angleunit="deg",coords="wcs",figsize=(20,10)):
 	'''
 	Plots an image with pseudovectors.
 	
@@ -366,9 +366,11 @@ def fplotvectors(imagefile,anglefile,deltapix=5,scale=2.,angleunit="deg",coords=
 					sys.exit()
 				angle_rad = angles_rad[y,x]
 				angle_deg = angles_deg[y,x]
+				# adjust amplitude
+				amp             = image[y,x]*100.*scale
 				# create line segment in pixel coordinates
-				(x1_pix,y1_pix) = (x-scale*np.cos(angle_rad),y-scale*np.sin(angle_rad))
-				(x2_pix,y2_pix) = (x+scale*np.cos(angle_rad),y+scale*np.sin(angle_rad))
+				(x1_pix,y1_pix) = (x-amp*np.cos(angle_rad),y-amp*np.sin(angle_rad))
+				(x2_pix,y2_pix) = (x+amp*np.cos(angle_rad),y+amp*np.sin(angle_rad))
 				line_pix        = np.array([(x1_pix,y1_pix),(x2_pix,y2_pix)])
 				if coords in pixel_units:
 					linelist_pix.append(line_pix)
