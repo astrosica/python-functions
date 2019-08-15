@@ -61,14 +61,8 @@ def fpolgrad(Q,U):
 	'''
 	
 	# compute Stokes spatial gradients
-	Q_grad   = np.gradient(Q)
-	U_grad   = np.gradient(U)
-	
-	# define components of spatial gradients
-	Q_grad_x = Q_grad[0]
-	Q_grad_y = Q_grad[1]
-	U_grad_x = U_grad[0]
-	U_grad_y = U_grad[1]
+	Q_grad_x,Q_grad_y = np.gradient(Q)
+	U_grad_x,U_grad_y = np.gradient(U)
 	
 	# compute spatial polarization gradient
 	polgrad  = np.sqrt(Q_grad_x**2.+Q_grad_y**2.+U_grad_x**2.+U_grad_y**2.)
@@ -89,14 +83,8 @@ def fpolgradnorm(Q,U):
 	'''
 	
 	# compute Stokes spatial gradients
-	Q_grad   = np.gradient(Q)
-	U_grad   = np.gradient(U)
-	
-	# define components of spatial gradients
-	Q_grad_x = Q_grad[0]
-	Q_grad_y = Q_grad[1]
-	U_grad_x = U_grad[0]
-	U_grad_y = U_grad[1]
+	Q_grad_x,Q_grad_y = np.gradient(Q)
+	U_grad_x,U_grad_y = np.gradient(U)
 	
 	# compute spatial polarization gradient
 	polgrad  = np.sqrt(Q_grad_x**2.+Q_grad_y**2.+U_grad_x**2.+U_grad_y**2.)
@@ -123,14 +111,8 @@ def fpolgrad_crossterms(Q,U):
 	'''
 	
 	# compute Stokes spatial gradients
-	Q_grad   = np.gradient(Q)
-	U_grad   = np.gradient(U)
-	
-	# define components of spatial gradients
-	Q_grad_x = Q_grad[0]
-	Q_grad_y = Q_grad[1]
-	U_grad_x = U_grad[0]
-	U_grad_y = U_grad[1]
+	Q_grad_x,Q_grad_y = np.gradient(Q)
+	U_grad_x,U_grad_y = np.gradient(U)
 	
 	# compute spatial polarization gradient
 	a       = Q_grad_x**2.+Q_grad_y**2.+U_grad_x**2.+U_grad_y**2.
@@ -157,14 +139,8 @@ def fpolgradarg(Q,U,parallel=False,deg=True):
 	'''
 	
 	# compute Stokes spatial gradients
-	Q_grad   = np.gradient(Q)
-	U_grad   = np.gradient(U)
-	
-	# define components of spatial gradients
-	Q_grad_x = Q_grad[0]
-	Q_grad_y = Q_grad[1]
-	U_grad_x = U_grad[0]
-	U_grad_y = U_grad[1]
+	Q_grad_x,Q_grad_y = np.gradient(Q)
+	U_grad_x,U_grad_y = np.gradient(U)
 
 	# compute argument of polarization gradient
 	a = np.sign(Q_grad_x*Q_grad_y + U_grad_x*U_grad_y)
@@ -199,14 +175,8 @@ def fpolgradarg_crossterms(Q,U,parallel=True,deg=True):
 	'''
 	
 	# compute Stokes spatial gradients
-	Q_grad   = np.gradient(Q)
-	U_grad   = np.gradient(U)
-	
-	# define components of spatial gradients
-	Q_grad_x = Q_grad[0]
-	Q_grad_y = Q_grad[1]
-	U_grad_x = U_grad[0]
-	U_grad_y = U_grad[1]
+	Q_grad_x,Q_grad_y = np.gradient(Q)
+	U_grad_x,U_grad_y = np.gradient(U)
 
 	# compute the cos(2*theta) term
 	cos2theta_num = -(Q_grad_y**2. - Q_grad_x**2. + U_grad_y**2. - U_grad_x**2.)
@@ -273,14 +243,8 @@ def fpolgradnorm_crossterms(Q,U):
 	'''
 	
 	# compute Stokes spatial gradients
-	Q_grad   = np.gradient(Q)
-	U_grad   = np.gradient(U)
-	
-	# define components of spatial gradients
-	Q_grad_x = Q_grad[0]
-	Q_grad_y = Q_grad[1]
-	U_grad_x = U_grad[0]
-	U_grad_y = U_grad[1]
+	Q_grad_x,Q_grad_y = np.gradient(Q)
+	U_grad_x,U_grad_y = np.gradient(U)
 	
 	# compute spatial polarization gradient
 	a       = Q_grad_x**2.+Q_grad_y**2.+U_grad_x**2.+U_grad_y**2.
@@ -309,14 +273,8 @@ def fpolgrad_rad(Q,U):
 	'''
 	
 	# compute Stokes spatial gradients
-	Q_grad   = np.gradient(Q)
-	U_grad   = np.gradient(U)
-	
-	# define components of spatial gradients
-	Q_grad_x = Q_grad[0]
-	Q_grad_y = Q_grad[1]
-	U_grad_x = U_grad[0]
-	U_grad_y = U_grad[1]
+	Q_grad_x,Q_grad_y = np.gradient(Q)
+	U_grad_x,U_grad_y = np.gradient(U)
 	
 	polgrad_rad_num = (Q*Q_grad_x+U*U_grad_x)**2. + (Q*Q_grad_y+U*U_grad_y)**2.
 	polgrad_rad_den = Q**2.+U**2.
@@ -340,14 +298,8 @@ def fpolgrad_tan(Q,U):
 	'''
 	
 	# compute Stokes spatial gradients
-	Q_grad   = np.gradient(Q)
-	U_grad   = np.gradient(U)
-	
-	# define components of spatial gradients
-	Q_grad_x = Q_grad[0]
-	Q_grad_y = Q_grad[1]
-	U_grad_x = U_grad[0]
-	U_grad_y = U_grad[1]
+	Q_grad_x,Q_grad_y = np.gradient(Q)
+	U_grad_x,U_grad_y = np.gradient(U)
 	
 	polgrad_tan_num = (Q*U_grad_x+U*Q_grad_x)**2. + (Q*U_grad_y-U*Q_grad_y)**2.
 	polgrad_tan_den = Q**2.+U**2.
