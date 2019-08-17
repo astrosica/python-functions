@@ -135,11 +135,7 @@ def fgradient(image):
 	'''
 	
 	# compute spatial gradients
-	grad_xy = np.gradient(image)
-	
-	# define components of spatial gradient
-	grad_x = grad_xy[0]
-	grad_y = grad_xy[1]
+	grad_y,grad_x = np.gradient(image)
 	
 	# compute total spatial gradient map
 	grad = np.sqrt(grad_x**2. + grad_y**2.)
