@@ -75,13 +75,14 @@ def fmask_snr(data,noise,snr):
 
 	return (mask,data_clean)
 
-def fmask_signal(data,signal):
+def fmask_signal(data,signal,fill_value=np.nan):
 	'''
 	Creates a mask used to clip data based on signal level.
 	
 	Input
-	data   : data to be clipped
-	signal : signal used for data clipping
+	data       : data to be clipped
+	signal     : signal used for data clipping
+	fill_value : value to fill masked regions with
 	
 	Output
 	mask         : bitmask used for data clipping
@@ -91,7 +92,7 @@ def fmask_signal(data,signal):
 	# create mask
 	mask             = np.ones(shape=data.shape) # initialize mask
 	low_signal       = np.where(data<signal)     # find signal less than input requirement
-	mask[low_signal] = np.nan                    # set low signal to nan
+	mask[low_signal] = fill_value                # set low signal to nan
 	
 	# mask data
 	data_clean       = data*mask
