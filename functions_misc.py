@@ -48,14 +48,15 @@ def fconvolve(oldres,newres,data,header,method="scipy"):
 	
 	return data_smoothed
 
-def fmask_snr(data,noise,snr):
+def fmask_snr(data,noise,snr,fill_value=np.nan):
 	'''
 	Computes a mask to clip data based on S/N level.
 	
 	Input
-	data  : data to be clipped
-	noise : noise level in the same units as data input
-	snr   : SNR used for data clipping
+	data       : data to be clipped
+	noise      : noise level in the same units as data input
+	snr        : SNR used for data clipping
+	fill_value : value to fill masked regions with
 	
 	Output
 	mask         : bitmask used for data clipping
@@ -68,7 +69,7 @@ def fmask_snr(data,noise,snr):
 	# create mask
 	mask          = np.ones(shape=data.shape) # initialize mask
 	low_snr       = np.where(data_snr<snr)    # find SNR less than input requirement
-	mask[low_snr] = np.nan                    # set low SNR to nan
+	mask[low_snr] = fill_value                # set low SNR to nan
 	
 	# mask data
 	data_clean    = data*mask
