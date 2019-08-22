@@ -173,3 +173,107 @@ def fmaskinterp(image,mask):
 	image_interp = interpolate.griddata((x1, y1), image_new.ravel(),(xx, yy),method="cubic")
 
 	return image_interp
+
+def fFFT(data,pos=False):
+	'''
+	Performs a one-dimensional fast Fourier transform (FFT).
+
+	Input
+	data : input one dimensional data to transform; can be a list or an array
+	pos  : if True, only return the positive-valued frequency components
+
+	Output
+	freq     : sampled frequencies
+	data_fft : one-dimensional FFT
+	'''
+
+	if isinstance(data,list)==True:
+		# if input data is a list, convert to array
+		data = np.array(data)
+
+	N  = len(data)
+	dt = 1./(data[1]-data[0])
+
+	freq     = fftpack.fftfreq(N,dt)
+	data_fft = fftpack.fft(data.astype(float))
+
+	if pos==True:
+		freq     = freq[0:N/2]
+		data_fft = data_fft[0:N/2]
+
+	return freq,data_fft
+
+def fIFFT(data,axis=-1):
+	'''
+	Performs a one-dimensional inverse fast Fourier transform (IFFT).
+
+	Input
+	data : input one dimensional data to transform; can be a list or an array
+
+	Output
+	data_ifft : one-dimensional FFT
+	'''
+
+	if isinstance(data,list)==True:
+		# if input data is a list, convert to array
+		data = np.array(data)
+
+	data_ifft = fftpack.ifft(data, axis=axis)
+
+	return data_ifft
+
+def fFFT2D(data,shift=True):
+	'''
+	Performs a two-dimensional fast Fourier transform (FFT).
+
+	Input
+	data  : input two-dimensional data to transform; can be a list or an array
+	shift : if True, centers the zero-frequency components to the grid center
+	
+	Output
+	freq_x   : frequency components of x-axis
+	freq_y   : frequency components of y-axis
+	data_fft : two-dimensional FFT
+	'''
+
+	if isinstance(data,list)==True:
+		# if input data is a list, convert to array
+		data = np.array(data)
+
+	N_y,N_x = data.shape
+	dt_y   = 1./(data[1,0]-data[0,0])
+	dt_x   = 1./(data[0,1]-data[0,0])
+	freq_x = fftpack.fftfreq(N_x,dt_x)
+	freq_y = fftpack.fftfreq(N_y,dt_y)
+
+	data_fft = fftpack.fft2(data.astype(float))
+
+	if shift==True:
+		data_fft = fftpack.fftshift(data_fft)
+		freq_x   = fftpack.fftshift(freq_x)
+		freq_y   = fftpack.fftshift(freq_y)
+
+	return freq_x,freq_y,data_fft
+
+def fIFFT2D(data,shift=True):
+	'''
+	Performs a two-dimensional inverse fast Fourier transform (IFFT).
+	
+	Input
+	data  : input two-dimensional data to transform; can be a list or an array
+	shift : if True, re-positions the zero-frequency components to the lower-left corner
+
+	Output
+	data_ifft : two-dimensional IFFT
+	'''
+
+	if isinstance(data,list)==True:
+		# if input data is a list, convert to array
+		data = np.array(data)
+
+	if shift==True:
+		data = fftpack.ifftshift(data)
+
+	data_ifft = fftpack.ifft2(data)
+
+	return data_ifft
