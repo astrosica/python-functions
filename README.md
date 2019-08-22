@@ -55,9 +55,11 @@ See the [Rolling Hough Transform](https://github.com/seclark/RHT).
 ## Miscellaneous
 
 * [x] convolve a 2D FITS image using FFT convolution
+* [x] compute the 1D and 2D fast Fourier transform (FFT)
+* [x] compute the 1D and 2D inverse fast Fourier transform (IFFT)
+* [x] compute the 2D spatial gradient of an image
 * [x] mask a 2D FITS image in signal-to-noise
 * [x] mask a 2D FITS image in signal
+* [x] mask a 2D image and interpolates over invalid numbers
 * [x] map angles from \[0,2*pi) to \[0,pi) (i.e., to a half-polar plot in radians)
 * [x] map angles from \[0,360) to \[0,180) (i.e., to a half-polar plot in degrees)
-* [x] compute the spatial gradients of an image
-* [x] mask a 2D image and interpolates over invalid numbers
