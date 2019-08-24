@@ -192,7 +192,7 @@ def fFFT(data,pos=False):
 		data = np.array(data)
 
 	N  = len(data)
-	dt = 1./(data[1]-data[0])
+	dt = 1.
 
 	freq     = fftpack.fftfreq(N,dt)
 	data_fft = fftpack.fft(data.astype(float))
@@ -241,8 +241,7 @@ def fFFT2D(data,shift=True):
 		data = np.array(data)
 
 	N_y,N_x = data.shape
-	dt_y   = 1./(data[1,0]-data[0,0])
-	dt_x   = 1./(data[0,1]-data[0,0])
+	dt_x,dt_y = 1.,1.
 	freq_x = fftpack.fftfreq(N_x,dt_x)
 	freq_y = fftpack.fftfreq(N_y,dt_y)
 
