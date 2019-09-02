@@ -48,6 +48,77 @@ def fconvolve(oldres,newres,data,header,method="scipy"):
 	
 	return data_smoothed
 
+def fmask_basketweaving(image):
+	'''
+	Creates a mask for Arecibo's basketweaving artefacts in Fourier space.
+
+	Input
+	image : two-dimensional data to be masked (FFT of sensitivity map)
+	x0_1  : starting x-coordinate of first (lower) line
+	y0_1  : starting y-coordinate of first (lower) line
+	x1_1  : ending x-coordinate of first (lower) line
+	y1_1  : ending y-coordinate of first (lower) line
+	x0_2  : starting x-coordinate of second (upper) line
+	y0_2  : starting y-coordinate of second (upper) line
+	x1_2  : ending x-coordinate of second (upper) line
+	y1_2  : ending y-coordinate of second (upper) line
+	num   : number of pixels in each line
+	
+	Output
+	mask         : resulting mask
+	image_masked : masked image
+	'''
+
+	NAXIS2,NAXIS1 = image.shape
+	xpix,ypix     = np.arange(0,NAXIS1),np.arange(0,NAXIS2)
+	xgrid,ygrid   = np.meshgrid(xpix,ypix)
+
+	xypoints = np.array([
+		[0,-94,NAXIS1,85,0,-84,NAXIS1,95],
+		[0,85,NAXIS1,264,0,95,NAXIS1,274],
+		[0,264,NAXIS1,444,0,273,NAXIS1,453],
+		[0,443,NAXIS1,622,0,453,NAXIS1,632],
+		[0,622,NAXIS1,801,0,632,NAXIS1,811],
+		[0,801,NAXIS1,980,0,811,NAXIS1,990],
+		[0,980,NAXIS1,1159,0,990,NAXIS1,1169],
+		#
+		[0,85,NAXIS1,-94,0,95,NAXIS1,-84],
+		[0,264,NAXIS1,85,0,274,NAXIS1,95],
+		[0,443,NAXIS1,264,0,453,NAXIS1,274],
+		[0,622,NAXIS1,443,0,632,NAXIS1,453],
+		[0,801,NAXIS1,622,0,811,NAXIS1,632],
+		[0,980,NAXIS1,801,0,990,NAXIS1,811],
+		[0,1159,NAXIS1,980,0,1169,NAXIS1,990]
+		])
+
+	# initialize mask
+	mask = np.full((NAXIS2,NAXIS1), True, dtype=bool)
+
+	# iterate through each set of lines to iteratively update mask
+	for i in xypoints:
+		x0_1,y0_1,x1_1,y1_1,x0_2,y0_2,x1_2,y1_2 = i[0],i[1],i[2],i[3],i[4],i[5],i[6],i[7]
+		# compute pixel coordinates of each line
+		xpix_1, ypix_1  = np.linspace(x0_1,x1_1,NAXIS1), np.linspace(y0_1,y1_1,NAXIS1)
+		xpix_2, ypix_2  = np.linspace(x0_2,x1_2,NAXIS1), np.linspace(y0_2,y1_2,NAXIS1)
+		# compute mask between lines
+		mask_i          = (ygrid>ypix_1) & (ygrid<ypix_2)
+		mask_i          = np.invert(mask_i)
+		mask           *= mask_i
+
+	# adjust mask for non-artefact features that should not be removed
+	mask[:,2684:2687]   = True # vertical line in the image center
+	mask_ellipse,_      = fmask_ellipse(image,NAXIS1*0.5,NAXIS2*0.5,100,420.,6.)
+	mask_ellipse        = np.invert(mask_ellipse)
+	mask[mask_ellipse]  = True
+
+	# convert mask to ones and zeros
+	mask = mask.astype(float)
+
+	# mask image
+	image_masked    = image*mask
+
+	return mask,image_masked
+
 def fmask_snr(data,noise,snr,fill_value=np.nan):
 	'''
 	Computes a mask to clip data based on S/N level.
