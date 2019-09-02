@@ -55,6 +55,7 @@ See the [Rolling Hough Transform](https://github.com/seclark/RHT).
 ## Miscellaneous
 
 * [x] convolve a 2D FITS image using FFT convolution
+* [x] masks basketweaving artefacts of the GALFACTS sensitivity map FFT
 * [x] compute the 1D and 2D fast Fourier transform (FFT)
 * [x] compute the 1D and 2D inverse fast Fourier transform (IFFT)
 * [x] compute the 2D spatial gradient of an image
