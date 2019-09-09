@@ -245,6 +245,38 @@ def fmaskinterp(image,mask):
 
 	return image_interp
 
+def fmaskpointsources(image,xpoints,ypoints,radius,interp="cubic"):
+	'''
+	Masks background point sources and interpolates over them.
+
+	Input
+	image   : two-dimensional image to be masked
+	xpoints : x pixel positions of sources to be masked
+	ypoints : y pixel positions of sources to be masked
+	radius  : mask radius
+	interp  : type of interpolation (default=cubic)
+
+	Output
+	image_masked_interp : masked and interpolated image
+	'''
+
+	# initialize mask
+	mask = np.ones(shape=image.shape).astype("bool") # initialize mask
+
+	for i in range(len(xpoints)):
+		x0,y0    = xpoints[i],ypoints[i]
+		mask_i,_ = fmask_circle(image,x0,y0,radius)
+		# iteratively adjust mask
+		mask *=mask_i
+
+	# mask image
+	image_masked = image*mask
+
+	# interpolate over mask
+	image_masked_interp = fmaskinterp(image_masked,mask)
+
+	return image_masked_interp
+
 def fFFT(data,pos=False):
 	'''
 	Performs a one-dimensional fast Fourier transform (FFT).
