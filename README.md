@@ -15,6 +15,7 @@ Possibly useful functions written in Python.
 ## FITS files
 
 * [x] construct the frequency axis of a 3D FITS file
+* [x] compute the average across a data cube's third axis
 * [x] create a grid of equatorial coordinates for a FITS file
 * [x] create a grid of Galactic coordinates for a FITS file
 * [x] transform a coordinate grid from equatorial to Galactic coordinates
