@@ -33,6 +33,29 @@ def ffreqaxis(file):
 
     return freqaxis
 
+def fcubeavg(filedir_in,filedir_out,write=False):
+    '''
+    Computes the average of a data cube along its third axis.
+
+    Input
+    filedir_in  : path to data cube to be averaged
+    filedir_out : path to write output averaged data cube to
+
+    Output
+    data_avg   : two-dimensional average image
+    header_avg : projected two-dimensional FITS header
+    '''
+
+    data_cube,header_cube = fits.getdata(filedir_in,header=True)
+
+    data_avg   = np.nanmean(data_cube,axis=0)
+    header_avg = fheader_3Dto2D(filedir_in,".",write=False)
+
+    if write==True:
+        fits.writeto(filedir_out,data_avg,header_avg,overwrite=True)
+
+    return data_avg,header_avg
+
 def fcoordgrid_EQ(filedir):
 	'''
 	Creates a grid of equatorial coordinates for a FITS file in decimal degrees.
