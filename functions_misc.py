@@ -48,21 +48,13 @@ def fconvolve(oldres,newres,data,header,method="scipy"):
 	
 	return data_smoothed
 
-def fmask_basketweaving(image):
+def fmask_basketweaving(image,pointing):
 	'''
 	Creates a mask for Arecibo's basketweaving artefacts in Fourier space.
 
 	Input
 	image : two-dimensional data to be masked (FFT of sensitivity map)
-	x0_1  : starting x-coordinate of first (lower) line
-	y0_1  : starting y-coordinate of first (lower) line
-	x1_1  : ending x-coordinate of first (lower) line
-	y1_1  : ending y-coordinate of first (lower) line
-	x0_2  : starting x-coordinate of second (upper) line
-	y0_2  : starting y-coordinate of second (upper) line
-	x1_2  : ending x-coordinate of second (upper) line
-	y1_2  : ending y-coordinate of second (upper) line
-	num   : number of pixels in each line
+	pointing : GALFACTS pointing (N[1-4],S[1-4])
 	
 	Output
 	mask         : resulting mask
@@ -73,24 +65,17 @@ def fmask_basketweaving(image):
 	xpix,ypix     = np.arange(0,NAXIS1),np.arange(0,NAXIS2)
 	xgrid,ygrid   = np.meshgrid(xpix,ypix)
 
-	xypoints = np.array([
-		[0,-96,NAXIS1,83,0,-82,NAXIS1,97],
-		[0,83,NAXIS1,262,0,102,NAXIS1,281],
-		[0,262,NAXIS1,442,0,280,NAXIS1,460],
-		[0,441,NAXIS1,620,0,455,NAXIS1,634],
-		[0,620,NAXIS1,799,0,634,NAXIS1,813],
-		[0,799,NAXIS1,978,0,813,NAXIS1,992],
-		[0,978,NAXIS1,1157,0,992,NAXIS1,1171],
-		#
-		[0,83,NAXIS1,-96,0,97,NAXIS1,-82],
-		[0,262,NAXIS1,83,0,281,NAXIS1,102],
-		[0,441,NAXIS1,262,0,455,NAXIS1,276],
-		[0,620,NAXIS1,441,0,634,NAXIS1,455],
-		[0,799,NAXIS1,620,0,813,NAXIS1,634],
-		[0,978,NAXIS1,799,0,992,NAXIS1,813],
-		[0,1157,NAXIS1,978,0,1171,NAXIS1,992]
-		])
-
+	if pointing=="N1" or pointing=="N2" or pointing=="N4" or pointing=="S1" or pointing=="S2" or pointing=="S3" or pointing=="S4":
+		xypoints = np.array([
+			[0,610,5369,425,0,647,5369,462],
+			[0,429,5369,606,0,466,5369,643]
+			])
+	elif pointing=="N3":
+		xypoints = np.array([
+			[0,620,6179,435,0,635,6179,450],
+			[0,439,6179,616,0,454,6179,631]
+			])
+	
 	# initialize mask
 	mask = np.full((NAXIS2,NAXIS1), True, dtype=bool)
 
@@ -106,16 +91,29 @@ def fmask_basketweaving(image):
 		mask           *= mask_i
 
 	# adjust mask for non-artefact features that should not be removed
-	mask[:,2684:2687]   = True # vertical line in the image center
-	mask_ellipse,_      = fmask_ellipse(image,NAXIS1*0.5,NAXIS2*0.5,100,420.,6.)
-	mask_ellipse        = np.invert(mask_ellipse)
-	mask[mask_ellipse]  = True
+	if pointing=="N1":
+		#mask[:,2561:2818] = True
+		mask[:,2461:2918] = True
+	elif pointing=="N2":
+		mask[:,2656:2896] = True
+	elif pointing=="N3":
+		mask[:,2959:3223] = True
+	elif pointing=="N4":
+		mask[:,2762:3088] = True
+	elif pointing=="S1":
+		mask[:,2423:2733] = True
+	elif pointing=="S2":
+		mask[:,2424:2978] = True
+	elif pointing=="S3":
+		mask[:,2500:3022] = True
+	elif pointing=="S4":
+		mask[:,2583:2819] = True	
 
 	# convert mask to ones and zeros
 	mask = mask.astype(float)
 
 	# mask image
-	image_masked    = image*mask
+	image_masked = image*mask
 
 	return mask,image_masked
 
