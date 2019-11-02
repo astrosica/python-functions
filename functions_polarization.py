@@ -309,6 +309,26 @@ def fpolgrad_tan(Q,U):
 	
 	return polgrad_tan
 
+def fpolangle(Q,U,deg=True):
+	'''
+	Computes the polarization angle.
+	
+	Input
+	Q   : Stokes Q
+	U   : Stokes U
+	deg : if True, convert angles to degrees for output
+
+	Output
+	polangle : polarization angle
+	'''
+
+	pol_ang = np.mod(0.5*np.arctan2(U,Q), np.pi)
+
+	if deg==True:
+		pol_ang = np.degrees(pol_angle)
+
+	return pol_angle
+
 def fplotvectors(imagefile,anglefile,deltapix=5,scale=1.,angleunit="deg",coords="wcs",figsize=(20,10)):
 	'''
 	Plots an image with pseudovectors.
