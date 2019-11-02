@@ -57,114 +57,112 @@ def fcubeavg(filedir_in,filedir_out,write=False):
     return data_avg,header_avg
 
 def fcoordgrid_EQ(filedir):
-	'''
-	Creates a grid of equatorial coordinates for a FITS file in decimal degrees.
+    '''
+    Creates a grid of equatorial coordinates for a FITS file in decimal degrees.
     
     Input
     filedir : path to FITS file
     
     Output
     radec_coords : equatorial coordinate grid in decimal degrees
-	'''
+    '''
+    data,header    = fits.getdata(filedir,header=True)
+    w              = wcs.WCS(header)
 
-	data,header    = fits.getdata(filedir,header=True)
-	w              = wcs.WCS(header)
+    # create pixel grid
+    NAXIS1,NAXIS2  = header["NAXIS1"],header["NAXIS2"]
+    xarray         = np.arange(NAXIS1)-0.5
+    yarray         = np.arange(NAXIS2)-0.5
+    xgrid,ygrid    = np.meshgrid(xarray,yarray)
 
-	# create pixel grid
-	NAXIS1,NAXIS2  = header["NAXIS1"],header["NAXIS2"]
-	xarray         = np.arange(NAXIS1)-0.5
-	yarray         = np.arange(NAXIS2)-0.5
-	xgrid,ygrid    = np.meshgrid(xarray,yarray)
-	
-	# create equatorial coordinate grid
-	ragrid,decgrid = w.all_pix2world(xgrid,ygrid,0)
-	radec_coords   = SkyCoord(ragrid,decgrid,frame="fk5",unit="deg")
+    # create equatorial coordinate grid
+    ragrid,decgrid = w.all_pix2world(xgrid,ygrid,0)
+    radec_coords   = SkyCoord(ragrid,decgrid,frame="fk5",unit="deg")
 
-	return radec_coords
+    return radec_coords
 
 def fcoordgrid_GAL(filedir):
-	'''
-	Creates a grid of Galactic coordinates for a FITS file in decimal degrees.
-
+    '''
+    Creates a grid of Galactic coordinates for a FITS file in decimal degrees.
     Input
     filedir : path to FITS file
-    
+
     Output
     lb_coords : Galactic coordinate grid in decimal degrees
-	'''
+    '''
 
-	data,header   = fits.getdata(filedir,header=True)
-	w             = wcs.WCS(header)
+    data,header   = fits.getdata(filedir,header=True)
+    w             = wcs.WCS(header)
 
-	# create pixel grid
-	NAXIS1,NAXIS2 = header["NAXIS1"],header["NAXIS2"]
-	xarray        = np.arange(NAXIS1)-0.5
-	yarray        = np.arange(NAXIS2)-0.5
-	xgrid,ygrid   = np.meshgrid(xarray,yarray)
-	
-	# create grid Galactic coordinate grid
-	lgrid,bgrid   = w.all_pix2world(xgrid,ygrid,0)
-	lb_coords     = SkyCoord(lgrid,bgrid,frame="galactic",unit="deg")
+    # create pixel grid
+    NAXIS1,NAXIS2 = header["NAXIS1"],header["NAXIS2"]
+    xarray        = np.arange(NAXIS1)-0.5
+    yarray        = np.arange(NAXIS2)-0.5
+    xgrid,ygrid   = np.meshgrid(xarray,yarray)
 
-	return lb_coords
+    # create grid Galactic coordinate grid
+    lgrid,bgrid   = w.all_pix2world(xgrid,ygrid,0)
+    lb_coords     = SkyCoord(lgrid,bgrid,frame="galactic",unit="deg")
+
+    return lb_coords
 
 def fcoordgrid_EQtoGAL(filedir):
-	'''
-	Creates a grid of Galactic coordinates in decimal degrees for a FITS file with a native equatorial projection.
-    
+    '''
+    Creates a grid of Galactic coordinates in decimal degrees for a FITS file with a native equatorial projection.
+
     Input
     filedir : path to FITS file
-    
+
     Output
     lb_coords : Galactic coordinate grid in decimal degrees
-	'''
+    '''
 
-	data,header    = fits.getdata(filedir,header=True)
-	w              = wcs.WCS(header)
+    data,header    = fits.getdata(filedir,header=True)
+    w              = wcs.WCS(header)
 
-	# create grid in pixels
-	NAXIS1,NAXIS2  = header["NAXIS1"],header["NAXIS2"]
-	xarray         = np.arange(NAXIS1)-0.5
-	yarray         = np.arange(NAXIS2)-0.5
-	xgrid,ygrid    = np.meshgrid(xarray,yarray)
-    	
-	# create grid in equatorial coordinates
-	ragrid,decgrid = w.all_pix2world(xgrid,ygrid,0)
-	radec_coords   = SkyCoord(ragrid,decgrid,frame="fk5",unit="deg")
+    # create grid in pixels
+    NAXIS1,NAXIS2  = header["NAXIS1"],header["NAXIS2"]
+    xarray         = np.arange(NAXIS1)-0.5
+    yarray         = np.arange(NAXIS2)-0.5
+    xgrid,ygrid    = np.meshgrid(xarray,yarray)
 
-	# transform to Galactic coordinates
-	lb_coords      = radec_coords.galactic
+    # create grid in equatorial coordinates
+    ragrid,decgrid = w.all_pix2world(xgrid,ygrid,0)
+    radec_coords   = SkyCoord(ragrid,decgrid,frame="fk5",unit="deg")
 
-	return lb_coords
+    # transform to Galactic coordinates
+    lb_coords      = radec_coords.galactic
+
+    return lb_coords
 
 def fcoordgrid_GALtoEQ(filedir):
-	'''
-	Creates a grid of equaorial coordinates in decimal degrees for a FITS file that with a native Galactic projection.
+    '''
+    Creates a grid of equaorial coordinates in decimal degrees for a FITS file that with a native Galactic projection.
 
     Input
     filedir : path to FITS file
-    
+
     Output
     radec_coords : equatorial coordinate grid in decimal degrees
-	'''
+    '''
 
-	data,header    = fits.getdata(filedir,header=True)
-	w              = wcs.WCS(header)
+    data,header    = fits.getdata(filedir,header=True)
+    w              = wcs.WCS(header)
 
-	# create grid in pixels
-	NAXIS1,NAXIS2  = header["NAXIS1"],header["NAXIS2"]
-	xarray         = np.arange(NAXIS1)-0.5
-	yarray         = np.arange(NAXIS2)-0.5
-	xgrid,ygrid    = np.meshgrid(xarray,yarray)
-    	
-	# create grid in Galactic coordinates
-	lgrid,bgrid    = w.all_pix2world(xgrid,ygrid,0)
-	lb_coords      = SkyCoord(lgrid,bgrid,frame="galactic",unit="deg")
+    # create grid in pixels
+    NAXIS1,NAXIS2  = header["NAXIS1"],header["NAXIS2"]
+    xarray         = np.arange(NAXIS1)-0.5
+    yarray         = np.arange(NAXIS2)-0.5
+    xgrid,ygrid    = np.meshgrid(xarray,yarray)
 
-	# transform to equatorial coordinates
-	radec_coords   = lb_coords.fk5
+    # create grid in Galactic coordinates
+    lgrid,bgrid    = w.all_pix2world(xgrid,ygrid,0)
+    lb_coords      = SkyCoord(lgrid,bgrid,frame="galactic",unit="deg")
 
-	return radec_coords
+    # transform to equatorial coordinates
+    radec_coords   = lb_coords.fk5
+
+    return radec_coords
 
 def freproject_2D(image1_dir,image2_dir,clean=False,order="nearest-neighbor"):
     '''
@@ -371,6 +369,36 @@ def freproj3D_EQ_GAL(filedir_in,filedir_out,header_file):
     montage.mGetHdr(header_file,mheader_file)
     os.remove(header_file)
     montage.reproject_cube(filedir_in,filedir_out,header=mheader_file,clobber=True)
+
+def freproj_fromHEALPix(healpix_file,fits_file,output_file,coord="G",nested=False,write=True):
+    '''
+    Reprojects a HEALPix image to a standard FITS projection.
+
+    Input:
+    healpix_file : directory to HEALPix file to be reprojected
+    fits_file    : directory to FITS file which the HEALPix image will be reprojected to
+    output_file  : directory to reprojected FITS file
+    coord        : coordinate system of input HEALPix image ("G" for Galactic or "C" for celestial)
+    nested       : order of HEALPix data (True for nested or False for ring)
+    write        : if True, writes reprojected FITS file
+
+    Output: 
+    healpix_data_reproj : reprojected HEALPix data
+    footprint           : reprojection footprint
+
+    '''
+
+    healpix_data          = hp.read_map(healpix_file)
+    _,healpix_header      = fits.getdata(healpix_file,header=True)
+    fits_data,fits_header = fits.getdata(fits_file,header=True)
+    fits_wcs              = wcs.WCS(fits_header)
+
+    healpix_data_reproj,footprint = reproject_from_healpix((healpix_data,coord),fits_wcs,shape_out=fits_data.shape,hdu_in=1,nested=nested)
+
+    if write==True:
+        fits.writeto(output_file,healpix_data_reproj,fits_header,overwrite=True)
+
+    return healpix_data_reproj,footprint
 
 def fhighlatmask(lb_coords,blim):
     '''
