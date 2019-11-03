@@ -329,6 +329,37 @@ def fpolangle(Q,U,deg=True):
 
 	return pol_angle
 
+def fBangle(Q,U,toIAU=True,deg=True):
+	'''
+	Computes the polarization angle.
+	
+	90 degree rotation = flip sign of Stokes Q and U
+	COSMO polarization angle convention to IAU B-field convention = flip sign of Stokes Q
+	
+	Input
+	Q   : Stokes Q
+	U   : Stokes U
+	deg : if True, convert angles to degrees for output
+
+	Output
+	polangle : polarization angle
+	'''
+
+	if toIAU==True:
+		# only Q changes sign
+		Q *= -1.
+	elif toIAU==False:
+		# both Q and U change sign
+		Q *= -1.
+		U *= -1.
+
+	B_angle = np.mod(0.5*np.arctan2(U,Q), np.pi)
+
+	if deg==True:
+		B_angle = np.degrees(B_angle)
+
+	return B_angle
+
 def fplotvectors(imagefile,anglefile,deltapix=5,scale=1.,angleunit="deg",coords="wcs",figsize=(20,10)):
 	'''
 	Plots an image with pseudovectors.
