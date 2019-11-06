@@ -47,6 +47,27 @@ def fPI_debiased(Q,U,Q_std,U_std):
 	
 	return PI_debiased
 
+def fpolfrac(I,Q,U):
+	'''
+	Coomputes the polarization fraction.
+	
+	Input
+	I : Stokes I map
+	Q : Stokes Q map
+	U : Stokes U map
+	
+	Output
+	polfrac : polarization fraction
+	'''
+	
+	# compute polarized intensity
+	PI = np.sqrt(Q**2.+U**2.)
+
+	# compute the polarization fraction
+	polfrac = PI/I
+	
+	return polfrac
+
 def fpolgrad(Q,U):
 	'''
 	Computes the polarization gradient.
