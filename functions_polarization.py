@@ -482,3 +482,76 @@ def fplotvectors(imagefile,anglefile,deltapix=5,scale=1.,angleunit="deg",coords=
 		f.add_colorbar()
 		fig.canvas.draw()
 		f.save(imagefile.split(".fits")[0]+"_angles.pdf")
+
+def fFDFmom2_1d(FDF_arr,phi_arr,threshold,sqrt=False):
+	'''
+	Computes the second moment of a one-dimensional Faraday dispersion function (FDF).
+	
+	Input
+	FDF_arr : faraday dispersion function array
+	phi_arr : faraday depth array
+	sqrt    : if True, take square root of second moment
+
+	Output
+	mom2 : second moment of FDF
+	'''
+
+	# take absolute value of input FDF
+	FDF_arr = np.abs(FDF_arr)
+	# apply signal threshold
+	_,FDF_arr = fmask_signal(FDF_arr,threshold)
+
+	# compute moment 1
+	mom1 = fFDFmom1_1d(FDF_arr,phi_arr,threshold)
+
+	# compute second moment
+	mom2 = np.nansum(FDF_arr*(phi_arr-mom1)**2.) / np.nansum(FDF_arr)
+	if sqrt==True:
+		mom2 = np.sqrt(mom2)
+
+	return mom2 # (rad/m^2)^2 ; or rad/m^2 if square root is taken
+
+def fFDFmom1_3d(FDF_cube,phi_arr,threshold):
+	'''
+	Computes the first moment of a three-dimensional Faraday dispersion function (FDF).
+
+	Input
+	FDF_cube : faraday dispersion function cube
+	phi_arr  : faraday depth array
+
+	Output
+	mom1 : first moment of FDF
+	'''
+
+	NAXIS3,NAXIS2,NAXIS1 = FDF_cube.shape
+	mom1                 = np.zeros(shape=(NAXIS2,NAXIS1))
+
+	for ypix in np.arange(NAXIS2):
+		for xpix in np.arange(NAXIS1):
+			mom1_i          = fFDFmom1_1d(FDF_cube[:,ypix,xpix],phi_arr,threshold)
+			mom1[ypix,xpix] = mom1_i
+
+	return mom1 # rad/m^2
+
+def fFDFmom2_3d(FDF_cube,phi_arr,threshold,sqrt=False):
+	'''
+	Computes the second moment of a three-dimensional Faraday dispersion function (FDF).
+
+	Input
+	FDF_cube : faraday dispersion function cube
+	phi_arr  : faraday depth array
+	sqrt     : if True, take square root of second moment
+
+	Output
+	mom2 : second moment of FDF
+	'''
+
+	NAXIS3,NAXIS2,NAXIS1 = FDF_cube.shape
+	mom2                 = np.zeros(shape=(NAXIS2,NAXIS1))
+
+	for ypix in np.arange(NAXIS2):
+		for xpix in np.arange(NAXIS1):
+			mom2_i          = fFDFmom2_1d(FDF_cube[:,ypix,xpix],phi_arr,threshold,sqrt=sqrt)
+			mom2[ypix,xpix] = mom2_i
+
+	return mom2 # (rad/m^2)^2 ; or rad/m^2 if square root is taken
