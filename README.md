@@ -11,6 +11,10 @@ Possibly useful functions written in Python.
 * [x] compute the argument of polarization gradient (with and without cross-terms)
 * [x] compute the radial and tangential components of polarization gradient
 * [x] plot an image with pseudovectors overlaid
+* [x] compute the first moment of a one-dimensional Faraday dispersion function
+* [x] compute the second moment of a one-dimensional Faraday dispersion function
+* [x] compute the first moment map of a three-dimensional Faraday dispersion function
+* [x] compute the second moment map of a three-dimensional Faraday dispersion function
 
 ## FITS files
 
