@@ -202,11 +202,20 @@ def denoise_polgrad(Q_file,U_file,noise_sigma=1.1e-2,levels=6,stepsize=1e-3,tol=
     Applies the de-noising algorithm to Stokes maps and computes the de-noised polarization gradient.
 
     Input
+    Q_file      : directory to Stokes Q file
+    U_file      : directory to Stokes U file
     noise_sigma : noise in Jy/beam on each pixel
     levels      : number of recursive wavelets
     stepsize    : step size
     tol         : the relative difference of the solution between iterations to give convergence
     iter        : the maximum numer of iterations
+
+    Output
+    Q_res       : restored Stokes Q map
+    U_res       : restored Stokes U map
+    polgrad_res : restored polarization gradient map
+    time_t      : run time in seconds
+    crit        : convergence criteria
     '''
     
     Q_data,Q_header = fits.getdata(Q_file,header=True)
@@ -232,4 +241,4 @@ def denoise_polgrad(Q_file,U_file,noise_sigma=1.1e-2,levels=6,stepsize=1e-3,tol=
     
     polgrad_res = fpolgrad_crossterms(Q_res,U_res)
     
-    return Q_res,U_res,polgrad_res
+    return Q_res,U_res,polgrad_res,time_t,crit
