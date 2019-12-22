@@ -6,7 +6,7 @@ import time as time
 import numpy as np
 import pywt
 
-from functions_polarization import fpolgrad_crossterms
+from functions_polarization import fpolgrad_crossterms, fPI
 
 class EmptyFunction:
     def fun(self, x):      return 0
@@ -220,8 +220,9 @@ def denoise_polgrad(Q_file,U_file,noise_sigma=1.1e-2,levels=6,stepsize=1e-3,tol=
     
     Q_data,Q_header = fits.getdata(Q_file,header=True)
     U_data,U_header = fits.getdata(U_file,header=True)
-    
-    height,width = Q_data.shape
+
+    width,height  = Q_data.shape
+    Q_data,U_data = Q_data[0:height,0:width],U_data[0:height,0:width]
     
     wav         = ["db8","db6","db4"]
     
@@ -233,12 +234,13 @@ def denoise_polgrad(Q_file,U_file,noise_sigma=1.1e-2,levels=6,stepsize=1e-3,tol=
     h = l1_norm_prox(np.max(np.abs(wav_op.forward(Q_data + complex(0, 1.) * U_data))*stepsize))
     h.dir_op = wav_op.forward
     h.adj_op = wav_op.backward
-    
+
     # minimization
-    QU_res, it, time_t, crit = FBPD(Q_data + complex(0,1.)*U_data, f, None, h, {'tol': tol, 'iter': iter});
+    QU_res, it, time, crit = FBPD(Q_data + complex(0,1.)*U_data, f, None, h, {'tol': tol, 'iter': iter});
     Q_res = np.real(QU_res)
     U_res = np.imag(QU_res)
     
+    P_res       = fPI(Q_res,U_res)
     polgrad_res = fpolgrad_crossterms(Q_res,U_res)
     
-    return Q_res,U_res,polgrad_res,time_t,crit
+    return Q_res,U_res,P_res,polgrad_res,time,crit
