@@ -1,5 +1,26 @@
 import numpy as np
 
+def fAK(Hmag,Hmag_err,G2mag,G2mag_err):
+    '''
+    Computes the K-band photometric extinction using the RJCE techinque.
+    See equation 1 in Majewski et al. (2011)
+
+    Input
+    Hmag      : H-band magnitude
+    Hmag_err  : error in H-band magnitude
+    G2mag     : GLIMPSE channel-2 magnitude
+    G2mag_err : error in GLIMPSE channel-2 magnitude
+
+    Output
+    AK    : K-band extinction
+    AKerr : error in K-band extinction
+    '''
+
+    AK    = 0.918 * (Hmag - G2mag - 0.08)
+    AKerr = 0.918 * np.sqrt((Hmag_err)**2. + (G2mag_err)**2.)
+
+    return AK, AKerr
+
 def fmagerrtosnr(magerr):
 	'''
 	Converts photometric magnitude uncertainty to signal-to-noise ratio.
