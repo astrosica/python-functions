@@ -118,7 +118,7 @@ def fAJHK_0(Jmag,Jmag_err,Hmag,Hmag_err,Kmag,Kmag_err,G2mag,G2mag_err):
     K0 = Kmag - AK
 
     # uncertainty in intrinsic K-, J-, and H-band magnitudes
-    H0_err = np.sqrt((1.-1.55*0.918)**2.*Hmag_err**2. + ()**2.*G2mag_err**2.)
+    H0_err = np.sqrt((1.-1.55*0.918)**2.*Hmag_err**2. + (1.55*0.918)**2.*G2mag_err**2.)
     J0_err = np.sqrt(Jmag_err**2. + AJerr**2.)
     K0_err = np.sqrt(Kmag_err**2. + AKerr**2.)
 
