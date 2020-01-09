@@ -160,9 +160,7 @@ def fLJHK(J0,H0,K0,p_mas):
             K0 = np.ones(shape=p_mas.shape) * np.infty
 
     # Gaia parallaxes --> distances
-    p_arcsec = p_mas*1E-3
-    d_pc     = 1./p_arcsec
-    d_10pc   = d_pc/10.
+    p_arcsec,d_pc,d_10pc,d_Mpc = fGaiaParallax(p_mas)
 
     # correct intrinsic magnintudes for Gaia distances
     L_J = J0 - 5.*np.log10(d_10pc)
