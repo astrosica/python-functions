@@ -49,6 +49,9 @@ Possibly useful functions written in Python.
 * [x] convert AB magnitudes to the Vega magnitude scale
 * [x] compute photometric colour and its uncertainty
 * [x] compute K-band extinction using the RJCE technique
+* [x] compute J-band extinction using the RJCE technique
+* [x] compute H-band extinction using the RJCE technique
+* [x] compute J-, H-, and K-band extinctions using the RJCE technique
 
 ## Rolling Hough Transform
 See the [Rolling Hough Transform](https://github.com/seclark/RHT).
