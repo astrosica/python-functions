@@ -22,15 +22,18 @@ def fAJHK(Hmag,Hmag_err,G2mag,G2mag_err):
 
     # RJCE techinque
     AK    = 0.918 * (Hmag - G2mag - 0.08)
-    AKerr = 0.918 * np.sqrt((Hmag_err)**2. + (G2mag_err)**2.)
+    if Hmag_err!=None and G2mag_err!=None:
+        AKerr = 0.918 * np.sqrt((Hmag_err)**2. + (G2mag_err)**2.)
 
     # scaling relations from Majewski
     AJ    = 2.5 * AK
-    AJerr = 2.5 * Akerr
+    if AKerr!=None:
+        AJerr = 2.5 * AKerr
 
     # scaling relations from Majewski
     AH    = 1.55 * AK
-    AHerr = 1.55 * Akerr
+    if AKerr!=None:
+        AHerr = 1.55 * AKerr
 
     return AJ, AJerr, AH, AHerr, AK, AKerr
 
