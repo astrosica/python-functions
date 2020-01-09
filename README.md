@@ -48,10 +48,9 @@ Possibly useful functions written in Python.
 * [x] convert photometric signal-to-noise ratio to magnitude uncertainty
 * [x] convert AB magnitudes to the Vega magnitude scale
 * [x] compute photometric colour and its uncertainty
-* [x] compute K-band extinction using the RJCE technique
-* [x] compute J-band extinction using the RJCE technique
-* [x] compute H-band extinction using the RJCE technique
 * [x] compute J-, H-, and K-band extinctions using the RJCE technique
+* [x] compute J-, H-, and K-band intrinsic magnitudes using the RJCE technique
+* [x] compute J-, H-, and K-band distance-corrected luminosities using Gaia parallaxes
 
 ## Rolling Hough Transform
 See the [Rolling Hough Transform](https://github.com/seclark/RHT).
