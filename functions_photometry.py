@@ -20,20 +20,23 @@ def fAJHK(Hmag,Hmag_err,G2mag,G2mag_err):
     AKerr : error in K-band extinction
     '''
 
+    # replace None's with infty's so we don't have to deal with missing numbers
+    Hmag[Hmag==None]           = np.infty
+    Hmag_err[Hmag_err==None]   = np.infty
+    G2mag[G2mag==None]         = np.infty
+    G2mag_err[G2mag_err==None] = np.infty
+
     # RJCE techinque
     AK    = 0.918 * (Hmag - G2mag - 0.08)
-    if Hmag_err!=None and G2mag_err!=None:
-        AKerr = 0.918 * np.sqrt((Hmag_err)**2. + (G2mag_err)**2.)
+    AKerr = 0.918 * np.sqrt((Hmag_err)**2. + (G2mag_err)**2.)
 
     # scaling relations from Majewski
     AJ    = 2.5 * AK
-    if AKerr!=None:
-        AJerr = 2.5 * AKerr
+    AJerr = 2.5 * AKerr
 
     # scaling relations from Majewski
     AH    = 1.55 * AK
-    if AKerr!=None:
-        AHerr = 1.55 * AKerr
+    AHerr = 1.55 * AKerr
 
     return AJ, AJerr, AH, AHerr, AK, AKerr
 
@@ -61,33 +64,35 @@ def fAJHK_0(Jmag,Jmag_err,Hmag,Hmag_err,Kmag,Kmag_err,G2mag,G2mag_err):
     K_0err : error in K-band instinsic magnnintude
     '''
 
+    # replace None's with infty's so we don't have to deal with missing numbers
+    Jmag[Jmag==None]           = np.infty
+    Jmag_err[Jmag_err==None]   = np.infty
+    Hmag[Hmag==None]           = np.infty
+    Hmag_err[Hmag_err==None]   = np.infty
+    Kmag[Kmag==None]           = np.infty
+    Kmag_err[Kmag_err==None]   = np.infty
+    G2mag[G2mag==None]         = np.infty
+    G2mag_err[G2mag_err==None] = np.infty
+
     # RJCE techinque (required)
     AK    = 0.918 * (Hmag - G2mag - 0.08)
     AH    = 1.55 * AK
     AJ    = 2.5 * AK
 
     # uncertainty in AK, AJ, AH
-    if Hmag_err!=None and G2mag_err!=None:
-        AKerr = 0.918 * np.sqrt((Hmag_err)**2. + (G2mag_err)**2.)
-        AJerr = 2.5 * AKerr
-        AHerr = 1.55*0.918 * np.sqrt((Hmag_err)**2. + (G2mag_err)**2.)
-    else:
-        AKerr = None
-        AJerr = None
-        AHerr = None
+    AKerr = 0.918 * np.sqrt((Hmag_err)**2. + (G2mag_err)**2.)
+    AJerr = 2.5 * AKerr
+    AHerr = 1.55*0.918 * np.sqrt((Hmag_err)**2. + (G2mag_err)**2.)
 
     # intrinsic K-, J-, and H-band magnitudes
     H0 = Hmag - AH
-    if Hmag_err!=None and G2mag_err!=None:
-        H0_err = np.sqrt((1.-1.55*0.918)**2.*Hmag_err**2. + ()**2.*G2mag_err**2.)
-    if Jmag!=None:
-        J0 = Jmag - AJ
-        if Jmag_err!=None and AJerr!=None:
-            J0_err = np.sqrt(Jmag_err**2. + AJerr**2.)
-    if Kmag!=None:
-        K0 = Kmag - AK
-        if Kmag_err!=None and AKerr!=None:
-            K0_err = np.sqrt(Kmag_err**2. + AKerr**2.)
+    J0 = Jmag - AJ
+    K0 = Kmag - AK
+
+    # uncertainty in intrinsic K-, J-, and H-band magnitudes
+    H0_err = np.sqrt((1.-1.55*0.918)**2.*Hmag_err**2. + ()**2.*G2mag_err**2.)
+    J0_err = np.sqrt(Jmag_err**2. + AJerr**2.)
+    K0_err = np.sqrt(Kmag_err**2. + AKerr**2.)
 
     return J0,J0_err,H0,H0_err,K0,K0_err
 
