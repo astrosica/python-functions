@@ -31,10 +31,14 @@ def fAJHK(Hmag,Hmag_err,G2mag,G2mag_err):
         if G2mag_err is None:
             G2mag_err = np.infty
     elif (isinstance(Hmag,np.ndarray)==True) or (isinstance(Hmag,list)==True):
-        Hmag      = np.ones(shape=Hmag) * np.infty
-        Hmag_err  = np.ones(shape=Hmag) * np.infty
-        G2mag     = np.ones(shape=Hmag) * np.infty
-        G2mag_err = np.ones(shape=Hmag) * np.infty
+        if Hmag is None:
+            Hmag = np.ones(shape=Hmag) * np.infty
+        if Hmag_err is None:
+            Hmag_err = np.ones(shape=Hmag) * np.infty
+        if G2mag is None:
+            G2mag = np.ones(shape=Hmag) * np.infty
+        if G2mag_err is None:
+            G2mag_err = np.ones(shape=Hmag) * np.infty
 
     # RJCE techinque
     AK    = 0.918 * (Hmag - G2mag - 0.08)
@@ -93,14 +97,18 @@ def fAJHK_0(Jmag,Jmag_err,Hmag,Hmag_err,Kmag,Kmag_err,G2mag,G2mag_err):
         if G2mag_err is None:
             G2mag_err = np.infty
     elif (isinstance(Hmag,np.ndarray)==True) or (isinstance(Hmag,list)==True):
-        Jmag      = np.ones(shape=Hmag) * np.infty
-        Jmag_err  = np.ones(shape=Hmag) * np.infty
-        Hmag      = np.ones(shape=Hmag) * np.infty
-        Hmag_err  = np.ones(shape=Hmag) * np.infty
-        Kmag      = np.ones(shape=Hmag) * np.infty
-        Kmag_err  = np.ones(shape=Hmag) * np.infty
-        G2mag     = np.ones(shape=Hmag) * np.infty
-        G2mag_err = np.ones(shape=Hmag) * np.infty
+        if Jmag is None:
+            Jmag     = np.ones(shape=Hmag) * np.infty
+        if Jmag_err is None:
+            Jmag_err = np.ones(shape=Hmag) * np.infty
+        if Hmag is None:
+            Hmag     = np.ones(shape=Hmag) * np.infty
+        if Hmag_err is None:
+            Hmag_err = np.ones(shape=Hmag) * np.infty
+        if Kmag is None:
+            Kmag     = np.ones(shape=Hmag) * np.infty
+        if Kmag_err is None:
+            Kmag_err = np.ones(shape=Hmag) * np.infty
 
     # RJCE techinque (required)
     AK    = 0.918 * (Hmag - G2mag - 0.08)
