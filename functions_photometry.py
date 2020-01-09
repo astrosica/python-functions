@@ -1,5 +1,39 @@
 import numpy as np
 
+def fAJHK(Hmag,Hmag_err,G2mag,G2mag_err):
+    '''
+    Computes the J-, H-, and K-band photometric extinctions using the RJCE techinque.
+    See equation 1 in Majewski et al. (2011) and Table 1 in Indebetouw et al. (2005)
+
+    Input
+    Hmag      : H-band magnitude
+    Hmag_err  : error in H-band magnitude
+    G2mag     : GLIMPSE channel-2 magnitude
+    G2mag_err : error in GLIMPSE channel-2 magnitude
+
+    Output
+    AJ    : J-band extinction
+    AJerr : error in J-band extinction
+    AH    : H-band extinction
+    AHerr : error in H-band extinction
+    AK    : K-band extinction
+    AKerr : error in K-band extinction
+    '''
+
+    # RJCE techinque
+    AK    = 0.918 * (Hmag - G2mag - 0.08)
+    AKerr = 0.918 * np.sqrt((Hmag_err)**2. + (G2mag_err)**2.)
+
+    # scaling relations from Majewski
+    AJ    = 2.5 * AK
+    AJerr = 2.5 * Akerr
+
+    # scaling relations from Majewski
+    AH    = 1.55 * AK
+    AHerr = 1.55 * Akerr
+
+    return AJ, AJerr, AH, AHerr, AK, AKerr
+
 def fAK(Hmag,Hmag_err,G2mag,G2mag_err):
     '''
     Computes the K-band photometric extinction using the RJCE techinque.
