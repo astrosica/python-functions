@@ -51,6 +51,7 @@ Possibly useful functions written in Python.
 * [x] compute J-, H-, and K-band extinctions using the RJCE technique
 * [x] compute J-, H-, and K-band intrinsic magnitudes using the RJCE technique
 * [x] compute J-, H-, and K-band distance-corrected luminosities using Gaia parallaxes
+* [x] compute distance using Gaia parallax
 
 ## Rolling Hough Transform
 See the [Rolling Hough Transform](https://github.com/seclark/RHT).
