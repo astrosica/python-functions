@@ -171,6 +171,29 @@ def fLJHK(J0,H0,K0,p_mas):
 
     return L_J,L_H,L_K
 
+def fGaiaParallax(p_mas):
+    '''
+    Computes distance using Gaia parallax.
+
+    Input
+    p_mas : Gaia parallax in milli-arcseconds
+
+    Output
+    p_as   : parallax
+    d_pc   : 
+    d_10pc : 
+    '''
+
+    # convert parallax from milli-arcsec to arcsec
+    p_arcsec = p_mas*1E-3
+
+    # compute distances
+    d_pc     = 1./p_arcsec
+    d_10pc   = d_pc/10.
+    d_Mpc    = d_pc/1E6
+
+    return p_arcsec,d_pc,d_10pc,d_Mpc
+
 def fmagerrtosnr(magerr):
 	'''
 	Converts photometric magnitude uncertainty to signal-to-noise ratio.
