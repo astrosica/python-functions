@@ -21,10 +21,20 @@ def fAJHK(Hmag,Hmag_err,G2mag,G2mag_err):
     '''
 
     # replace None's with infty's so we don't have to deal with missing numbers
-    Hmag[Hmag==None]           = np.infty
-    Hmag_err[Hmag_err==None]   = np.infty
-    G2mag[G2mag==None]         = np.infty
-    G2mag_err[G2mag_err==None] = np.infty
+    if (isinstance(Hmag,float)==True) or (isinstance(Hmag,int)==True):
+        if Hmag==None:
+            Hmag = np.infty
+        if Hmag_err==None:
+            Hmag_err = np.infty
+        if G2mag==None:
+            G2mag = np.infty
+        if G2mag_err==None:
+            G2mag_err = np.infty
+    elif (isinstance(Hmag,np.ndarray)==True) or (isinstance(Hmag,list)==True):
+        Hmag[Hmag==None]           = np.infty
+        Hmag_err[Hmag_err==None]   = np.infty
+        G2mag[G2mag==None]         = np.infty
+        G2mag_err[G2mag_err==None] = np.infty
 
     # RJCE techinque
     AK    = 0.918 * (Hmag - G2mag - 0.08)
@@ -65,14 +75,32 @@ def fAJHK_0(Jmag,Jmag_err,Hmag,Hmag_err,Kmag,Kmag_err,G2mag,G2mag_err):
     '''
 
     # replace None's with infty's so we don't have to deal with missing numbers
-    Jmag[Jmag==None]           = np.infty
-    Jmag_err[Jmag_err==None]   = np.infty
-    Hmag[Hmag==None]           = np.infty
-    Hmag_err[Hmag_err==None]   = np.infty
-    Kmag[Kmag==None]           = np.infty
-    Kmag_err[Kmag_err==None]   = np.infty
-    G2mag[G2mag==None]         = np.infty
-    G2mag_err[G2mag_err==None] = np.infty
+    if (isinstance(Hmag,float)==True) or (isinstance(Hmag,int)==True):
+        if Jmag==None:
+            Jmag = np.infty
+        if Jmag_err==None:
+            Jmag_err = np.infty
+        if Hmag==None:
+            Hmag = np.infty
+        if Hmag_err==None:
+            Hmag_err = np.infty
+        if Kmag==None:
+            Kmag = np.infty
+        if Kmag_err==None:
+            Kmag_err = np.infty
+        if G2mag==None:
+            G2mag = np.infty
+        if G2mag_err==None:
+            G2mag_err = np.infty
+    elif (isinstance(Hmag,np.ndarray)==True) or (isinstance(Hmag,list)==True):
+        Jmag[Jmag==None]           = np.infty
+        Jmag_err[Jmag_err==None]   = np.infty
+        Hmag[Hmag==None]           = np.infty
+        Hmag_err[Hmag_err==None]   = np.infty
+        Kmag[Kmag==None]           = np.infty
+        Kmag_err[Kmag_err==None]   = np.infty
+        G2mag[G2mag==None]         = np.infty
+        G2mag_err[G2mag_err==None] = np.infty
 
     # RJCE techinque (required)
     AK    = 0.918 * (Hmag - G2mag - 0.08)
