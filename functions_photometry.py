@@ -124,6 +124,45 @@ def fAJHK_0(Jmag,Jmag_err,Hmag,Hmag_err,Kmag,Kmag_err,G2mag,G2mag_err):
 
     return J0,J0_err,H0,H0_err,K0,K0_err
 
+def fLJHK(J0,H0,K0,p_mas):
+    '''
+    Computes the distance-corrected intrinsic J-, H-, and K-band luminosities usinng Gaia parallaxes,
+
+    Input:
+    J0    : extinction-corrected J-band magintude
+    H0    : extinction-corrected H-band magintude
+    K0    : extinction-corrected K-band magintude
+    p_mas : Gaia parallaxes in milli-arcsec
+    '''
+
+    # replace None's with infty's so we don't have to deal with missing numbers
+    if (isinstance(p_mas,float)==True) or (isinstance(p_mas,int)==True):
+        if J0 is None:
+            J0 = np.infty
+        if H0 is None:
+            H0 = np.infty
+        if K0 is None:
+            K0 = np.infty
+    elif (isinstance(p_mas,np.ndarray)==True) or (isinstance(p_mas,list)==True):
+        if J0 is None:
+            J0 = np.ones(shape=p_mas.shape) * np.infty
+        if H0 is None:
+            H0 = np.ones(shape=p_mas.shape) * np.infty
+        if K0 is None:
+            K0 = np.ones(shape=p_mas.shape) * np.infty
+
+    # Gaia parallaxes --> distances
+    p_arcsec = p_mas*1E-3
+    d_pc     = 1./p_arcsec
+    d_10pc   = d_pc/10.
+
+    # correct intrinsic magnintudes for Gaia distances
+    L_J = J0 - 5.*np.log10(d_10pc)
+    L_H = H0 - 5.*np.log10(d_10pc)
+    L_K = K0 - 5.*np.log10(d_10pc)
+
+    return L_J,L_H,L_K
+
 def fmagerrtosnr(magerr):
 	'''
 	Converts photometric magnitude uncertainty to signal-to-noise ratio.
