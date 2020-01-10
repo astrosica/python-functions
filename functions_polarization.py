@@ -352,7 +352,7 @@ def fpolangle(Q,U,deg=True):
 
 def fBangle(Q,U,toIAU=True,deg=True):
 	'''
-	Computes the polarization angle.
+	Computes the plane-of-sky magnetic field angle.
 	
 	90 degree rotation = flip sign of Stokes Q and U
 	COSMO polarization angle convention to IAU B-field convention = flip sign of Stokes Q
