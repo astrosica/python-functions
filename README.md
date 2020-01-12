@@ -32,6 +32,7 @@ Possibly useful functions written in Python.
 * [ ] reproject a 3D FITS image from Galactic to equatorial coordinates
 * [x] transform a 3D FITS header to a 2D FITS header
 * [x] slice a 3D FITS data cube along its third axis and saves each 2D image as a separate FITS image
+* [x] reproject a HEALPix image to a standard FITS projection
 
 ## Sky Coordinates
 
