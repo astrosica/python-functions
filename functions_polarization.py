@@ -330,23 +330,31 @@ def fpolgrad_tan(Q,U):
 	
 	return polgrad_tan
 
-def fpolangle(Q,U,deg=True):
+def fpolangle(Q,U,toIAU=False,deg=True):
 	'''
 	Computes the polarization angle.
 	
 	Input
 	Q   : Stokes Q
 	U   : Stokes U
-	deg : if True, convert angles to degrees for output
+	toIAU : if True, converts from COSMO to IAU convention (default=False)
+	deg : if True, convert angles to degrees for output (default=True)
 
 	Output
 	polangle : polarization angle
 	'''
 
-	pol_ang = np.mod(0.5*np.arctan2(U,Q), np.pi)
+	if toIAU==True:
+		# if converting from COSMOS to IAU convention
+		# flip sign of Stokes U
+		U *= -1.
+
+	# polarization angle
+	pol_angle = np.mod(0.5*np.arctan2(U,Q), np.pi)
 
 	if deg==True:
-		pol_ang = np.degrees(pol_angle)
+		# convert from radians to degrees
+		pol_angle = np.degrees(pol_angle)
 
 	return pol_angle
 
@@ -357,9 +365,10 @@ def fBangle(Q,U,toIAU=False,deg=True):
 	COSMO polarization angle convention to IAU B-field convention = flip sign of Stokes U
 	
 	Input
-	Q   : Stokes Q
-	U   : Stokes U
-	deg : if True, convert angles to degrees for output (default=False)
+	Q     : Stokes Q
+	U     : Stokes U
+	toIAU : if True, converts from COSMO to IAU convention (default=False)
+	deg   : if True, convert angles to degrees for output (default=True)
 
 	Output
 	polangle : magnetic field angle
