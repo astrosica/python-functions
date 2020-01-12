@@ -350,33 +350,38 @@ def fpolangle(Q,U,deg=True):
 
 	return pol_angle
 
-def fBangle(Q,U,toIAU=True,deg=True):
+def fBangle(Q,U,toIAU=False,deg=True):
 	'''
 	Computes the plane-of-sky magnetic field angle.
 	
-	90 degree rotation = flip sign of Stokes Q and U
-	COSMO polarization angle convention to IAU B-field convention = flip sign of Stokes Q
+	COSMO polarization angle convention to IAU B-field convention = flip sign of Stokes U
 	
 	Input
 	Q   : Stokes Q
 	U   : Stokes U
-	deg : if True, convert angles to degrees for output
+	deg : if True, convert angles to degrees for output (default=False)
 
 	Output
-	polangle : polarization angle
+	polangle : magnetic field angle
 	'''
 
+	# flip both Q and U to convert from electric
+	# field to magnetic field (equivalent to a
+	# 90 degree rotation)
+
+	Q *= -1.
+	U *= -1.
+
 	if toIAU==True:
-		# only Q changes sign
-		Q *= -1.
-	elif toIAU==False:
-		# both Q and U change sign
-		Q *= -1.
+		# if converting from COSMOS to IAU convention
+		# flip sign of Stokes U
 		U *= -1.
 
+	# magnetic field angle
 	B_angle = np.mod(0.5*np.arctan2(U,Q), np.pi)
 
 	if deg==True:
+		# convert from radians to degrees
 		B_angle = np.degrees(B_angle)
 
 	return B_angle
