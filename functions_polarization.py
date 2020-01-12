@@ -395,6 +395,19 @@ def fBangle(Q,U,toIAU=False,deg=True):
 
 	return B_angle
 
+def fPlanckMJy(I,Q,U):
+	'''
+	Converts Planck Stokes maps from K_CMB to astrophysical units MJy/sr.
+	'''
+
+	fac = 287.5
+
+	I_MJysr = I*fac
+	Q_MJysr = Q*fac
+	U_MJysr = U*fac
+
+	return I_MJysr,Q_MJysr,U_MJysr
+
 def fplotvectors(imagefile,anglefile,deltapix=5,scale=1.,angleunit="deg",coords="wcs",figsize=(20,10)):
 	'''
 	Plots an image with pseudovectors.
