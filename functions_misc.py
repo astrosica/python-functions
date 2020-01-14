@@ -383,6 +383,8 @@ def ftwilight():
     Creates the twilight matplotlib colormap.
     '''
     
+    import matplotlib.colors as colors
+    
     _twilight_data = [
         [0.88575015840754434, 0.85000924943067835,  0.8879736506427196],
         [0.88378520195539056, 0.85072940540310626,  0.88723222096949894],
