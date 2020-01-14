@@ -514,8 +514,6 @@ def fplotvectors(imagefile,anglefile,deltapix=5,scale=1.,angleunit="deg",coords=
 		f.colorbar.set_axis_label_font(size=20)
 		# scale bar
 		f.add_scalebar(1.,color="white",corner="top left")
-		f.scalebar.set_corner("top left")
-		f.scalebar.set_color("white")
 		f.scalebar.set_label("1 degree")
 		f.scalebar.set_font(size=15)
 
