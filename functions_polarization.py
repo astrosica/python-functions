@@ -465,8 +465,7 @@ def fplotvectors(imagefile,anglefile,deltapix=5,scale=1.,angleunit="deg",coords=
 					sys.exit()
 				angle_rad = angles_rad[y,x]
 				angle_deg = angles_deg[y,x]
-				# adjust amplitude
-				amp             = image[y,x]*100.*scale
+				amp       = image[y,x]*100.*scale
 				# create line segment in pixel coordinates
 				(x1_pix,y1_pix) = (x-amp*np.cos(angle_rad),y-amp*np.sin(angle_rad))
 				(x2_pix,y2_pix) = (x+amp*np.cos(angle_rad),y+amp*np.sin(angle_rad))
@@ -484,7 +483,7 @@ def fplotvectors(imagefile,anglefile,deltapix=5,scale=1.,angleunit="deg",coords=
 	if coords in pixel_units:
 		# replace NaNs with zeros just for plotting visuals
 		image[np.isnan(image)==True] = 0.0
-		
+
 		fig = plt.figure(figsize=figsize)
 		ax = fig.add_subplot(111)
 		im = ax.imshow(image,vmax=0.05,cmap="Greys_r",origin="lower")
@@ -498,15 +497,28 @@ def fplotvectors(imagefile,anglefile,deltapix=5,scale=1.,angleunit="deg",coords=
 
 	elif coords in wcs_units:
 		fig = plt.figure(figsize=figsize)
+		# colorscale
 		f = aplpy.FITSFigure(imagefile,figure=fig)
 		f.show_grayscale()
 		f.set_nan_color("black")
+		# pseudovectors
 		f.show_lines(linelist_wcs,layer="vectors",color="red")
-		f.add_scalebar(1.)
+		# axis labels
+		f.axis_labels.set_font(size=20)
+		# tick labels
+		f.tick_labels.show()
+		f.tick_labels.set_font(size=20)
+		# colour bar
+		f.add_colorbar()
+		f.colorbar.set_axis_label_text(r"$|\vec{\nabla}\vec{P}|\,\mathrm{(K/arcmin)}$")
+		f.colorbar.set_axis_label_font(size=20)
+		# scale bar
+		f.add_scalebar(1.,color="white",corner="top left")
 		f.scalebar.set_corner("top left")
 		f.scalebar.set_color("white")
 		f.scalebar.set_label("1 degree")
-		f.add_colorbar()
+		f.scalebar.set_font(size=15)
+
 		fig.canvas.draw()
 		f.save(imagefile.split(".fits")[0]+"_angles.pdf")
 
