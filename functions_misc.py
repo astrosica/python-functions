@@ -378,6 +378,36 @@ def fIFFT2D(data,shift=True):
 
 	return data_ifft
 
+def fwavel(freq):
+	'''
+	Connverts frequency to wavelength.
+
+	Input
+	freq : frequency [Hz]
+
+	Output
+	wavel : wavelength [m]
+	'''
+
+	wavel = const.c.value/freq
+
+	return wavel
+
+def ffreq(wavel):
+	'''
+	Converts wavelength to frequency.
+
+	Input
+	wavel : wavelength [m]
+
+	Output
+	freq : frequency [Hz]
+	'''
+
+	freq = const.c.value/wavel
+
+	return freq
+
 def ftwilight():
     '''
     Creates the twilight matplotlib colormap.
