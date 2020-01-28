@@ -395,6 +395,42 @@ def fBangle(Q,U,toIAU=False,deg=True):
 
 	return B_angle
 
+def fderotate(pangle,RM,wavel,inunit,outunit):
+	'''
+	Computes the de-rotated polarization angles.
+
+	Input
+	pangle  : polarization angle                 [degrees or radians]
+	RM      : rotation measure                   [rad/m^2]
+	wavel   : observing wavelength               [m]
+	inunit  : units of input polarization angle  [degrees or radians]
+	outunit : units of output polarization angle [degrees or radians]
+	'''
+
+	degree_units = ["deg","degree","degrees"]
+	rad_units    = ["rad","radian","radians"]
+
+	if inunit in degree_units:
+		# if input polarization angle is in degrees
+		pangle_deg = pangle
+		pangle_rad = np.radians(pangle)
+	elif inunit in rad_units:
+		# if input polarization angle is in radians
+		pangle_rad = pangle
+		pangle_deg = np.degrees(pangle)
+
+	pangle_0_rad = np.mod(pangle_rad-RM*wavel**2.,np.pi)
+	pangle_0_deg = np.degrees(pangle_0_rad)
+
+	if outunit in degree_units:
+		# if output polarization angle is in degrees
+		pangle_0 = pangle_0_deg
+	elif outunit in rad_units:
+		# if output polarization angle is in radians
+		pangle_0 = pangle_0_rad
+
+	return pangle_0
+
 def fPlanckMJy(I,Q,U):
 	'''
 	Converts Planck Stokes maps from K_CMB to astrophysical units MJy/sr.
