@@ -366,7 +366,6 @@ def fgradphi(Q,U):
 
 	return gradphi
 
-
 def fpolangle(Q,U,toIAU=False,deg=True):
 	'''
 	Computes the polarization angle.
@@ -431,6 +430,25 @@ def fBangle(Q,U,toIAU=False,deg=True):
 		B_angle = np.degrees(B_angle)
 
 	return B_angle
+
+def fSest(Q,U,delta):
+	'''
+	Computes an estimate of the polarization angle dispersion function.
+	See Equation 7 in Planck XII (2018).
+
+	Input
+	Q     : Stokes Q
+	U     : Stokes U
+	delta : lag in pixels
+	'''
+
+	# compute gradient of polarization angle
+	gradphi = fgradphi(Q,U)
+
+	# compute Sest
+	Sest = delta*gradphi/(2.*np.sqrt(2.))
+
+	return Sest
 
 def fderotate(pangle,RM,wavel,inunit,outunit):
 	'''
