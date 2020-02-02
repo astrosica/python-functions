@@ -314,7 +314,7 @@ def fpolgrad_rad(Q,U):
     
 def fpolgrad_tan(Q,U):
 	'''
-	Computes the radial component of the polarization gradient.
+	Computes the tangential component of the polarization gradient.
 	See Equation 25 in Herron et al. (2018).
 	
 	Input
@@ -336,6 +336,36 @@ def fpolgrad_tan(Q,U):
 	polgrad_tan = np.sqrt(polgrad_tan_num/polgrad_tan_den)
 	
 	return polgrad_tan
+
+def fgradphi(Q,U):
+	'''
+	Computes the angular version of the polarization gradient.
+	See Equation 6 in Planck XII (2018).
+
+	Input
+	Q : Stokes Q
+	U : Stokes U
+
+	Output
+	gradphi : 
+	'''
+
+	# compute polarized intensity
+	P = fPI(Q,U)
+
+	# compute mainn terms in gradphi
+	QP = Q/P
+	UP = U/P
+
+	# compute Stokes spatial gradients
+	QP_grad_y,QP_grad_x = np.gradient(QP)
+	UP_grad_y,UP_grad_x = np.gradient(UP)
+
+	# compute gradient of angular component
+	gradphi = np.sqrt((QP_grad_x)**2. + (QP_grad_y)**2. + (UP_grad_x)**2. + (UP_grad_y)**2.)
+
+	return gradphi
+
 
 def fpolangle(Q,U,toIAU=False,deg=True):
 	'''
