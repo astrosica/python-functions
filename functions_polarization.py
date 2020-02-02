@@ -4,7 +4,10 @@ import numpy as np
 import astropy.wcs as wcs
 from astropy.io import fits
 import matplotlib.pyplot as plt
+from astropy import constants as const
 from matplotlib.collections import LineCollection
+
+from functions_misc import fmask_signal
 
 def fPI(Q,U):
 	'''
@@ -22,6 +25,27 @@ def fPI(Q,U):
 	PI = np.sqrt(Q**2.+U**2.)
 	
 	return PI
+
+def fpolfrac(I,Q,U):
+	'''
+	Coomputes the polarization fraction.
+	
+	Input
+	I : Stokes I map
+	Q : Stokes Q map
+	U : Stokes U map
+	
+	Output
+	polfrac : polarization fraction
+	'''
+	
+	# compute polarized intensity
+	PI = np.sqrt(Q**2.+U**2.)
+
+	# compute the polarization fraction
+	polfrac = PI/I
+	
+	return polfrac
 
 def fPI_debiased(Q,U,Q_std,U_std):
 	'''
@@ -47,27 +71,6 @@ def fPI_debiased(Q,U,Q_std,U_std):
 	
 	return PI_debiased
 
-def fpolfrac(I,Q,U):
-	'''
-	Coomputes the polarization fraction.
-	
-	Input
-	I : Stokes I map
-	Q : Stokes Q map
-	U : Stokes U map
-	
-	Output
-	polfrac : polarization fraction
-	'''
-	
-	# compute polarized intensity
-	PI = np.sqrt(Q**2.+U**2.)
-
-	# compute the polarization fraction
-	polfrac = PI/I
-	
-	return polfrac
-
 def fpolgrad(Q,U):
 	'''
 	Computes the polarization gradient.
@@ -82,8 +85,8 @@ def fpolgrad(Q,U):
 	'''
 	
 	# compute Stokes spatial gradients
-	Q_grad_x,Q_grad_y = np.gradient(Q)
-	U_grad_x,U_grad_y = np.gradient(U)
+	Q_grad_y,Q_grad_x = np.gradient(Q)
+	U_grad_y,U_grad_x = np.gradient(U)
 	
 	# compute spatial polarization gradient
 	polgrad  = np.sqrt(Q_grad_x**2.+Q_grad_y**2.+U_grad_x**2.+U_grad_y**2.)
@@ -104,8 +107,8 @@ def fpolgradnorm(Q,U):
 	'''
 	
 	# compute Stokes spatial gradients
-	Q_grad_x,Q_grad_y = np.gradient(Q)
-	U_grad_x,U_grad_y = np.gradient(U)
+	Q_grad_y,Q_grad_x = np.gradient(Q)
+	U_grad_y,U_grad_x = np.gradient(U)
 	
 	# compute spatial polarization gradient
 	polgrad  = np.sqrt(Q_grad_x**2.+Q_grad_y**2.+U_grad_x**2.+U_grad_y**2.)
@@ -132,8 +135,8 @@ def fpolgrad_crossterms(Q,U):
 	'''
 	
 	# compute Stokes spatial gradients
-	Q_grad_x,Q_grad_y = np.gradient(Q)
-	U_grad_x,U_grad_y = np.gradient(U)
+	Q_grad_y,Q_grad_x = np.gradient(Q)
+	U_grad_y,U_grad_x = np.gradient(U)
 	
 	# compute spatial polarization gradient
 	a       = Q_grad_x**2.+Q_grad_y**2.+U_grad_x**2.+U_grad_y**2.
@@ -160,8 +163,8 @@ def fpolgradarg(Q,U,parallel=False,deg=True):
 	'''
 	
 	# compute Stokes spatial gradients
-	Q_grad_x,Q_grad_y = np.gradient(Q)
-	U_grad_x,U_grad_y = np.gradient(U)
+	Q_grad_y,Q_grad_x = np.gradient(Q)
+	U_grad_y,U_grad_x = np.gradient(U)
 
 	# compute argument of polarization gradient
 	a = np.sign(Q_grad_x*Q_grad_y + U_grad_x*U_grad_y)
@@ -180,7 +183,7 @@ def fpolgradarg(Q,U,parallel=False,deg=True):
 
 	return polgrad_arg
 
-def fpolgradarg_crossterms(Q,U,parallel=True,deg=True):
+def fpolgradarg_crossterms(Q,U,parallel=False,deg=True):
 	'''
 	Computes the argument of the polarization gradint with cross-terms.
 	See Equations 13 and 14 in Herron et al. (2018).
@@ -196,8 +199,8 @@ def fpolgradarg_crossterms(Q,U,parallel=True,deg=True):
 	'''
 	
 	# compute Stokes spatial gradients
-	Q_grad_x,Q_grad_y = np.gradient(Q)
-	U_grad_x,U_grad_y = np.gradient(U)
+	Q_grad_y,Q_grad_x = np.gradient(Q)
+	U_grad_y,U_grad_x = np.gradient(U)
 
 	# compute the cos(2*theta) term
 	cos2theta_num = -(Q_grad_y**2. - Q_grad_x**2. + U_grad_y**2. - U_grad_x**2.)
@@ -210,9 +213,13 @@ def fpolgradarg_crossterms(Q,U,parallel=True,deg=True):
 	sin2theta     = sin2theta_num/sin2theta_den
 
 	# compute tan(theta)
-	tantheta      = sin2theta/(1.+cos2theta)
-	# take inverse tan tocompute argument
-	polgrad_arg = np.arctan(tantheta) # angle measured from the x-axis on [-pi/2,+pi/2] in radians
+	tantheta_num  = sin2theta
+	tantheta_den  = 1.+cos2theta
+	# take inverse tan to compute argument
+	polgrad_arg   = np.arctan2(tantheta_num,tantheta_den) # angle measured from the x-axis on [-pi,+pi] in radians
+	# transform angles from [-pi,pi] to [-pi/2,pi/2]
+	polgrad_arg[polgrad_arg<-np.pi/2.] += np.pi
+	polgrad_arg[polgrad_arg>np.pi/2.]  += np.pi
 
 	if parallel==True:
 		# compute argument angle parallel to filaments from North (like the RHT)
@@ -264,8 +271,8 @@ def fpolgradnorm_crossterms(Q,U):
 	'''
 	
 	# compute Stokes spatial gradients
-	Q_grad_x,Q_grad_y = np.gradient(Q)
-	U_grad_x,U_grad_y = np.gradient(U)
+	Q_grad_y,Q_grad_x = np.gradient(Q)
+	U_grad_y,U_grad_x = np.gradient(U)
 	
 	# compute spatial polarization gradient
 	a       = Q_grad_x**2.+Q_grad_y**2.+U_grad_x**2.+U_grad_y**2.
@@ -294,8 +301,8 @@ def fpolgrad_rad(Q,U):
 	'''
 	
 	# compute Stokes spatial gradients
-	Q_grad_x,Q_grad_y = np.gradient(Q)
-	U_grad_x,U_grad_y = np.gradient(U)
+	Q_grad_y,Q_grad_x = np.gradient(Q)
+	U_grad_y,U_grad_x = np.gradient(U)
 	
 	polgrad_rad_num = (Q*Q_grad_x+U*U_grad_x)**2. + (Q*Q_grad_y+U*U_grad_y)**2.
 	polgrad_rad_den = Q**2.+U**2.
@@ -319,8 +326,8 @@ def fpolgrad_tan(Q,U):
 	'''
 	
 	# compute Stokes spatial gradients
-	Q_grad_x,Q_grad_y = np.gradient(Q)
-	U_grad_x,U_grad_y = np.gradient(U)
+	Q_grad_y,Q_grad_x = np.gradient(Q)
+	U_grad_y,U_grad_x = np.gradient(U)
 	
 	polgrad_tan_num = (Q*U_grad_x+U*Q_grad_x)**2. + (Q*U_grad_y-U*Q_grad_y)**2.
 	polgrad_tan_den = Q**2.+U**2.
@@ -444,6 +451,70 @@ def fPlanckMJy(I,Q,U):
 
 	return I_MJysr,Q_MJysr,U_MJysr
 
+def fPlanckCMBmonopole(data,unit="K"):
+	'''
+	Removes the CMB monopole from the Planck 353 GHz Stokes maps.
+	Offset corrections from Planck III (2018).
+
+	Input
+	data : Planck Stokes map
+	unit : dimensions of Stokes map [K or MJysr]
+	'''
+
+	if unit=="K":
+		offset = 452E-6
+	elif unit=="MJysr":
+		offset = 0.13
+
+	data_corr = data - offset
+
+	return data_corr
+
+def fPlanckHIcorr(data,unit="K"):
+	'''
+	Adds the Galactic HI offset correction to the Planck 353 GHz Stokes I map.
+	Offset correction from Planck XII (2018).
+
+	Input
+	data : Planck Stokes I map
+	unit : dimensions of Stokes map [K or MJysr]
+	'''
+
+	if unit=="K":
+		offset = 36E-6
+	elif unit=="MJysr":
+		fac = 287.5 # converts K_CMB to MJy/sr
+		offset = 36E-6 * fac
+
+	data_corr = data + offset
+
+	return data_corr
+
+def fpolgradargdict(polgrad_arg):
+	'''
+	Creates a dictionary of polarization gradient arguments for each pixel in the image plane.
+	
+	Input
+	polgrad_arg : two-dimensional image of polarization gradient argument
+
+	Output
+	polgrad_arg_dict : dictionary of polarization gradient argument with pixel coordinate keys
+	ijpoints         : tuple of pixel coordinates
+	'''
+
+	polgrad_arg_dict = {}
+	ijpoints         = []
+
+	NAXIS2,NAXIS1 = polgrad_arg.shape
+
+	for j in range(NAXIS2):
+		for i in range(NAXIS1):
+			arg = polgrad_arg[j,i]
+			polgrad_arg_dict[i,j]=arg
+			ijpoints.append((i,j))
+
+	return polgrad_arg_dict,ijpoints
+
 def fplotvectors(imagefile,anglefile,deltapix=5,scale=1.,angleunit="deg",coords="wcs",figsize=(20,10)):
 	'''
 	Plots an image with pseudovectors.
@@ -539,22 +610,90 @@ def fplotvectors(imagefile,anglefile,deltapix=5,scale=1.,angleunit="deg",coords=
 		f.set_nan_color("black")
 		# pseudovectors
 		f.show_lines(linelist_wcs,layer="vectors",color="red")
+		# tick coordinates
+		f.tick_labels.set_xformat("hh:mm")
+		f.tick_labels.set_yformat("dd")
 		# axis labels
-		f.axis_labels.set_font(size=20)
+		f.axis_labels.set_font(size=30)
 		# tick labels
 		f.tick_labels.show()
-		f.tick_labels.set_font(size=20)
+		f.tick_labels.set_font(size=30)
 		# colour bar
 		f.add_colorbar()
 		f.colorbar.set_axis_label_text(r"$|\vec{\nabla}\vec{P}|\,\mathrm{(K/arcmin)}$")
-		f.colorbar.set_axis_label_font(size=20)
+		f.colorbar.set_axis_label_font(size=30)
 		# scale bar
 		f.add_scalebar(1.,color="white",corner="top left")
 		f.scalebar.set_label("1 degree")
-		f.scalebar.set_font(size=15)
+		f.scalebar.set_font(size=25)
+		# remove whitespace
+		plt.subplots_adjust(top=1,bottom=0,right=1,left=0,hspace=0,wspace=0)
 
 		fig.canvas.draw()
 		f.save(imagefile.split(".fits")[0]+"_angles.pdf")
+
+def fRMSF(freq_file,weights_file):
+	'''
+	Calculate the rotation measure spread function (RMSF) and related parameters.
+
+	Input
+	freq_file : directory to file containing frequencies in Hertz
+	weights_file : directory to file containing weights
+	'''
+
+	# arrays
+	freq_arr           = np.loadtxt(freq_file,dtype=float) # frequency array in Hertz
+	lambda_sq_arr      = (const.c.value/freq_arr)**2.      # lambda^2 array in m^2
+	if weights_file==None:
+		weights_arr = np.ones(shape=freq_arr.shape)     # weights array
+	else:
+		weights_arr = np.loadtxt(weights_file,dtype=float) # weights array
+
+	# numbers
+	lambda_sq_min      = np.min(lambda_sq_arr)                               # lambda^2 min
+	lambda_sq_max      = np.max(lambda_sq_arr)                               # lambda^2 max
+	Delta_lambda_sq    = lambda_sq_max-lambda_sq_min                         # lambda^2 range
+	delta_lambda_sq    = np.median(np.abs(np.diff(lambda_sq_arr)))           # lambda^2 step size
+	Delta_phi          = 3.79/Delta_lambda_sq                                # RM resolution (FWHM)
+	phi_max            = 1.9/delta_lambda_sq                                 # maximum RM value
+	phi_max_scale      = np.pi/lambda_sq_min                                 # broadest RM feature
+
+	phi_max            = 10.*2.*np.sqrt(3.0) / (lambda_sq_max-lambda_sq_min) # 
+	delta_phi          = 0.1*2.*np.sqrt(3.0) / (lambda_sq_max-lambda_sq_min) # 
+	delta_freq_Hz      = np.nanmin(np.abs(np.diff(freq_arr)))                #
+
+	# arrays
+	phi_array=np.arange(-1.*phi_max,phi_max+1e-6,delta_phi)
+
+	#Output key results to terminal:
+	print("RMSF PROPERTIES:")
+	#print('Theoretical (unweighted) FWHM:       {:.4g} rad m^-2'.format(2.*np.sqrt(3.) / (lambda_sq_max-lambda_sq_min)))
+	#print('Measured FWHM:                       {:.4g} rad m^-2'.format(fwhmRMSFArr))
+	print("Resolution in RM:                    {:.4g} rad m^-2".format(Delta_phi))
+	print("Broadest RM feature probed:          {:.4g} rad m^-2".format(phi_max_scale))
+	print("Maximum RM that can be detected:     {:.4g} rad m^-2".format(phi_max))
+
+def fFDFmom1_1d(FDF_arr,phi_arr,threshold):
+	'''
+	Computes the first moment of a one-dimensional Faraday dispersion function (FDF).
+
+	Input
+	FDF_arr: faraday dispersion function array
+	phi_arr : faraday depth array
+
+	Output
+	mom1 : first moment of FDF
+	'''
+
+	# take absolute value of input FDF
+	FDF_arr = np.abs(FDF_arr)
+	# apply signal threshold
+	_,FDF_arr = fmask_signal(FDF_arr,threshold)
+
+	# compute moment 1
+	mom1    = np.nansum(FDF_arr*phi_arr)/np.nansum(FDF_arr)
+
+	return mom1 # rad/m^2
 
 def fFDFmom2_1d(FDF_arr,phi_arr,threshold,sqrt=False):
 	'''
@@ -586,7 +725,7 @@ def fFDFmom2_1d(FDF_arr,phi_arr,threshold,sqrt=False):
 
 def fFDFmom1_3d(FDF_cube,phi_arr,threshold):
 	'''
-	Computes the first moment of a three-dimensional Faraday dispersion function (FDF).
+	Computes the first moment map of a three-dimensional Faraday dispersion function (FDF).
 
 	Input
 	FDF_cube : faraday dispersion function cube
@@ -597,7 +736,7 @@ def fFDFmom1_3d(FDF_cube,phi_arr,threshold):
 	'''
 
 	NAXIS3,NAXIS2,NAXIS1 = FDF_cube.shape
-	mom1                 = np.zeros(shape=(NAXIS2,NAXIS1))
+	mom1                 = np.ones(shape=(NAXIS2,NAXIS1))*np.nan
 
 	for ypix in np.arange(NAXIS2):
 		for xpix in np.arange(NAXIS1):
@@ -608,7 +747,7 @@ def fFDFmom1_3d(FDF_cube,phi_arr,threshold):
 
 def fFDFmom2_3d(FDF_cube,phi_arr,threshold,sqrt=False):
 	'''
-	Computes the second moment of a three-dimensional Faraday dispersion function (FDF).
+	Computes the second moment map of a three-dimensional Faraday dispersion function (FDF).
 
 	Input
 	FDF_cube : faraday dispersion function cube
@@ -620,7 +759,7 @@ def fFDFmom2_3d(FDF_cube,phi_arr,threshold,sqrt=False):
 	'''
 
 	NAXIS3,NAXIS2,NAXIS1 = FDF_cube.shape
-	mom2                 = np.zeros(shape=(NAXIS2,NAXIS1))
+	mom2                 = np.ones(shape=(NAXIS2,NAXIS1))*np.nan
 
 	for ypix in np.arange(NAXIS2):
 		for xpix in np.arange(NAXIS1):
@@ -628,3 +767,16 @@ def fFDFmom2_3d(FDF_cube,phi_arr,threshold,sqrt=False):
 			mom2[ypix,xpix] = mom2_i
 
 	return mom2 # (rad/m^2)^2 ; or rad/m^2 if square root is taken
+
+
+
+
+
+
+
+
+
+
+
+
+
