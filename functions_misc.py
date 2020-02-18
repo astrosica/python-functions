@@ -378,6 +378,33 @@ def fIFFT2D(data,shift=True):
 
 	return data_ifft
 
+def fTk(delta_v,delta_t=None):
+	'''
+	Computes the upper-limit on kinetic temperature from line broadening.
+
+	Input
+	delta_v : line width in velocity [km/s]
+
+	Output
+	Tk : kinetic temperature	
+	'''
+
+	mH = 1.00784*const.u.value
+	kB = const.k_B.value
+
+	if delta_t is None:
+		# only thermal broadening
+		num = mH*delta_v**2.
+		den = 3.*kB
+		Tk  = num/den
+	elif delta_t is not None:
+		# includes turbulent broadening
+		num = mH*delta_v**2. - delta_t**2.
+		den = 3.*kB
+		Tk  = num/den
+
+	return Tk
+
 def fwavel(freq):
 	'''
 	Connverts frequency to wavelength.
