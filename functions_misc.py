@@ -53,6 +53,8 @@ def fconvolve(oldres,newres,data,header,method="scipy"):
 def freadROHSA(filedir,shape):
 	'''
 	Reads in a dat file containing ROHSA results and outputs the corresponding data.
+	See Marchal et al. (2019) for a description of ROHSA.
+	https://github.com/antoinemarchal/ROHSA
 
 	Input
 	filedir : directory to ROHSA dat file
@@ -60,9 +62,9 @@ def freadROHSA(filedir,shape):
 	nx      : number of pixels in x-dimension
 
 	Output
-	amp : amplitudes  [pixels]
-	pos : positions   [pixels]
-	dis : dispersions [pixels]
+	amplitude : amplitude of Gaussian components         [pixels]
+	position : central position of Gaussian components   [pixels]
+	dispersion : dispersion of Gaussian componennts      [pixels]
 	'''
 
 	def gauss_2D(xs,a,mu,sig):
