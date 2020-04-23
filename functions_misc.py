@@ -1,3 +1,4 @@
+import os
 import numpy as np
 from scipy import fftpack
 from scipy import interpolate
@@ -50,7 +51,89 @@ def fconvolve(oldres,newres,data,header,method="scipy"):
 	
 	return data_smoothed
 
-def freadROHSA(filedir,shape):
+def fPSD_2D(image, image2=None, oned=False, 
+        fft_pad=False, real=False, imag=False,
+        binsize=1.0, radbins=1, azbins=1, radial=False, hanning=False, 
+        wavnum_scale=False, twopi_scale=False, **kwargs):
+    """
+    Source: https://github.com/keflavich/image_tools/blob/master/fft_psd_tools/psds.py
+
+    Two-dimensional Power Spectral Density.
+    NAN values are treated as zero.
+    image2 - can specify a second image if you want to see the cross-power-spectrum instead of the 
+        power spectrum.
+    oned - return radial profile of 2D PSD (i.e. mean power as a function of spatial frequency)
+           freq,zz = PSD2(image); plot(freq,zz) is a power spectrum
+    fft_pad - Add zeros to the edge of the image before FFTing for a speed
+        boost?  (the edge padding will be removed afterwards)
+    real - Only compute the real part of the PSD (Default is absolute value)
+    imag - Only compute the complex part of the PSD (Default is absolute value)
+    hanning - Multiply the image to be PSD'd by a 2D Hanning window before performing the FTs.  
+        Reduces edge effects.  This idea courtesy Paul Ricchiazzia (May 1993), author of the
+        IDL astrolib psd.pro
+    wavnum_scale - multiply the FFT^2 by the wavenumber when computing the PSD?
+    twopi_scale - multiply the FFT^2 by 2pi?
+    azbins - Number of azimuthal (angular) bins to include.  Default is 1, or
+        all 360 degrees.  If azbins>1, the data will be split into [azbins]
+        equally sized pie pieces.  Azbins can also be a numpy array.  See
+        AG_image_tools.azimuthalAverageBins for details
+        
+    
+    radial - An option to return the *azimuthal* power spectrum (i.e., the spectral power as a function 
+        of angle).  Not commonly used.
+    radbins - number of radial bins (you can compute the azimuthal power spectrum in different annuli)
+    """
+    
+    # prevent modification of input image (i.e., the next two lines of active code)
+    image = image.copy()
+
+    # remove NANs (but not inf's)
+    image[image!=image] = 0
+
+    if hanning:
+        image = hanning2d(*image.shape) * image
+
+    if image2 is None:
+        image2 = image
+    else:
+        image2 = image2.copy()
+        image2[image2!=image2] = 0
+        if hanning:
+            image2 = hanning2d(*image2.shape) * image2
+
+    if real:
+        psd2 = np.real( correlate2d(image,image2,return_fft=True,fft_pad=fft_pad) ) 
+    elif imag:
+        psd2 = np.imag( correlate2d(image,image2,return_fft=True,fft_pad=fft_pad) ) 
+    else: # default is absolute value
+        psd2 = np.abs( correlate2d(image,image2,return_fft=True,fft_pad=fft_pad) ) 
+    # normalization is approximately (np.abs(image).sum()*np.abs(image2).sum())
+
+    if wavnum_scale:
+        wx = np.concatenate([ np.arange(image.shape[0]/2,dtype='float') , image.shape[0]/2 - np.arange(image.shape[0]/2,dtype='float') -1 ]) / (image.shape[0]/2.)
+        wy = np.concatenate([ np.arange(image.shape[1]/2,dtype='float') , image.shape[1]/2 - np.arange(image.shape[1]/2,dtype='float') -1 ]) / (image.shape[1]/2.)
+        wx/=wx.max()
+        wy/=wy.max()
+        wavnum = np.sqrt( np.outer(wx,np.ones(wx.shape))**2 + np.outer(np.ones(wy.shape),wx)**2 )
+        psd2 *= wavnum
+
+    if twopi_scale:
+        psd2 *= np.pi * 2
+
+    if radial:
+        azbins,az,zz = radialAverageBins(psd2,radbins=radbins, interpnan=True, binsize=binsize, **kwargs)
+        if len(zz) == 1:
+            return az,zz[0]
+        else:
+            return az,zz
+
+    if oned:
+        return pspec(psd2, azbins=azbins, binsize=binsize, **kwargs)
+
+    # else...
+    return psd2
+
+def freadROHSA(filedir,shape,vmin,vmax,deltav):
 	'''
 	Reads in a dat file containing ROHSA results and outputs the corresponding data.
 	See Marchal et al. (2019) for a description of ROHSA.
@@ -89,17 +172,30 @@ def freadROHSA(filedir,shape):
 				params[2+(3*k),i,j] = sigma[i__]
 				i__ += 1
 
-	amplitude  = params[0]
-	position   = params[1]
-	dispersion = params[2]
+	amplitude  = params[0::3]
+	position   = params[1::3]
+	dispersion = params[2::3]
 
-	result = np.zeros(shape)
+	model = np.zeros(shape)
 	n_gauss = params.shape[0]/3
 
 	for i in np.arange(n_gauss):
-		result += gauss_2D(np.arange(shape[0]),params[int(0+(3*i))],params[int(1+(3*i))],params[int(2+(3*i))])
+		model += gauss_2D(np.arange(shape[0]),params[int(0+(3*i))],params[int(1+(3*i))],params[int(2+(3*i))])
 
-	return amplitude,position,dispersion,result
+	# translate amplitude to column density (assuming optically thin emission)
+	columnden = amplitude*1.823E18
+
+	# translate pixel axis to velocity axis
+	vel_axis = np.arange(vmin,vmax,deltav)
+	pix_axis = np.arange(len(vel_axis))
+	fvel     = interpolate.interp1d(pix_axis,vel_axis)
+	velocity = fvel(position)
+
+	# translate dispersion from pixel to velocity units
+	dispersion_v = dispersion*deltav
+
+	#return amplitude,position,dispersion,model
+	return amplitude,columnden,position,velocity,dispersion,dispersion_v,model
 
 def fmask_snr(data,noise,snr,fill_value=np.nan):
 	'''
@@ -129,7 +225,7 @@ def fmask_snr(data,noise,snr,fill_value=np.nan):
 
 	return (mask,data_clean)
 
-def fmask_signal(data,signal,fill_value=np.nan):
+def fmask_signal(data,signal,fill_value=np.nan,lessthan=True):
 	'''
 	Creates a mask used to clip data based on signal level.
 	
@@ -145,8 +241,11 @@ def fmask_signal(data,signal,fill_value=np.nan):
 
 	# create mask
 	mask             = np.ones(shape=data.shape) # initialize mask
-	low_signal       = np.where(data<signal)     # find signal less than input requirement
-	mask[low_signal] = fill_value                # set low signal to nan
+	if lessthan is True:
+		low_signal       = np.where(data<signal)
+	elif lessthan is not True:
+		low_signal       = np.where(data>signal)
+	mask[low_signal] = fill_value
 	
 	# mask data
 	data_clean       = data*mask
@@ -1318,8 +1417,31 @@ def ftwilight():
     return cmaps
 
 
+def fplanckfreqcmap():
+    '''
+    Creates the Planck matplotlib colormap.
+    '''
+
+    from matplotlib.colors import ListedColormap
+    planck_cmap = ListedColormap(np.loadtxt("/Users/campbell/Documents/PhD/data/functions/Planck_FreqMap_RGB.txt")/255.)
+    #planck_cmap.set_bad("gray")    # color of missing pixels
+    #planck_cmap.set_under("white") # color of background, necessary if you want to use with mollview
+
+    return planck_cmap
 
 
+
+def fplanckparchmentcmap():
+    '''
+    Creates the Planck matplotlib colormap.
+    '''
+
+    from matplotlib.colors import ListedColormap
+    planck_cmap = ListedColormap(np.loadtxt("/Users/campbell/Documents/PhD/data/functions/Planck_Parchment_RGB.txt")/255.)
+    planck_cmap.set_bad("gray")    # color of missing pixels
+    planck_cmap.set_under("white") # color of background, necessary if you want to use with mollview
+
+    return planck_cmap
 
 
 
