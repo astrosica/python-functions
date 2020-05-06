@@ -3,6 +3,7 @@ import aplpy
 import numpy as np
 import astropy.wcs as wcs
 from astropy.io import fits
+from scipy import interpolate
 import matplotlib.pyplot as plt
 from astropy import constants as const
 from matplotlib.collections import LineCollection
@@ -337,7 +338,7 @@ def fpolgrad_tan(Q,U):
 	
 	return polgrad_tan
 
-def fgradphi(Q,U):
+def fgradchi(Q,U):
 	'''
 	Computes the angular version of the polarization gradient.
 	See Equation 6 in Planck XII (2018).
@@ -347,7 +348,7 @@ def fgradphi(Q,U):
 	U : Stokes U
 
 	Output
-	gradphi : 
+	gradchi : 
 	'''
 
 	# compute polarized intensity
@@ -362,9 +363,9 @@ def fgradphi(Q,U):
 	UP_grad_y,UP_grad_x = np.gradient(UP)
 
 	# compute gradient of angular component
-	gradphi = np.sqrt((QP_grad_x)**2. + (QP_grad_y)**2. + (UP_grad_x)**2. + (UP_grad_y)**2.)
+	gradchi = np.sqrt((QP_grad_x)**2. + (QP_grad_y)**2. + (UP_grad_x)**2. + (UP_grad_y)**2.)
 
-	return gradphi
+	return gradchi
 
 def fpolangle(Q,U,toIAU=False,deg=True):
 	'''
@@ -430,6 +431,151 @@ def fBangle(Q,U,toIAU=False,deg=True):
 		B_angle = np.degrees(B_angle)
 
 	return B_angle
+
+def lic(vx, vy, length=1, niter=1, normalize=True, amplitude=False, level=0.1, scalar=1, interpolation='nearest'):
+	# Calculates the line integral convolution representation of the 2D vector field represented by Vx and Vy.
+	# INPUTS
+	# Vx     - X
+	# Vy     - Y
+	# length - L
+
+	vxbad=np.isnan(vx).nonzero()
+	vybad=np.isnan(vy).nonzero()
+
+	vx[vxbad]=0. 
+	vy[vybad]=0.
+
+	sz=np.shape(vx)
+
+	ni=sz[0]
+	nj=sz[1]
+
+	uu=np.sqrt(vx**2+vy**2)
+	ii=(uu == 0.).nonzero()
+
+	if (np.size(ii) > 0):
+		uu[ii]=1.0
+	if (normalize):
+		ux=vx/uu
+		uy=vy/uu
+	else: 
+		ux=vx/np.max(uu)
+		uy=vy/np.max(uu)
+
+	vl=np.random.rand(ni,nj)
+
+	xi=np.arange(ni)
+	xj=np.arange(nj)
+
+	for i in range(0,niter):
+
+		print('iter {:.0f} / {:.0f}'.format(i, niter))
+
+		texture=vl
+		vv=np.zeros([ni,nj])
+
+		pi0, pj0 = np.meshgrid(xi, xj, indexing ='ij')
+		pi, pj   = np.meshgrid(xi, xj, indexing ='ij')
+		mi=pi 
+		mj=pj
+
+		ppi=1.*pi
+		ppj=1.*pj
+		mmi=1.*mi
+		mmj=1.*mj
+
+		for l in range(0,length):
+
+			print('{} / {}'.format(l, length))
+
+			ppi0=ppi
+			ppj0=ppj
+			points   =np.transpose(np.array([pi0.ravel(),pj0.ravel()]))
+			outpoints=np.transpose(np.array([ppi.ravel(),ppj.ravel()]))
+
+			dpi=interpolate.griddata(points, uy.ravel(), outpoints, method=interpolation)
+			dpj=interpolate.griddata(points, ux.ravel(), outpoints, method=interpolation)
+
+			ppi=ppi0+0.25*np.reshape(dpi,[ni,nj])
+			ppj=ppj0+0.25*np.reshape(dpj,[ni,nj])
+
+			mmi0=mmi
+			mmj0=mmj
+			points   =np.transpose(np.array([pi0.ravel(),pj0.ravel()]))
+			outpoints=np.transpose(np.array([mmi.ravel(),mmj.ravel()]))
+			dmi=interpolate.griddata(points, uy.ravel(), outpoints, method=interpolation)
+			dmj=interpolate.griddata(points, ux.ravel(), outpoints, method=interpolation)
+
+			mmi=mmi0-0.25*np.reshape(dmi,[ni,nj])
+			mmj=mmj0-0.25*np.reshape(dmj,[ni,nj])
+			pi=(np.fix(ppi) + ni) % ni
+			pj=(np.fix(ppj) + nj) % nj
+			mi=(np.fix(mmi) + ni) % ni
+			mj=(np.fix(mmj) + nj) % nj
+
+			ppi=pi+(ppi.copy()-np.fix(ppi.copy()))
+			ppj=pj+(ppj.copy()-np.fix(ppj.copy()))
+			mmi=mi+(mmi.copy()-np.fix(mmi.copy()))
+			mmj=mj+(mmj.copy()-np.fix(mmj.copy()))
+
+			points   =np.transpose(np.array([pi0.ravel(),pj0.ravel()]))
+			outpoints=np.transpose(np.array([ppi.ravel(),ppj.ravel()]))
+			tempA=interpolate.griddata(points, texture.ravel(), outpoints, method=interpolation)
+
+			points   =np.transpose(np.array([pi0.ravel(),pj0.ravel()]))
+			outpoints=np.transpose(np.array([mmi.ravel(),mmj.ravel()]))
+			tempB=interpolate.griddata(points, texture.ravel(), outpoints, method=interpolation)
+
+		vv=vv.copy() + np.reshape(tempA,[ni,nj]) + np.reshape(tempB,[ni,nj])
+		vl=0.25*vv/length
+
+	#import pdb; pdb.set_trace()
+	vl[vxbad]=np.nan
+	vl[vybad]=np.nan
+
+	return vl
+
+def fLIC(I_file,Q_file,U_file,toIAU=True):
+
+	I_data,I_header = fits.getdata(I_file,header=True)
+	Q_data = fits.getdata(Q_file)
+	U_data = fits.getdata(U_file)
+
+	# flip both Q and U to convert from electric
+	# field to magnetic field (equivalent to a
+	# 90 degree rotation)
+
+	#Q_data *= -1.
+	#U_data *= -1.
+
+	#if toIAU==True:
+		# if converting from COSMOS to IAU convention
+		# flip sign of Stokes U
+	#	U_data *= -1.
+
+	# magnetic field angle
+	#B_angle = np.mod(0.5*np.arctan2(U_data,Q_data), np.pi)
+
+	B_angle=np.arctan2(-U_data,Q_data)
+
+	e_x = np.cos(B_angle)
+	e_y = np.sin(B_angle)
+	b_x = np.copy(e_y)
+	b_y = -np.copy(e_x)
+
+	s_z = np.shape(I_data)
+	length = int(1.*s_z[0])
+
+	licmap = lic(b_x,b_y,length=length,niter=2)
+
+	fig = plt.figure(figsize=(10,10))
+	ax1=plt.subplot(1,1,1, projection=wcs.WCS(I_header))
+	im=ax1.imshow(I_data, origin='lower')
+	ax1.imshow(licmap, origin='lower', alpha=0.4, cmap='binary', clim=[np.mean(licmap)-np.std(licmap),np.mean(licmap)+np.std(licmap)])
+	#arrows=plt.quiver(x, y, ux, uy, units='width', color='black', pivot='middle', headlength=0, headwidth=0)
+	plt.colorbar(im)
+	plt.savefig("/Users/campbell/Documents/PhD/data/Planck/LIC.pdf",bbox_inches="tight")
+	plt.show()
 
 def fSest(Q,U,delta):
 	'''
@@ -617,13 +763,13 @@ def fplotvectors(imagefile,anglefile,deltapix=5,scale=1.,angleunit="deg",coords=
 				else:
 					# raise error
 					print "Input angleunit is not defined."
-					sys.exit()
+					sys.exit() # pol_angle = np.mod(0.5*np.arctan2(U,Q), np.pi)
 				angle_rad = angles_rad[y,x]
 				angle_deg = angles_deg[y,x]
 				amp       = image[y,x]*100.*scale
 				# create line segment in pixel coordinates
-				(x1_pix,y1_pix) = (x-amp*np.cos(angle_rad),y-amp*np.sin(angle_rad))
-				(x2_pix,y2_pix) = (x+amp*np.cos(angle_rad),y+amp*np.sin(angle_rad))
+				(x1_pix,y1_pix) = (x-amp*np.sin(angle_rad),y+amp*np.cos(angle_rad))
+				(x2_pix,y2_pix) = (x+amp*np.sin(angle_rad),y-amp*np.cos(angle_rad))
 				line_pix        = np.array([(x1_pix,y1_pix),(x2_pix,y2_pix)])
 				if coords in pixel_units:
 					linelist_pix.append(line_pix)
@@ -657,23 +803,24 @@ def fplotvectors(imagefile,anglefile,deltapix=5,scale=1.,angleunit="deg",coords=
 		f.show_grayscale()
 		f.set_nan_color("black")
 		# pseudovectors
-		f.show_lines(linelist_wcs,layer="vectors",color="red")
+		f.show_lines(linelist_wcs,layer="vectors",color="red",linewidth=1)
 		# tick coordinates
-		f.tick_labels.set_xformat("hh:mm")
-		f.tick_labels.set_yformat("dd")
+		#f.tick_labels.set_xformat("hh:mm")
+		#f.tick_labels.set_yformat("dd")
 		# axis labels
-		f.axis_labels.set_font(size=30)
+		f.axis_labels.set_font(size=20)
 		# tick labels
 		f.tick_labels.show()
-		f.tick_labels.set_font(size=30)
+		f.tick_labels.set_font(size=20)
 		# colour bar
 		f.add_colorbar()
-		f.colorbar.set_axis_label_text(r"$|\vec{\nabla}\vec{P}|\,\mathrm{(K/arcmin)}$")
-		f.colorbar.set_axis_label_font(size=30)
+		#f.colorbar.set_axis_label_text(r"$|\vec{\nabla}\vec{P}|\,\mathrm{(K/arcmin)}$")
+		f.colorbar.set_axis_label_text(r"$I_{857}\,\mathrm{(MJy/sr)}$")
+		f.colorbar.set_axis_label_font(size=20)
 		# scale bar
-		f.add_scalebar(1.,color="white",corner="top left")
-		f.scalebar.set_label("1 degree")
-		f.scalebar.set_font(size=25)
+		f.add_scalebar(5.,color="white",corner="top left")
+		f.scalebar.set_label("5 degrees")
+		f.scalebar.set_font(size=20)
 		# remove whitespace
 		plt.subplots_adjust(top=1,bottom=0,right=1,left=0,hspace=0,wspace=0)
 
