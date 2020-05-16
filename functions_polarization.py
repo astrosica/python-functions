@@ -27,7 +27,7 @@ def fPI(Q,U):
 	
 	return PI
 
-def fPI_error(Q,U,QQ,UU,QU):
+def fPI_error(Q,U,QQ,QU,UU):
 	'''
 	Computes the uncertainty of the the polarized intensity.
 	See Equation B.4 in Planck XIX (2015).
@@ -36,8 +36,8 @@ def fPI_error(Q,U,QQ,UU,QU):
 	Q  : Stokes Q
 	U  : Stokes U
 	QQ : QQ covariance
-	UU : UU covariance
 	QU : QU covariance
+	UU : UU covariance
 
 	Output
 	PI_error : uncertainty in polarized intensity
@@ -55,10 +55,10 @@ def fpolangle(Q,U,toIAU=False,deg=True):
 	Computes the polarization angle.
 	
 	Input
-	Q   : Stokes Q
-	U   : Stokes U
+	Q     : Stokes Q
+	U     : Stokes U
 	toIAU : if True, converts from COSMO to IAU convention (default=False)
-	deg : if True, convert angles to degrees for output (default=True)
+	deg   : if True, convert angles to degrees for output (default=True)
 
 	Output
 	polangle : polarization angle
@@ -78,18 +78,38 @@ def fpolangle(Q,U,toIAU=False,deg=True):
 
 	return pol_angle
 
-def fpolangle_error(Q,U,QQ,UU,QU):
+def fpolangle_error(Q,U,QQ,QU,UU,deg=True):
 	'''
 	Computed the uncertainty in the polarization angle.
+	See Equation B.3 in Planck XIX (2015).
 
 	Input
+	Q   : Stokes Q
+	U   : Stokes U
+	QQ  : QQ covariance
+	QU  : QU covariance
+	UU  : UU covariance
+	deg : if True, convert angles to degrees for output (default=True)
 
 	Output
-
+	polangle_error : uncertainty in polarization angle
 	'''
 
+	num = Q**2.*UU + U**2.*QQ - 2.*Q*U*QU
+	den = Q**2.*QQ + U**2.*UU + 2.*Q*U*QU
 
+	# compute uncertainty in polarized intensity
+	PI_error = fPI_error(Q,U,QQ,QU,UU)
 
+	if deg==True:
+		fac = 28.65
+	else:
+		fac = np.radians(28.65)
+
+	# compute uncertainty in polarization angle
+	polangle_error = fac * np.sqrt(num/den) * PI_error
+
+	return polangle_error
 
 
 def fpolfrac(I,Q,U):
