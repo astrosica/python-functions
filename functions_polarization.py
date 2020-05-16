@@ -30,7 +30,7 @@ def fPI(Q,U):
 def fPI_error(Q,U,QQ,UU,QU):
 	'''
 	Computes the uncertainty of the the polarized intensity.
-	See Equation B.4 in Planck XIX (2015)
+	See Equation B.4 in Planck XIX (2015).
 
 	Input
 	Q  : Stokes Q
@@ -49,6 +49,47 @@ def fPI_error(Q,U,QQ,UU,QU):
 	PI_error = (Q**2.*QQ + U**2.*UU + 2.*Q*U*QU)/(PI**2.)
 
 	return PI_error
+
+def fpolangle(Q,U,toIAU=False,deg=True):
+	'''
+	Computes the polarization angle.
+	
+	Input
+	Q   : Stokes Q
+	U   : Stokes U
+	toIAU : if True, converts from COSMO to IAU convention (default=False)
+	deg : if True, convert angles to degrees for output (default=True)
+
+	Output
+	polangle : polarization angle
+	'''
+
+	if toIAU==True:
+		# if converting from COSMOS to IAU convention
+		# flip sign of Stokes U
+		U *= -1.
+
+	# polarization angle
+	pol_angle = np.mod(0.5*np.arctan2(U,Q), np.pi)
+
+	if deg==True:
+		# convert from radians to degrees
+		pol_angle = np.degrees(pol_angle)
+
+	return pol_angle
+
+def fpolangle_error(Q,U,QQ,UU,QU):
+	'''
+	Computed the uncertainty in the polarization angle.
+
+	Input
+
+	Output
+
+	'''
+
+
+
 
 
 def fpolfrac(I,Q,U):
@@ -71,6 +112,37 @@ def fpolfrac(I,Q,U):
 	polfrac = PI/I
 	
 	return polfrac
+
+def fpolfrac_error(I,Q,U,II,IQ,IU,QQ,QU,UU):
+	'''
+	Computes the uncertainty in the polarization fraction.
+
+	Input
+	I  : Stokes I
+	Q  : Stokes Q
+	U  : Stokes U
+	II : II covariance
+	IQ : IQ covariance
+	IU : IU covariance
+	QQ : QQ covariance
+	QU : QU covariance
+	UU : UU covariance
+
+	Output
+	polfrac_error : uncertainty in polarization fraction
+	'''
+
+	# compute polarization fraction
+	polfrac = fpolfrac(I,Q,U)
+
+	# compute uncertainty in polarization fraction
+	a_den = (polfrac**2.) * (I**4.)
+	a     = 1./fac_den
+	b     = Q**2.*QQ + U**2.*UU + (II/(I**2.))*(Q**2.+U**2.)**2. + 2.*Q*U*QU - (2.*U*(Q**2.+U**2.)*IQ)/I - (2.*U*(Q**2.+U**2.)*IU)/I
+
+	polfrac_error = np.sqrt(a*b)
+
+	return polfrac_error
 
 def fPI_debiased(Q,U,Q_std,U_std):
 	'''
@@ -390,34 +462,6 @@ def fgradchi(Q,U):
 	gradchi = np.sqrt((QP_grad_x)**2. + (QP_grad_y)**2. + (UP_grad_x)**2. + (UP_grad_y)**2.)
 
 	return gradchi
-
-def fpolangle(Q,U,toIAU=False,deg=True):
-	'''
-	Computes the polarization angle.
-	
-	Input
-	Q   : Stokes Q
-	U   : Stokes U
-	toIAU : if True, converts from COSMO to IAU convention (default=False)
-	deg : if True, convert angles to degrees for output (default=True)
-
-	Output
-	polangle : polarization angle
-	'''
-
-	if toIAU==True:
-		# if converting from COSMOS to IAU convention
-		# flip sign of Stokes U
-		U *= -1.
-
-	# polarization angle
-	pol_angle = np.mod(0.5*np.arctan2(U,Q), np.pi)
-
-	if deg==True:
-		# convert from radians to degrees
-		pol_angle = np.degrees(pol_angle)
-
-	return pol_angle
 
 def fBangle(Q,U,toIAU=False,deg=True):
 	'''
