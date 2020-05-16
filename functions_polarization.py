@@ -27,6 +27,30 @@ def fPI(Q,U):
 	
 	return PI
 
+def fPI_error(Q,U,QQ,UU,QU):
+	'''
+	Computes the uncertainty of the the polarized intensity.
+	See Equation B.4 in Planck XIX (2015)
+
+	Input
+	Q  : Stokes Q
+	U  : Stokes U
+	QQ : QQ covariance
+	UU : UU covariance
+	QU : QU covariance
+
+	Output
+	PI_error : uncertainty in polarized intensity
+	'''
+
+	# compute polarized intensity
+	PI = fPI(Q,U)
+
+	PI_error = (Q**2.*QQ + U**2.*UU + 2.*Q*U*QU)/(PI**2.)
+
+	return PI_error
+
+
 def fpolfrac(I,Q,U):
 	'''
 	Coomputes the polarization fraction.
