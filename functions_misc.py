@@ -11,25 +11,31 @@ from astropy.convolution import convolve_fft
 from matplotlib import rc
 rc("text", usetex=True)
 
-def fconvolve(oldres,newres,data,header,method="scipy"):
+def fconvolve(oldres,newres,data,header,restype="FWHM",method="scipy"):
 	'''
 	Convolves an image using FFT convolution.
 	Note: newres is not the size of the convolution kernel, this will be solved for.
 	
 	Input
-	oldres : input resolution in arcminutes (FWHM)
-	newres : desired resolution in arcminutes (FWHM)
-	data   : image to be convolved
-	header : FITS header of image
-	method : method of interpolation; can be scipy or astropy (default=scipy)
+	oldres  : input resolution in arcminutes (FWHM)
+	newres  : desired resolution in arcminutes (FWHM)
+	data    : image to be convolved
+	header  : FITS header of image
+	restype : type of resolution; can be either sigma (standard deviation) or FWHM (default=sigma)
+	method  : method of interpolation; can be scipy or astropy (default=scipy)
 	
 	Output
 	data_smoothed : smoothed image
 	'''
 	
-	# convert FWHM to standard deviations
-	oldres_sigma  = oldres/(2.*np.sqrt(2.*np.log(2.)))
-	newres_sigma  = newres/(2.*np.sqrt(2.*np.log(2.)))
+	if restype=="sigma":
+		# do nothing
+		oldres_sigma = oldres
+		newres_sigma = newres
+	if restype=="FWHM":
+		# convert FWHM to standard deviations
+		oldres_sigma  = oldres/(2.*np.sqrt(2.*np.log(2.)))
+		newres_sigma  = newres/(2.*np.sqrt(2.*np.log(2.)))
 	# construct kernel
 	kernel_arcmin = np.sqrt(newres_sigma**2.-oldres_sigma**2.) # convolution theorem
 	pixelsize     = header["CDELT2"]*60.                       # in arcminutes
@@ -240,11 +246,11 @@ def fmask_signal(data,signal,fill_value=np.nan,lessthan=True):
 	'''
 
 	# create mask
-	mask             = np.ones(shape=data.shape) # initialize mask
+	mask = np.ones(shape=data.shape) # initialize mask
 	if lessthan is True:
-		low_signal       = np.where(data<signal)
+		low_signal = np.where(data<signal)
 	elif lessthan is not True:
-		low_signal       = np.where(data>signal)
+		low_signal = np.where(data>signal)
 	mask[low_signal] = fill_value
 	
 	# mask data
