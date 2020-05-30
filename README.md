@@ -62,6 +62,12 @@ See the [Rolling Hough Transform](https://github.com/seclark/RHT).
 * [x] compute the distribution in RHT angle differences between two images
 * [x] compute the RHT backprojection allowing one to mask specific angles
 
+## Line Integral Convolution (LIC)
+
+* [x] compute magnetic field orientation in IAU convention
+* [x] compute LIC texture
+* [x] overplot LIC texture on an image
+
 ## Miscellaneous
 
 * [x] convolve a 2D FITS image using FFT convolution
