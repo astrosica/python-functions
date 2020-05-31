@@ -2,6 +2,7 @@ import os
 import numpy as np
 import rht, RHT_tools
 from astropy.io import fits
+from functions_misc import fdeltatheta
 
 def fRHTdir(dir,wlen,smr,frac):
 	'''
@@ -9,9 +10,9 @@ def fRHTdir(dir,wlen,smr,frac):
 	
 	Input
 	dir  : the directory within which the RHT will perform
-	wlen : the window length (D_W) which sets the length of a structure
-	smr  : the unsharp mask smoothing radius (D_K)
-	frac : fraction/percent of one angle that must be 'lit up' to be counted
+	wlen : the window length (D_W) which sets the length of a structure (default=21)
+	smr  : the unsharp mask smoothing radius (D_K; default=2)
+	frac : fraction/percent of one angle that must be 'lit up' to be counted (default=0.7)
 
 	Output
 	saves the RHT FITS table to the input dir directory
@@ -58,7 +59,6 @@ def faddtoRHTheader(rhtfile,newheader):
 	thdulist = fits.HDUList([priHDU,tblHDU])                # table HDUlist
 	thdulist.writeto(rhtfile,output_verify="silentfix",overwrite=True,checksum=True)
 
-
 def RHTanglediff(ijpoints_polgrad_HI,RHT_polgrad_dict,RHT_HI_dict,hthets_polgrad,hthets_HI,angles_polgrad,angles_HI):
 	'''
 	Computes the RHT angle difference between two maps.
@@ -103,6 +103,85 @@ def RHTanglediff(ijpoints_polgrad_HI,RHT_polgrad_dict,RHT_HI_dict,hthets_polgrad
 	intensity_diff_HI      = np.array(intensity_diff_HI)
 
 	return theta_diff_polgrad_HI, intensity_diff_HI
+
+def fRHTargdiff(ijpoints,arg_dict,RHT_dict,angles):
+	'''
+	Computes the angle difference between the polarization gradient argument and the HI RHT.
+
+	Input
+	ijpoints : list or array of pixel positions (i,j)
+	arg_dict : dictionary of polarization gradient argument for each pixel position (i,j) in degrees on [-90,+90]
+	RHT_dict : dictionary of RHT angle intensities for each pixel position (i,j)
+	angles   : list or array of RHT angles associated with hthets in degrees on [0,180)
+
+	Output
+	theta_diff : array of differences between arguments of polarizartion gradients and HI fibers
+	'''
+
+	theta_diff = []
+	# 0 -- 16 degrees    : ignore
+	# 164 -- 180 degrees : ignore
+	# 16 -- 164 degrees  : want
+
+	#angles_deg = np.degrees(angles)
+
+	# iterate through spatial pixels common to non-zero polarization gradient and HI RHT angle intensities
+	for ijpoint in ijpoints:
+		arg_ij       = arg_dict[ijpoint]                # single angle
+		hthets_ij    = RHT_dict[ijpoint]                # list of intensities as a function of angle
+		# extract non-zero intensity RHT angles
+		thetas_ij    = angles[np.where(hthets_ij>0)[0]] # list of angles
+		# iterate through RHT angles and compute difference from argument
+		if (arg_ij!=np.nan) and (np.isnan(arg_ij)==False):
+			# ignore nan argument angles
+			for theta_ij in thetas_ij:
+				# ignore artefact RHT angles
+				if (theta_ij>16.) and (theta_ij<164.):
+					#arg_RHT_diff = np.abs((arg_ij+90.)) - np.abs((theta_ij))
+					arg_RHT_diff = fdeltatheta(arg_ij,theta_ij,"deg","deg")
+					theta_diff.append(arg_RHT_diff)
+
+	theta_diff = np.array(theta_diff)
+
+	return theta_diff
+
+def fRHTargdiff_filament_map(ijpoints,arg_dict,RHT_dict,angles):
+	'''
+	Computes a map of the the angular offset between the polarization gradient argument and the HI RHT for the bright polarized filament in N1.
+
+	Input
+	ijpoints : list or array of pixel positions (i,j)
+	arg_dict : dictionary of polarization gradient argument for each pixel position (i,j) in degrees on [-90,+90]
+	RHT_dict : dictionary of RHT angle intensities for each pixel position (i,j)
+	angles   : list or array of RHT angles associated with hthets in degrees on [0,180)
+
+	Output
+	theta_diff : array of differences between arguments of polarizartion gradients and HI fibers
+	'''
+
+	theta_diff_map = np.zeros(shape=(455, 455))
+	# 0 -- 16 degrees    : ignore
+	# 164 -- 180 degrees : ignore
+	# 16 -- 164 degrees  : want
+
+	#angles_deg = np.degrees(angles)
+
+	# iterate through spatial pixels common to non-zero polarization gradient and HI RHT angle intensities
+	for ijpoint in ijpoints:
+		arg_ij       = arg_dict[ijpoint]                # single angle
+		hthets_ij    = RHT_dict[ijpoint]                # list of intensities as a function of angle
+		# extract non-zero intensity RHT angles
+		thetas_ij    = angles[np.where(hthets_ij>0)[0]] # list of angles
+		# iterate through RHT angles and compute difference from argument
+		if (arg_ij!=np.nan) and (np.isnan(arg_ij)==False):
+			# ignore nan argument angles
+			for theta_ij in thetas_ij:
+				# ignore artefact RHT angles
+				if (theta_ij>16.) and (theta_ij<164.):
+					arg_RHT_diff = fdeltatheta(arg_ij,theta_ij,"deg","deg")
+					theta_diff_map[ijpoint[1],ijpoint[0]] = arg_RHT_diff
+
+	return theta_diff_map
 
 def fRHTthetadict(ijpoints,hthets):
 	'''
@@ -150,8 +229,11 @@ def fRHTbackprojection(ipoints,jpoints,hthets,naxis1,naxis2):
 		hthets = hthets_dict[i,j]
 		# mask hthets
 		hthets_masked        = np.copy(hthets)
-		hthets_masked[:15+1] = 0.0
-		hthets_masked[-15:]  = 0.0
+		# polarization gradient
+		#hthets_masked[:15+1] = 0.0
+		#hthets_masked[-15:]  = 0.0
+		# weight map FFT
+		hthets_masked[0]     = 0.0
 		hthets_sum           = np.sum(hthets_masked)
 		backproj[j,i]        = hthets_sum
 

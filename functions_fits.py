@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import healpy as hp
 import astropy.wcs as wcs
 from astropy.io import fits
 from astropy import units as u
@@ -55,6 +56,25 @@ def fcubeavg(filedir_in,filedir_out,write=False):
         fits.writeto(filedir_out,data_avg,header_avg,overwrite=True)
 
     return data_avg,header_avg
+
+def faddfits(filedir_in,filedir_out,write=True):
+    '''
+    Computes the summation of a list of two-dimensional FITS files.
+
+    Input
+    filedir_in  : list of paths to FITS files to be summed
+    filedir_out : path to write output summed FITS file
+    '''
+
+    for i in range(len(filedir_in)):
+        file = filedir_in[i]
+        data,header = fits.getdata(file,header=True)
+        if i==0:
+            data_sum = np.zeros(shape=data.shape)
+        data_sum += data
+
+    if write==True:
+        fits.writeto(filedir_out,data_sum,header,overwrite=True)
 
 def fcoordgrid_EQ(filedir):
     '''
@@ -164,14 +184,16 @@ def fcoordgrid_GALtoEQ(filedir):
 
     return radec_coords
 
-def freproject_2D(image1_dir,image2_dir,clean=False,order="nearest-neighbor"):
+def freproject_2D(image1_dir,image2_dir,reproj_dir,clean=False,save=False,order="nearest-neighbor"):
     '''
     Reprojects one FITS image to another.
 
     Input
     image1_dir : directory to image that will be reprojected
     image2_dir : directory to template image used for reprojection
+    reproj_dir : the directory to which the reprojected image will be saved if save=True
     clean      : if True, creates new minimal headers based off inputs
+    save       : if True, saves the reprojected image to the reproj_dir directory
     order      : order of interpolation (alternative options are 'bilinear', 'biquadratic', 'bicubic')
 
     Output
@@ -227,6 +249,9 @@ def freproject_2D(image1_dir,image2_dir,clean=False,order="nearest-neighbor"):
     # perform reprojection
     image1_data_reproj,footprint = reproject_interp((image1_data, image1_header_reproj), image2_header_reproj,order=order)
 
+    if save==True:
+        fits.writeto(reproj_dir,image1_data_reproj,image1_header_reproj,overwrite=True)
+
     return (image1_data,image1_header,image1_data_reproj,image1_header_reproj,image2_data,image2_header_reproj,footprint)
 
 def freproj2D_EQ_GAL(filedir_in,filedir_out):
@@ -256,6 +281,11 @@ def freproj2D_EQ_GAL(filedir_in,filedir_out):
     #header_GAL_NAXIS1,header_GAL_NAXIS2 = (6000,6000)                                       # N1
     #header_GAL_NAXIS1,header_GAL_NAXIS2 = (3000,6500)                                       # N2
     #header_GAL_NAXIS1,header_GAL_NAXIS2 = (4000,7500)                                       # N3
+    #header_GAL_NAXIS1,header_GAL_NAXIS2 = (6000,5500)                                       # N4
+    #header_GAL_NAXIS1,header_GAL_NAXIS2 = (6000,6500)                                       # S1
+    #header_GAL_NAXIS1,header_GAL_NAXIS2 = (8000,4000)                                       # S2
+    #header_GAL_NAXIS1,header_GAL_NAXIS2 = (6000,7000)                                       # S3
+    #header_GAL_NAXIS1,header_GAL_NAXIS2 = (8000,4000)                                       # S4
     ############################################################################################
 
     header_GAL_CRPIX1,header_GAL_CRPIX2 = header_GAL_NAXIS1/2.,header_GAL_NAXIS2/2.
@@ -301,7 +331,7 @@ def freproj2D_EQ_GAL(filedir_in,filedir_out):
     fits.writeto(header_file,data_GAL,header_GAL,overwrite=True)
     montage.mGetHdr(header_file,mheader_file)
     os.remove(header_file)
-    montage.reproject(filedir_in,filedir_out,header=mheader_file,clobber=True)
+    montage.reproject(filedir_in,filedir_out,header=mheader_file)
 
 def freproj3D_EQ_GAL(filedir_in,filedir_out,header_file):
 
@@ -400,6 +430,7 @@ def freproj_fromHEALPix(healpix_file,fits_file,output_file,coord="G",nested=Fals
 
     return healpix_data_reproj,footprint
 
+
 def fhighlatmask(lb_coords,blim):
     '''
     Creates a two-dimensional FITS image mask for low Galactic latitudes.
@@ -422,18 +453,32 @@ def fhighlatmask(lb_coords,blim):
 
     return mask
 
-def fmask2DEQhighlat(filedir,blim):
+def fmask2DEQhighlat(filedir_in,filedir_out,blim,write=False):
     '''
+    Masks a 2D FITS image in equatorial coordinates using a cut on Galactic latitude.
+
+    Input
+    filedir_in  : path to 2D FITS file in equatorial coordinates
+    filedir_out : path to write masked FITS file
+    blim        : minimum Galatic latitude
+    write       : if True, writes the masked data to a new file (default=False)
+
+    Output
+    data_masked : masked data
+
     '''
 
-    data      = fits.getdata(filedir)
+    data,header = fits.getdata(filedir_in,header=True)
 
     # create Galactic coordinate grid
-    lb_coords = fcoordgrid_EQtoGAL(filedir)
+    lb_coords   = fcoordgrid_EQtoGAL(filedir_in)
     # create mask
-    mask      = fhighlatmask(lb_coords,blim)
+    mask        = fhighlatmask(lb_coords,blim)
     # mask data
     data_masked = data*mask
+
+    if write==True:
+        fits.writeto(filedir_out,data_masked,header,overwrite=True)
 
     return data_masked
 

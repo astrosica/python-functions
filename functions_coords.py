@@ -92,7 +92,7 @@ def fsexatodeg(ra_sexa,dec_sexa):
 
 def fB1950toJ2000(ra_B1950,dec_B1950):
 	'''
-	Transforms Right Ascension and Declination coordinates from the B1950 system to the J2000 system.
+	Precess Right Ascension and Declination coordinates from the B1950 system to the J2000 system.
 	
 	Input
 	ra  : B1950 Right Ascension coordinates in the sexagismal system; ; can be single-valued or a list/array
@@ -105,7 +105,7 @@ def fB1950toJ2000(ra_B1950,dec_B1950):
 	
 	def fB1950toJ2000_main(ra_J2000,dec_J2000):
 		'''
-		Converts Right Ascension and Declination coordinates from the sexagismal positions in the B1959 system to decimal degrees in the J2000 system.
+		Precess Right Ascension and Declination coordinates from the sexagismal positions in the B1959 system to decimal degrees in the J2000 system.
 		
 		Input
 		ra_J2000: single Right Ascension position in sexagismal J2000
@@ -205,7 +205,7 @@ def fmatchpos(names,ra1,dec1,ra2,dec2,minarcsec,fdir=None,fname=None,N1=None,N2=
 		for i in range(len(ra1)):
 			ra1_i                = ra1[i]
 			dec1_i               = dec1[i]
-			ra1_deg_i,dec1_deg_i = sexatodeg(ra1_i,dec1_i)
+			ra1_deg_i,dec1_deg_i = fsexatodeg(ra1_i,dec1_i)
 			ra1_deg.append(ra1_deg_i)
 			dec1_deg.append(dec1_deg_i)
 		ra2_deg  = []
@@ -213,7 +213,7 @@ def fmatchpos(names,ra1,dec1,ra2,dec2,minarcsec,fdir=None,fname=None,N1=None,N2=
 		for i in range(len(ra2)):
 			ra2_i                = ra2[i]
 			dec2_i               = dec2[i]
-			ra2_deg_i,dec2_deg_i = sexatodeg(ra2_i,dec2_i)
+			ra2_deg_i,dec2_deg_i = fsexatodeg(ra2_i,dec2_i)
 			ra2_deg.append(ra2_deg_i)
 			dec2_deg.append(dec2_deg_i)
 	else:
