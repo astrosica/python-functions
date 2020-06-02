@@ -1,4 +1,4 @@
-def fPlanc_KCMB_MJysr(data,freq):
+def fPlanck_KCMB_MJysr(data,freq):
 	'''
 	Converts Planck Stokes maps from K_CMB to MJy/sr.
 	See Table 6 from Planck IX (2013).
@@ -21,7 +21,7 @@ def fPlanc_KCMB_MJysr(data,freq):
 
 	return data_MJysr
 
-def fPlanc_uK_MJysr(data,freq):
+def fPlanck_uK_MJysr(data,freq):
 	'''
 	Converts Planck Stokes maps from uK to MJy/sr.
 	See Table 5 from Planck IX (2013).
