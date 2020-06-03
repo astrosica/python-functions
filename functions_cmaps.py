@@ -1,9 +1,11 @@
+import numpy as np
+from matplotlib.colors import ListedColormap
+
 def fplanckfreqcmap():
     '''
     Creates the Planck matplotlib colormap.
     '''
 
-    from matplotlib.colors import ListedColormap
     planck_cmap = ListedColormap(np.loadtxt("/Users/campbell/Documents/PhD/data/functions/Planck_FreqMap_RGB.txt")/255.)
     #planck_cmap.set_bad("gray")    # color of missing pixels
     #planck_cmap.set_under("white") # color of background, necessary if you want to use with mollview
@@ -17,7 +19,6 @@ def fplanckparchmentcmap():
     Creates the Planck matplotlib colormap.
     '''
 
-    from matplotlib.colors import ListedColormap
     planck_cmap = ListedColormap(np.loadtxt("/Users/campbell/Documents/PhD/data/functions/Planck_Parchment_RGB.txt")/255.)
     planck_cmap.set_bad("gray")    # color of missing pixels
     planck_cmap.set_under("white") # color of background, necessary if you want to use with mollview
