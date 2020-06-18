@@ -184,6 +184,32 @@ def fcoordgrid_GALtoEQ(filedir):
 
     return radec_coords
 
+def freproject_2D_simple(image1_dir,image2_dir,reproj_dir,save=False,order="nearest-neighbor"):
+    '''
+    Reprojects one FITS image to another.
+
+    Input
+    image1_dir : directory to image that will be reprojected
+    image2_dir : directory to template image used for reprojection
+    reproj_dir : the directory to which the reprojected image will be saved if save=True
+    save       : if True, saves the reprojected image to the reproj_dir directory
+
+    Output
+    reproj_data : data of reprojected image
+    footprint   : a mask that defines which pixels in the reprojected image have a corresponding image in the original image
+    '''
+
+    hdu1 = fits.open(image1_dir)[0] # header to be reprojected
+    hdu2 = fits.open(image2_dir)[0] # reference header
+
+    reproj_data, footprint = reproject_interp(hdu1, hdu2.header)
+
+    if save==True:
+        fits.writeto(reproj_dir,reproj_data,hdu2.header,overwrite=True)
+
+    return (reproj_data,footprint)
+
+
 def freproject_2D(image1_dir,image2_dir,reproj_dir,clean=False,save=False,order="nearest-neighbor"):
     '''
     Reprojects one FITS image to another.
