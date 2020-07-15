@@ -305,6 +305,52 @@ def fdeltatheta(theta1,theta2,inunit,outunit):
 
 	return delta_theta
 
+def fhist2dmean(xedges,yedges,data_x,data_y):
+	'''
+	Bins two-dimensional histogram data into the respective x- and y-bins and computes the mean for each bin.
+
+	Input
+	xedges : edges of x-bins
+	yedges : edges of y-bins
+	data_x : x-component of 2D histogram data
+	data_y : x-component of 2D histogram data
+
+	Output
+	bin_mean_x : mean of y-component of 2D histogram data binned into x-bins
+	bin_mean_y : mean of x-component of 2D histogram data binned into y-bins
+	'''
+
+    digitized_x = np.digitize(data_x,xedges)
+    digitized_y = np.digitize(data_y,yedges)
+    
+    bin_mean_x = [data_y[digitized_x == i].mean() for i in range(1,len(xedges))]
+    bin_mean_y = [data_x[digitized_y == i].mean() for i in range(1,len(yedges))]
+    
+    return (bin_mean_x,bin_mean_y)
+
+def fhist2dmedian(xedges,yedges,data_x,data_y):
+	'''
+	Bins two-dimensional histogram data into the respective x- and y-bins and computes the median for each bin.
+
+	Input
+	xedges : edges of x-bins
+	yedges : edges of y-bins
+	data_x : x-component of 2D histogram data
+	data_y : x-component of 2D histogram data
+
+	Output
+	bin_median_x : median of y-component of 2D histogram data binned into x-bins
+	bin_median_y : median of x-component of 2D histogram data binned into y-bins
+	'''
+
+    digitized_x = np.digitize(data_x,xedges)
+    digitized_y = np.digitize(data_y,yedges)
+    
+    bin_median_x = [np.median(data_y[digitized_x == i]) for i in range(1,len(xedges))]
+    bin_median_y = [np.median(data_x[digitized_y == i]) for i in range(1,len(yedges))]
+    
+    return (bin_median_x,bin_median_y)
+
 def fconvolve(oldres,newres,data,header,restype="FWHM",method="scipy"):
 	'''
 	Convolves an image using FFT convolution.
