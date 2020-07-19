@@ -64,6 +64,9 @@ def fpolangle(Q,U,toIAU=False,deg=True):
 	polangle : polarization angle
 	'''
 
+	Q = np.copy(Q)
+	U = np.copy(U)
+
 	if toIAU==True:
 		# if converting from COSMOS to IAU convention
 		# flip sign of Stokes U
@@ -111,6 +114,42 @@ def fpolangle_error(Q,U,QQ,QU,UU,deg=True):
 
 	return polangle_error
 
+def fpolanglediff(Q_1,U_1,Q_2,U_2,toIAU=False,deg=True):
+	'''
+	Computes the difference between two polarization angles.
+	See Equation 7 in Planck XIX (2015).
+	
+	Input
+	Q_1     : Stokes Q corresponding to reference polarization angle
+	U_1     : Stokes U corresponding to reference polarization angle
+	Q_2     : Stokes Q corresponding to displaced polarization angle
+	U_2     : Stokes U corresponding to displaced polarization angle
+	toIAU : if True, converts from COSMO to IAU convention (default=False)
+	deg   : if True, convert angles to degrees for output (default=True)
+
+	Output
+	pol_angle_diff : difference between polarization angles
+	'''
+
+	Q_1 = np.copy(Q_1)
+	U_1 = np.copy(U_1)
+	Q_2 = np.copy(Q_2)
+	U_2 = np.copy(U_2)
+
+	if toIAU==True:
+		# if converting from COSMOS to IAU convention
+		# flip sign of Stokes U
+		U_1 *= -1.
+		U_2 *= -1.
+
+	# difference between polarization angles
+	pol_angle_diff = 0.5*np.arctan2(Q_2*U_1-Q_1*U_2,Q_2*Q_1-U_2*U_1)
+
+	if deg==True:
+		# convert from radians to degrees
+		pol_angle_diff = np.degrees(pol_angle)
+
+	return pol_angle_diff
 
 def fpolfrac(I,Q,U):
 	'''
@@ -501,6 +540,9 @@ def fBangle(Q,U,toIAU=False,deg=True):
 	Output
 	polangle : magnetic field angle
 	'''
+
+	Q = np.copy(Q)
+	U = np.copy(U)
 
 	# flip both Q and U to convert from electric
 	# field to magnetic field (equivalent to a
