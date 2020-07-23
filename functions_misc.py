@@ -189,6 +189,9 @@ def fFFT2D(data,shift=True):
 		# if input data is a list, convert to array
 		data = np.array(data)
 
+	# replace NaNs with zeros
+	data[np.isnan(data)] = 0.0
+
 	N_y,N_x   = data.shape
 	dt_x,dt_y = 1.,1.
 	freq_x    = fftpack.fftfreq(N_x,dt_x)
@@ -276,9 +279,9 @@ def fdeltatheta(theta1,theta2,inunit,outunit):
 	See Equation 15 in Clark & Hensley (2019)
 
 	Input
-	theta1 : list or array of reference angles
-	theta2 : list or array of angles whose offsets from the reference angles we want to know
-	inunit : units of angular inputs
+	theta1  : list or array of reference angles
+	theta2  : list or array of angles whose offsets from the reference angles we want to know
+	inunit  : units of angular inputs
 	outunit : units of angular offset outputs
 
 	Output
@@ -320,13 +323,13 @@ def fhist2dmean(xedges,yedges,data_x,data_y):
 	bin_mean_y : mean of x-component of 2D histogram data binned into y-bins
 	'''
 
-    digitized_x = np.digitize(data_x,xedges)
-    digitized_y = np.digitize(data_y,yedges)
-    
-    bin_mean_x = [data_y[digitized_x == i].mean() for i in range(1,len(xedges))]
-    bin_mean_y = [data_x[digitized_y == i].mean() for i in range(1,len(yedges))]
-    
-    return (bin_mean_x,bin_mean_y)
+	digitized_x = np.digitize(data_x,xedges)
+	digitized_y = np.digitize(data_y,yedges)
+
+	bin_mean_x = [data_y[digitized_x == i].mean() for i in range(1,len(xedges))]
+	bin_mean_y = [data_x[digitized_y == i].mean() for i in range(1,len(yedges))]
+
+	return (bin_mean_x,bin_mean_y)
 
 def fhist2dmedian(xedges,yedges,data_x,data_y):
 	'''
@@ -343,13 +346,13 @@ def fhist2dmedian(xedges,yedges,data_x,data_y):
 	bin_median_y : median of x-component of 2D histogram data binned into y-bins
 	'''
 
-    digitized_x = np.digitize(data_x,xedges)
-    digitized_y = np.digitize(data_y,yedges)
-    
-    bin_median_x = [np.median(data_y[digitized_x == i]) for i in range(1,len(xedges))]
-    bin_median_y = [np.median(data_x[digitized_y == i]) for i in range(1,len(yedges))]
-    
-    return (bin_median_x,bin_median_y)
+	digitized_x = np.digitize(data_x,xedges)
+	digitized_y = np.digitize(data_y,yedges)
+
+	bin_median_x = [np.median(data_y[digitized_x == i]) for i in range(1,len(xedges))]
+	bin_median_y = [np.median(data_x[digitized_y == i]) for i in range(1,len(yedges))]
+
+	return (bin_median_x,bin_median_y)
 
 def fconvolve(oldres,newres,data,header,restype="FWHM",method="scipy"):
 	'''
@@ -524,159 +527,6 @@ def fmaskinterp(image,mask):
 
 	return image_interp
 
-def fmask_circle(image,x0,y0,r):
-	'''
-	Masks an image within the boundaries of a circle.
-
-	Input
-	image  : image to be masked
-	x0     : x-coordinate of circle center
-	y0     : y-coordinates of circle center
-	r      : circle radius
-
-	Output
-	mask         : output mask
-	image_masked : masked image
-	'''
-
-	NAXIS2,NAXIS1 = image.shape
-	xpix,ypix     = np.arange(0,NAXIS1),np.arange(0,NAXIS2)
-	xgrid,ygrid   = np.meshgrid(xpix,ypix)
-
-	mask          = r**2. > ((xgrid-x0)**2.) + ((ygrid-y0)**2.)
-	mask          = np.invert(mask)
-
-	image_masked  = image*mask
-
-	return mask,image_masked
-
-def fmask_ellipse(image,x0,y0,r,a,b):
-	'''
-	Masks an image within the boundaries of an ellipse.
-
-	Input
-	image  : image to be masked
-	x0     : x-coordinate of circle center
-	y0     : y-coordinates of circle center
-	r      : circle radius
-	a      : horizontal stretch (a>0) or compression (a<0)
-	b      : vertical stretch (b>0) or compression (b<0)
-
-	Output
-	mask         : output mask
-	image_masked : masked image
-	'''
-
-	NAXIS2,NAXIS1 = image.shape
-	xpix,ypix     = np.arange(0,NAXIS1),np.arange(0,NAXIS2)
-	xgrid,ygrid   = np.meshgrid(xpix,ypix)
-
-	mask          = r**2. > ((xgrid-x0)**2.)/a + ((ygrid-y0)**2.)/b
-	mask          = np.invert(mask)
-
-	image_masked  = image*mask
-
-	return mask,image_masked
-
-def fmask_slab(image,theta1,theta2,x0_1,y0_1,x0_2,y0_2,scale_x,scale_y,angleunits="deg"):
-	'''
-	'''
-
-	NAXIS2,NAXIS1      = image.shape
-	xpix,ypix          = np.arange(0,NAXIS1),np.arange(0,NAXIS2)
-	xgrid,ygrid        = np.meshgrid(xpix,ypix)
-
-	deg_units = ["deg","degree","degrees"]
-	rad_units = ["rad","radian","radians"]
-
-	if angleunits in deg_units:
-		deltax_1, deltay_1 = scale_x*np.cos(np.radians(theta1)), scale_y*np.sin(np.radians(theta1))
-		deltax_2, deltay_2 = scale_x*np.cos(np.radians(theta2)), scale_y*np.sin(np.radians(theta2))
-	else:
-		deltax_1, deltay_1 = scale_x*np.cos(theta1), scale_y*np.sin(theta1)
-		deltax_2, deltay_2 = scale_x*np.cos(theta2), scale_y*np.sin(theta2)
-	slope_1,slope_2    = deltay_1/deltax_1, deltay_2/deltax_2
-	b_1,b_2            = (y0_1-slope_1*x0_1, y0_2-slope_2*x0_2)
-	y_1,y_2            = (slope_1*xgrid+b_1, slope_2*xgrid+b_2)
-
-	mask               = (ygrid>y_1) & (ygrid<y_2)
-	mask               = np.invert(mask)
-
-	image_masked       = image*mask
-
-	return mask,image_masked
-
-def fmask_sensitivitymap(image):
-	'''
-	Creates a mask for Arecibo's sensitivity map structures.
-
-	Input
-	image : two-dimensional data to be masked (FFT of sensitivity map)
-	x0_1  : starting x-coordinate of first (lower) line
-	y0_1  : starting y-coordinate of first (lower) line
-	x1_1  : ending x-coordinate of first (lower) line
-	y1_1  : ending y-coordinate of first (lower) line
-	x0_2  : starting x-coordinate of second (upper) line
-	y0_2  : starting y-coordinate of second (upper) line
-	x1_2  : ending x-coordinate of second (upper) line
-	y1_2  : ending y-coordinate of second (upper) line
-	num   : number of pixels in each line
-	
-	Output
-	mask         : resulting mask
-	image_masked : masked image
-	'''
-
-	NAXIS2,NAXIS1 = image.shape
-	xpix,ypix     = np.arange(0,NAXIS1),np.arange(0,NAXIS2)
-	xgrid,ygrid   = np.meshgrid(xpix,ypix)
-
-	xypoints = np.array([
-		[0,-96,NAXIS1,83,0,-82,NAXIS1,97],
-		[0,83,NAXIS1,262,0,102,NAXIS1,281],
-		[0,262,NAXIS1,442,0,280,NAXIS1,460],
-		[0,441,NAXIS1,620,0,455,NAXIS1,634],
-		[0,620,NAXIS1,799,0,634,NAXIS1,813],
-		[0,799,NAXIS1,978,0,813,NAXIS1,992],
-		[0,978,NAXIS1,1157,0,992,NAXIS1,1171],
-		#
-		[0,83,NAXIS1,-96,0,97,NAXIS1,-82],
-		[0,262,NAXIS1,83,0,281,NAXIS1,102],
-		[0,441,NAXIS1,262,0,455,NAXIS1,276],
-		[0,620,NAXIS1,441,0,634,NAXIS1,455],
-		[0,799,NAXIS1,620,0,813,NAXIS1,634],
-		[0,978,NAXIS1,799,0,992,NAXIS1,813],
-		[0,1157,NAXIS1,978,0,1171,NAXIS1,992]
-		])
-		
-	# initialize mask
-	mask = np.full((NAXIS2,NAXIS1), True, dtype=bool)
-
-	# iterate through each set of lines to iteratively update mask
-	for i in xypoints:
-		x0_1,y0_1,x1_1,y1_1,x0_2,y0_2,x1_2,y1_2 = i[0],i[1],i[2],i[3],i[4],i[5],i[6],i[7]
-		# compute pixel coordinates of each line
-		xpix_1, ypix_1  = np.linspace(x0_1,x1_1,NAXIS1), np.linspace(y0_1,y1_1,NAXIS1)
-		xpix_2, ypix_2  = np.linspace(x0_2,x1_2,NAXIS1), np.linspace(y0_2,y1_2,NAXIS1)
-		# compute mask between lines
-		mask_i          = (ygrid>ypix_1) & (ygrid<ypix_2)
-		mask_i          = np.invert(mask_i)
-		mask           *= mask_i
-
-	# adjust mask for non-artefact features that should not be removed
-	mask[:,2684:2687]   = True # vertical line in the image center
-	mask_ellipse,_      = fmask_ellipse(image,NAXIS1*0.5,NAXIS2*0.5,100,420.,6.)
-	mask_ellipse        = np.invert(mask_ellipse)
-	mask[mask_ellipse]  = True
-
-	# convert mask to ones and zeros
-	mask = mask.astype(float)
-
-	# mask image
-	image_masked = image*mask
-
-	return mask,image_masked
-
 def fmask_basketweaving_diffuse(image,pointing):
 	'''
 	Creates a mask for Arecibo's basketweaving artefacts in Fourier space towards a diffuse region.
@@ -724,53 +574,6 @@ def fmask_basketweaving_diffuse(image,pointing):
 	elif pointing=="N3":
 		mask[:,223:250] = True
 
-	# convert mask to ones and zeros
-	mask = mask.astype(float)
-
-	# mask image
-	image_masked = image*mask
-
-	return mask,image_masked
-
-def fmask_basketweaving_filament(image):
-	'''
-	Creates a mask for Arecibo's basketweaving artefacts in Fourier space towards a polarized filament.
-
-	Input
-	image : two-dimensional data to be masked (FFT of sensitivity map)
-	
-	Output
-	mask         : resulting mask
-	image_masked : masked image
-	'''
-
-	NAXIS2,NAXIS1 = image.shape
-	xpix,ypix     = np.arange(0,NAXIS1),np.arange(0,NAXIS2)
-	xgrid,ygrid   = np.meshgrid(xpix,ypix)
-
-	# N1
-	xypoints = np.array([
-		[0,257,454,177,0,275,454,195],
-		[0,180,454,256,0,198,454,274]
-		])
-		
-	# initialize mask
-	mask = np.full((NAXIS2,NAXIS1), True, dtype=bool)
-
-	# iterate through each set of lines to iteratively update mask
-	for i in xypoints:
-		x0_1,y0_1,x1_1,y1_1,x0_2,y0_2,x1_2,y1_2 = i[0],i[1],i[2],i[3],i[4],i[5],i[6],i[7]
-		# compute pixel coordinates of each line
-		xpix_1, ypix_1  = np.linspace(x0_1,x1_1,NAXIS1), np.linspace(y0_1,y1_1,NAXIS1)
-		xpix_2, ypix_2  = np.linspace(x0_2,x1_2,NAXIS1), np.linspace(y0_2,y1_2,NAXIS1)
-		# compute mask between lines
-		mask_i          = (ygrid>ypix_1) & (ygrid<ypix_2)
-		mask_i          = np.invert(mask_i)
-		mask           *= mask_i
-
-	# N1
-	mask[:,202:252]   = True
-	
 	# convert mask to ones and zeros
 	mask = mask.astype(float)
 
@@ -851,4 +654,104 @@ def fmask_basketweaving(image,pointing):
 	image_masked = image*mask
 
 	return mask,image_masked
+
+def fmask_basketweaving_S1C(image):
+	'''
+	Creates a mask for Arecibo's basketweaving artefacts in Fourier space for S1-C.
+
+	Input
+	image    : two-dimensional data to be masked
+	
+	Output
+	mask         : resulting mask
+	image_masked : masked image
+	'''
+
+	NAXIS2,NAXIS1 = image.shape
+	xpix,ypix     = np.arange(0,NAXIS1),np.arange(0,NAXIS2)
+	xgrid,ygrid   = np.meshgrid(xpix,ypix)
+
+	xypoints = np.array([
+		[0,280,800,415,0,295,800,400], # - + + - 
+		[0,400,800,295,0,413,800,280], # - + + - 
+		[0,295,800,400,0,280,800,415], # + - - +
+		[0,415,800,280,0,400,800,295]  # + - - +
+		])
+	
+	# initialize mask
+	mask = np.full((NAXIS2,NAXIS1),True,dtype=bool)
+
+	# iterate through each set of lines to iteratively update mask
+	for i in xypoints:
+		x0_1,y0_1,x1_1,y1_1,x0_2,y0_2,x1_2,y1_2 = i[0],i[1],i[2],i[3],i[4],i[5],i[6],i[7]
+		# compute pixel coordinates of each line
+		xpix_1, ypix_1  = np.linspace(x0_1,x1_1,NAXIS1), np.linspace(y0_1,y1_1,NAXIS1)
+		xpix_2, ypix_2  = np.linspace(x0_2,x1_2,NAXIS1), np.linspace(y0_2,y1_2,NAXIS1)
+		# compute mask between lines
+		mask_i          = (ygrid>ypix_1) & (ygrid<ypix_2)
+		mask_i          = np.invert(mask_i)
+		mask           *= mask_i
+
+	# adjust mask for non-artefact features that should not be removed
+	mask[:,368:432] = True
+
+	# convert mask to ones and zeros
+	mask = mask.astype(float)
+
+	# mask image
+	image_masked = image*mask
+
+	return mask,image_masked
+
+def fmaskGALFACTSedges(data,pointing):
+	'''
+	Masks edges of GALFACTS data.
+
+	Input
+	data     : data to be masked
+	pointing : GALFACTS pointing
+
+	Output
+	data_masked : masked GALFACTS data
+	'''
+
+	data_masked = np.copy(data)
+
+	if pointing=="N1":
+		data_masked[:,:38]   = np.nan
+		data_masked[:,5200:] = np.nan
+	elif pointing=="N2":
+		data_masked[:,5355:] = np.nan
+	elif pointing=="N3":
+		data_masked[:,:341]  = np.nan
+		data_masked[:,5757:] = np.nan
+	elif pointing=="N4":
+		data_masked[:,:115]  = np.nan
+		data_masked[:,5808:] = np.nan
+	elif pointing=="S1":
+		data_masked[:,5100:] = np.nan
+	elif pointing=="S2":
+		data_masked[:,:30]   = np.nan
+		data_masked[:,5250:] = np.nan
+	elif pointing=="S3":
+		data_masked[:,:341]  = np.nan
+		data_masked[:,5757:] = np.nan
+	elif pointing=="S4":
+		data_masked[:,:5]    = np.nan
+		data_masked[:,5445:] = np.nan
+
+	return data_masked
+
+
+
+
+
+
+
+
+
+
+
+
+
 
