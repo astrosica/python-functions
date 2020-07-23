@@ -512,7 +512,7 @@ def fgradchi(Q,U):
 	# compute polarized intensity
 	P = fPI(Q,U)
 
-	# compute mainn terms in gradphi
+	# compute main terms in gradphi
 	QP = Q/P
 	UP = U/P
 
@@ -577,10 +577,10 @@ def fSest(Q,U,delta):
 	'''
 
 	# compute gradient of polarization angle
-	gradphi = fgradphi(Q,U)
+	gradchi = fgradchi(Q,U)
 
 	# compute Sest
-	Sest = delta*gradphi/(2.*np.sqrt(2.))
+	Sest = delta*gradchi/(2.*np.sqrt(2.))
 
 	return Sest
 
