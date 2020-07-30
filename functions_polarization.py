@@ -579,7 +579,7 @@ def fQU(P,chi,deg=True):
 	U : Stokes U
 	'''
 
-	if deg=True:
+	if deg==True:
 		# convert polarization angle to radians
 		chi_rad = np.radians(chi)
 	else:
