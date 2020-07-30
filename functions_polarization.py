@@ -565,6 +565,32 @@ def fBangle(Q,U,toIAU=False,deg=True):
 
 	return B_angle
 
+def fQU(P,chi,deg=True):
+	'''
+	Computes Stokes Q and U maps.
+
+	Input
+	P   : polarized intensity
+	chi : polarization angle
+	deg : if True, units of input chi are in degrees (if False, radians)
+
+	Output
+	Q : Stokes Q
+	U : Stokes U
+	'''
+
+	if deg=True:
+		# convert polarization angle to radians
+		chi_rad = np.radians(chi)
+	else:
+		# polarization angle already in radians
+		chi_rad = chi
+
+	Q = P * np.cos(2.*chi_rad)
+	U = P * np.sin(2.*chi_rad)
+
+	return (Q,U)
+
 def fSest(Q,U,delta):
 	'''
 	Computes an estimate of the polarization angle dispersion function.
@@ -805,25 +831,46 @@ def fRMSF(freq_file,weights_file):
 	print("Broadest RM feature probed:          {:.4g} rad m^-2".format(phi_max_scale))
 	print("Maximum RM that can be detected:     {:.4g} rad m^-2".format(phi_max))
 
+def fFDFmom0_1d(FDF_arr,phi_arr,threshold):
+	'''
+	Computes the zeroth moment of a one-dimensional Faraday dispersion function (FDF).
+
+	Input
+	FDF_arr : faraday dispersion function array
+	phi_arr : faraday depth array
+
+	Output
+	mom0 : zeroth moment of FDF
+	'''
+
+	# apply signal threshold
+	_,FDF_arr = fmask_signal(FDF_arr,threshold)
+
+	# take sum
+	mom0 = np.nansum(FDF_arr)
+
+	return mom0
+
 def fFDFmom1_1d(FDF_arr,phi_arr,threshold):
 	'''
 	Computes the first moment of a one-dimensional Faraday dispersion function (FDF).
 
 	Input
-	FDF_arr: faraday dispersion function array
+	FDF_arr : faraday dispersion function array
 	phi_arr : faraday depth array
 
 	Output
 	mom1 : first moment of FDF
 	'''
 
-	# take absolute value of input FDF
-	FDF_arr = np.abs(FDF_arr)
 	# apply signal threshold
 	_,FDF_arr = fmask_signal(FDF_arr,threshold)
 
+	# compute moment 0
+	mom0 = fFDFmom0_1d(FDF_arr,phi_arr,threshold)
+
 	# compute moment 1
-	mom1    = np.nansum(FDF_arr*phi_arr)/np.nansum(FDF_arr)
+	mom1    = np.nansum(FDF_arr*phi_arr,axis=0)/mom0
 
 	return mom1 # rad/m^2
 
@@ -839,21 +886,42 @@ def fFDFmom2_1d(FDF_arr,phi_arr,threshold,sqrt=False):
 	Output
 	mom2 : second moment of FDF
 	'''
-
-	# take absolute value of input FDF
-	FDF_arr = np.abs(FDF_arr)
+	
 	# apply signal threshold
 	_,FDF_arr = fmask_signal(FDF_arr,threshold)
+
+	# compute moment 0
+	mom0 = fFDFmom0_1d(FDF_arr,phi_arr,threshold)
 
 	# compute moment 1
 	mom1 = fFDFmom1_1d(FDF_arr,phi_arr,threshold)
 
 	# compute second moment
-	mom2 = np.nansum(FDF_arr*(phi_arr-mom1)**2.) / np.nansum(FDF_arr)
+	mom2 = np.nansum(FDF_arr*(phi_arr-mom1)**2.) / mom0
 	if sqrt==True:
 		mom2 = np.sqrt(mom2)
 
 	return mom2 # (rad/m^2)^2 ; or rad/m^2 if square root is taken
+
+def fFDFmom0_3d(FDF_arr,phi_arr,threshold):
+	'''
+	Computes the zeroth moment of a three-dimensional Faraday dispersion function (FDF).
+
+	Input
+	FDF_arr : faraday dispersion function array
+	phi_arr : faraday depth array
+
+	Output
+	mom0 : zeroth moment of FDF
+	'''
+
+	# apply signal threshold
+	_,FDF_arr = fmask_signal(FDF_arr,threshold)
+
+	# take sum
+	mom0 = np.nansum(FDF_arr,axis=0)
+
+	return mom0
 
 def fFDFmom1_3d(FDF_cube,phi_arr,threshold):
 	'''
