@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import healpy as hp
+import coord_v_convert
 import astropy.wcs as wcs
 from astropy.io import fits
 from astropy import units as u
@@ -33,6 +34,58 @@ def ffreqaxis(file):
     freqaxis   =  CRVAL3 + (freqpixels-CRPIX3)*CDELT3
 
     return freqaxis
+
+def fNpix(nside):
+    '''
+    Computes the number of pixels in a healpix map.
+
+    Input
+    nside : the number of pixels per side
+
+    Output
+    npix : the total number of pixels in the map
+    '''
+
+    npix = int(12*nside**2)
+
+    return npix
+
+def fRotateHealpix_GC(file,I_field,Q_field,U_field,incoord,outcoord,inepoch=2000.,outepoch=2000.):
+    '''
+    Rotates a Healpix FITS file between coordinate systems.
+
+    Input
+    file     : path to Healpix file
+    I_field  : field of Stokes I data
+    Q_field  : field of Stokes Q data
+    U_field  : field of Stokes U data
+    incoord  : 
+    outcoord : 
+    inepoch  : 
+    outepoch : 
+
+    Output
+    I_rotated_data : 
+    Q_rotated_data : 
+    U_rotated_data : 
+    '''
+
+    I_data = hp.read_map(planck_dust_353_dir+dust_353_file,field=I_field)
+    Q_data = hp.read_map(planck_dust_353_dir+dust_353_file,field=Q_field)
+    U_data = hp.read_map(planck_dust_353_dir+dust_353_file,field=U_field)
+
+    IQU_data = np.array([I_data.tolist(),Q_data.tolist(),U_data.tolist()])
+
+    header = fits.getheader(file)
+    NSIDE  = header["NSIDE"]
+
+    IQU_rotated_data = rotate_map(IQU_data,inepoch,outepoch,incoord,outcoord,NSIDE)
+
+    I_rotated_data = IQU_rotated_data[0]
+    Q_rotated_data = IQU_rotated_data[1]
+    U_rotated_data = IQU_rotated_data[2]
+
+    return (I_rotated_data,Q_rotated_data,U_rotated_data)
 
 def fcubeavg(filedir_in,filedir_out,write=False):
     '''
@@ -441,21 +494,17 @@ def freproj_fromHEALPix(healpix_file,fits_file,output_file,coord="G",nested=Fals
     Output: 
     healpix_data_reproj : reprojected HEALPix data
     footprint           : reprojection footprint
-
     '''
 
     healpix_data          = hp.read_map(healpix_file)
-    _,healpix_header      = fits.getdata(healpix_file,header=True)
     fits_data,fits_header = fits.getdata(fits_file,header=True)
-    fits_wcs              = wcs.WCS(fits_header)
 
-    healpix_data_reproj,footprint = reproject_from_healpix((healpix_data,coord),fits_wcs,shape_out=fits_data.shape,hdu_in=1,nested=nested)
+    healpix_data_reproj,footprint = reproject_from_healpix((healpix_data,coord),fits_header,nested=nested)
 
     if write==True:
         fits.writeto(output_file,healpix_data_reproj,fits_header,overwrite=True)
 
     return healpix_data_reproj,footprint
-
 
 def fhighlatmask(lb_coords,blim):
     '''
