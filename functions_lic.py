@@ -52,13 +52,13 @@ def fLICtexture(Bangle):
 
 	# the IAU convention meaasures angles from north while
 	# LIC measures angles from west; rotate angles for LIC
-	Bangle = (np.pi/2.)-Bangle
+	Bangle += (np.pi/2.)
 
 	# compute the x- and y-components of magnetic field;
 	# this is why polarization data must be in the IAU convention
 	# otherwise the following will be the wrong components of the field
-	b_x =  np.sin(Bangle)
-	b_y = -np.cos(Bangle)
+	b_x = np.sin(Bangle)
+	b_y = np.cos(Bangle)
 
 	# length scale; typically 25% of image size
 	L_z = np.shape(Bangle)
@@ -86,7 +86,7 @@ def fplotLIC(image_file,texture,wcs=True):
 		f1  = aplpy.FITSFigure(image_file,figure=fig,subplot=(1,1,1))
 		f1.show_colorscale(cmap="plasma")
 		# texture
-		plt.imshow(texture, origin="lower",alpha=0.4,cmap="binary",clim=[np.mean(texture)-np.std(texture),np.mean(texture)+np.std(texture)])
+		plt.imshow(texture,origin="lower",alpha=0.4,cmap="binary",clim=[np.mean(texture)-np.std(texture),np.mean(texture)+np.std(texture)])
 		# axis labels
 		f1.axis_labels.set_font(size=20)
 		# tick labels
@@ -108,7 +108,7 @@ def fplotLIC(image_file,texture,wcs=True):
 		im = ax.imshow(image,cmap="plasma",origin="lower")
 		plt.xlabel("pixels")
 		plt.ylabel("pixels")
-		plt.imshow(texture, origin="lower",alpha=0.4,cmap="binary",clim=[np.mean(texture)-np.std(texture),np.mean(texture)+np.std(texture)])
+		plt.imshow(texture,origin="lower",alpha=0.4,cmap="binary",clim=[np.mean(texture)-np.std(texture),np.mean(texture)+np.std(texture)])
 		plt.gca().add_collection(lc)
 		plt.colorbar(im, ax=ax, orientation="vertical")
 		plt.show()
