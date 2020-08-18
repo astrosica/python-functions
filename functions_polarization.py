@@ -116,14 +116,52 @@ def fpolangle_error(Q,U,QQ,QU,UU,deg=True):
 
 	return polangle_error
 
+def fBangle(Q,U,toIAU=False,deg=True):
+	'''
+	Computes the plane-of-sky magnetic field angle.
+	
+	COSMO polarization angle convention to IAU B-field convention = flip sign of Stokes U
+	
+	Input
+	Q     : Stokes Q
+	U     : Stokes U
+	toIAU : if True, converts from COSMO to IAU convention (default=False)
+	deg   : if True, convert angles to degrees for output (default=True)
+
+	Output
+	polangle : magnetic field angle
+	'''
+
+	if toIAU==True:
+		# if converting from COSMOS to IAU convention flip sign of Stokes U 
+		# and flip both Q and U to convert from E to B
+		# (i.e., just flip sign of Q)
+
+		# compute B angle
+		B_angle = np.mod(0.5*np.arctan2(U,Q*-1.), np.pi)
+
+	elif toIAU==False:
+		# don't flip sign of Stokes U
+		# but do flip both Q and U to convert from E to B
+		# (i.e., flip sign of both Q and U)
+
+		# compute polarization angle
+		B_angle = np.mod(0.5*np.arctan2(U*-1.,Q*-1.), np.pi)
+
+	if deg==True:
+		# convert from radians to degrees
+		B_angle = np.degrees(B_angle)
+
+	return B_angle
+
 def fQU(P,chi,deg=True):
 	'''
 	Compute Stokes Q and U.
 
 	Input
-	P        : polarized intensity
-	chi      : polarization angle
-	chi_unit : units of polarization angle
+	P    : polarized intensity
+	chi  : polarization angle
+	deg : if True, polarization angle is in degrees (otherwise radians) [default=True]
 
 	Output
 	Q : Stokes Q
@@ -137,11 +175,10 @@ def fQU(P,chi,deg=True):
 		chi_rad = chi
 
 	# compute Stokes QU
-	Q = P*np.cos(2.*np.radians(chi_rad))
-	U = P*np.sin(2.*np.radians(chi_rad))
+	Q = P*np.cos(2.*chi_rad)
+	U = P*np.sin(2.*chi_rad)
 
 	return Q,U
-
 
 def fpolanglediff(Q_1,U_1,Q_2,U_2,toIAU=False,deg=True):
 	'''
@@ -553,44 +590,6 @@ def fgradchi(Q,U):
 	gradchi = np.sqrt((QP_grad_x)**2. + (QP_grad_y)**2. + (UP_grad_x)**2. + (UP_grad_y)**2.)
 
 	return gradchi
-
-def fBangle(Q,U,toIAU=False,deg=True):
-	'''
-	Computes the plane-of-sky magnetic field angle.
-	
-	COSMO polarization angle convention to IAU B-field convention = flip sign of Stokes U
-	
-	Input
-	Q     : Stokes Q
-	U     : Stokes U
-	toIAU : if True, converts from COSMO to IAU convention (default=False)
-	deg   : if True, convert angles to degrees for output (default=True)
-
-	Output
-	polangle : magnetic field angle
-	'''
-
-	if toIAU==True:
-		# if converting from COSMOS to IAU convention flip sign of Stokes U 
-		# and flip both Q and U to convert from E to B
-		# (i.e., just flip sign of Q)
-
-		# compute B angle
-		B_angle = np.mod(0.5*np.arctan2(U,Q*-1.), np.pi)
-
-	elif toIAU==False:
-		# don't flip sign of Stokes U
-		# but do flip both Q and U to convert from E to B
-		# (i.e., flip sign of both Q and U)
-
-		# compute polarization angle
-		B_angle = np.mod(0.5*np.arctan2(U*-1.,Q*-1.), np.pi)
-
-	if deg==True:
-		# convert from radians to degrees
-		B_angle = np.degrees(B_angle)
-
-	return B_angle
 
 def fSest(Q,U,delta):
 	'''
