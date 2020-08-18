@@ -64,16 +64,18 @@ def fpolangle(Q,U,toIAU=False,deg=True):
 	polangle : polarization angle
 	'''
 
-	Q = np.copy(Q)
-	U = np.copy(U)
-
 	if toIAU==True:
 		# if converting from COSMOS to IAU convention
 		# flip sign of Stokes U
-		U *= -1.
 
-	# polarization angle
-	pol_angle = np.mod(0.5*np.arctan2(U,Q), np.pi)
+		# compute polarization angle
+		pol_angle = np.mod(0.5*np.arctan2(U*-1.,Q), np.pi)
+
+	elif toIAU==False:
+		# don't flip sign of Stokes U
+
+		# compute polarization angle
+		pol_angle = np.mod(0.5*np.arctan2(U,Q), np.pi)
 
 	if deg==True:
 		# convert from radians to degrees
@@ -113,6 +115,33 @@ def fpolangle_error(Q,U,QQ,QU,UU,deg=True):
 	polangle_error = fac * np.sqrt(num/den) * PI_error
 
 	return polangle_error
+
+def fQU(P,chi,deg=True):
+	'''
+	Compute Stokes Q and U.
+
+	Input
+	P        : polarized intensity
+	chi      : polarization angle
+	chi_unit : units of polarization angle
+
+	Output
+	Q : Stokes Q
+	U : Stokes U
+	'''
+
+	# make sure polarization angles are in radians
+	if deg==True:
+		chi_rad = np.radians(chi)
+	elif deg==False:
+		chi_rad = chi
+
+	# compute Stokes QU
+	Q = P*np.cos(2.*np.radians(chi_rad))
+	U = P*np.sin(2.*np.radians(chi_rad))
+
+	return Q,U
+
 
 def fpolanglediff(Q_1,U_1,Q_2,U_2,toIAU=False,deg=True):
 	'''
@@ -541,55 +570,27 @@ def fBangle(Q,U,toIAU=False,deg=True):
 	polangle : magnetic field angle
 	'''
 
-	Q = np.copy(Q)
-	U = np.copy(U)
-
-	# flip both Q and U to convert from electric
-	# field to magnetic field (equivalent to a
-	# 90 degree rotation)
-
-	Q *= -1.
-	U *= -1.
-
 	if toIAU==True:
-		# if converting from COSMOS to IAU convention
-		# flip sign of Stokes U
-		U *= -1.
+		# if converting from COSMOS to IAU convention flip sign of Stokes U 
+		# and flip both Q and U to convert from E to B
+		# (i.e., just flip sign of Q)
 
-	# magnetic field angle
-	B_angle = np.mod(0.5*np.arctan2(U,Q), np.pi)
+		# compute B angle
+		B_angle = np.mod(0.5*np.arctan2(U,Q*-1.), np.pi)
+
+	elif toIAU==False:
+		# don't flip sign of Stokes U
+		# but do flip both Q and U to convert from E to B
+		# (i.e., flip sign of both Q and U)
+
+		# compute polarization angle
+		B_angle = np.mod(0.5*np.arctan2(U*-1.,Q*-1.), np.pi)
 
 	if deg==True:
 		# convert from radians to degrees
 		B_angle = np.degrees(B_angle)
 
 	return B_angle
-
-def fQU(P,chi,deg=True):
-	'''
-	Computes Stokes Q and U maps.
-
-	Input
-	P   : polarized intensity
-	chi : polarization angle
-	deg : if True, units of input chi are in degrees (if False, radians)
-
-	Output
-	Q : Stokes Q
-	U : Stokes U
-	'''
-
-	if deg==True:
-		# convert polarization angle to radians
-		chi_rad = np.radians(chi)
-	else:
-		# polarization angle already in radians
-		chi_rad = chi
-
-	Q = P * np.cos(2.*chi_rad)
-	U = P * np.sin(2.*chi_rad)
-
-	return (Q,U)
 
 def fSest(Q,U,delta):
 	'''
