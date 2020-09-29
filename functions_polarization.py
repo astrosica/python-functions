@@ -1,6 +1,7 @@
 import sys
 import aplpy
 import numpy as np
+from tqdm import tqdm
 import astropy.wcs as wcs
 from astropy.io import fits
 from scipy import interpolate
@@ -9,6 +10,7 @@ from astropy import constants as const
 from matplotlib.collections import LineCollection
 
 from functions_misc import fmask_signal
+from functions_fits import fheader_3Dto2D
 
 def fPI(Q,U):
 	'''
@@ -26,6 +28,27 @@ def fPI(Q,U):
 	PI = np.sqrt(Q**2.+U**2.)
 	
 	return PI
+
+def fPI_err(Q,U,Q_err,U_err):
+	'''
+	Computes the uncertainty in the polarized intensity.
+
+	Input
+	Q     : 
+	U     : 
+	Q_err : 
+	U_err : 
+	'''
+
+	P = np.sqrt(Q**2.+U**2.)
+
+	Q_term = (Q/P)**2. * Q_err**2.
+	U_term = (U/P)**2. * U_err**2.
+
+	P_err = np.sqrt(Q_term + U_term)
+
+	return P_err
+
 
 def fPI_error(Q,U,QQ,QU,UU):
 	'''
@@ -789,6 +812,254 @@ def fplotvectors(imagefile,anglefile,deltapix=5,scale=1.,angleunit="deg",coords=
 
 		fig.canvas.draw()
 		f.save(imagefile.split(".fits")[0]+"_angles.pdf")
+
+def frun_RM1d_iterate(do_RMsynth_1D_dir,Q_filedir,U_filedir,Q_err,U_err,freq_Hz_filedir,rmsynth_inputfiledir,options):
+	'''
+	Iteratively runs 1D RM synthesis on a cube of data.
+	
+	Input
+	do_RMsynth_1D_dir     : 
+	Q_filedir             : 
+	U_filedir             : 
+	Q_err                 : 
+	U_err                 : 
+	freq_Hz_filedir       : 
+	rmsynth_inputfiledir  : 
+	options               : 
+	
+	Output
+	
+	'''
+
+	rmsynth_outputfiledir = rmsynth_inputfiledir.split(".")[0]+"_RMsynth."+rmsynth_inputfiledir.split(".")[-1]
+
+	# extract data
+	Q_data       = fits.getdata(Q_filedir)
+	U_data       = fits.getdata(U_filedir)
+	freq_Hz_data = np.loadtxt(freq_Hz_filedir)
+	Q_header_2D  = fheader_3Dto2D(Q_filedir,Q_filedir,write=False)
+
+	# turn uncertainties into arrays
+	sigma_Q = np.ones(shape=Q_data.shape[0])*Q_err
+	sigma_U = np.ones(shape=U_data.shape[0])*U_err
+
+	# create nan arrays to later replace with RM synthesis results
+	dFDFcorMAD           = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	dFDFrms              = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	phiPeakPIchan_rm2    = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	dPhiPeakPIchan_rm2   = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	ampPeakPIchan        = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	ampPeakPIchanEff     = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	dAmpPeakPIchan       = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	snrPIchan            = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	indxPeakPIchan       = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	peakFDFimagChan      = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	peakFDFrealChan      = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	polAngleChan_deg     = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	dPolAngleChan_deg    = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	polAngle0Chan_deg    = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	dPolAngle0Chan_deg   = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	phiPeakPIfit_rm2     = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	dPhiPeakPIfit_rm2    = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	ampPeakPIfit         = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	ampPeakPIfitEff      = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	dAmpPeakPIfit        = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	snrPIfit             = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	indxPeakPIfit        = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	peakFDFimagFit       = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	peakFDFrealFit       = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	polAngleFit_deg      = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	dPolAngleFit_deg     = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	polAngle0Fit_deg     = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	dPolAngle0Fit_deg    = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	Ifreq0               = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	#polyCoeffs           = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	IfitStat             = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	IfitChiSqRed         = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	lam0Sq_m2            = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	freq0_Hz             = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	fwhmRMSF             = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	dQU                  = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	dFDFth               = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	#units                = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	min_freq             = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	max_freq             = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	N_channels           = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	median_channel_width = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	fracPol              = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	sigmaAddQ            = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	dSigmaAddMinusQ      = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	dSigmaAddPlusQ       = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	sigmaAddU            = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	dSigmaAddMinusU      = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+	dSigmaAddPlusU       = np.ones(shape=(Q_data.shape[1],Q_data.shape[2]))*np.nan
+
+	# iterate over spatial y-pixel coordinates
+	for _y in tqdm(range(Q_data.shape[1])):
+		# iterate over spatial x-pixel coordinates
+		for _x in range(Q_data.shape[2]):
+			# extract Stokes data at spatial pixel
+			Q_xy  = Q_data[:,_y,_x]
+			U_xy  = U_data[:,_y,_x]
+			# write file containing input for RM synthesis 1D
+			np.savetxt(rmsynth_inputfiledir,np.transpose([freq_Hz_data,Q_xy,U_xy,sigma_Q,sigma_U]))
+			# run RM synthesis
+			#os.system(do_RMsynth_1D_dir+" "+str(rmsynth_inputfiledir)+" "+options)
+			DEVNULL = open(os.devnull, 'wb')
+			subprocess.call(do_RMsynth_1D_dir+" "+str(rmsynth_inputfiledir)+" "+options,stderr=DEVNULL,shell=True)
+			# extract RM synthesis output
+			with open(rmsynth_outputfiledir) as f:
+				lines = f.readlines()
+				dFDFcorMAD_xy           = float(lines[0].split("=")[1])
+				dFDFrms_xy              = float(lines[1].split("=")[1])
+				phiPeakPIchan_rm2_xy    = float(lines[2].split("=")[1])
+				dPhiPeakPIchan_rm2_xy   = float(lines[3].split("=")[1])
+				ampPeakPIchan_xy        = float(lines[4].split("=")[1])
+				ampPeakPIchanEff_xy     = float(lines[5].split("=")[1])
+				dAmpPeakPIchan_xy       = float(lines[6].split("=")[1])
+				snrPIchan_xy            = float(lines[7].split("=")[1])
+				indxPeakPIchan_xy       = float(lines[8].split("=")[1])
+				peakFDFimagChan_xy      = float(lines[9].split("=")[1])
+				peakFDFrealChan_xy      = float(lines[10].split("=")[1])
+				polAngleChan_deg_xy     = float(lines[11].split("=")[1])
+				dPolAngleChan_deg_xy    = float(lines[12].split("=")[1])
+				polAngle0Chan_deg_xy    = float(lines[13].split("=")[1])
+				dPolAngle0Chan_deg_xy   = float(lines[14].split("=")[1])
+				phiPeakPIfit_rm2_xy     = float(lines[15].split("=")[1])
+				dPhiPeakPIfit_rm2_xy    = float(lines[16].split("=")[1])
+				ampPeakPIfit_xy         = float(lines[17].split("=")[1])
+				ampPeakPIfitEff_xy      = float(lines[18].split("=")[1])
+				dAmpPeakPIfit_xy        = float(lines[19].split("=")[1])
+				snrPIfit_xy             = float(lines[20].split("=")[1])
+				indxPeakPIfit_xy        = float(lines[21].split("=")[1])
+				peakFDFimagFit_xy       = float(lines[22].split("=")[1])
+				peakFDFrealFit_xy       = float(lines[23].split("=")[1])
+				polAngleFit_deg_xy      = float(lines[24].split("=")[1])
+				dPolAngleFit_deg_xy     = float(lines[25].split("=")[1])
+				polAngle0Fit_deg_xy     = float(lines[26].split("=")[1])
+				dPolAngle0Fit_deg_xy    = float(lines[27].split("=")[1])
+				Ifreq0_xy               = float(lines[28].split("=")[1])
+				#polyCoeffs_xy           = str(lines[29].split("=")[1])
+				IfitStat_xy             = float(lines[30].split("=")[1])
+				IfitChiSqRed_xy         = float(lines[31].split("=")[1])
+				lam0Sq_m2_xy            = float(lines[32].split("=")[1])
+				freq0_Hz_xy             = float(lines[33].split("=")[1])
+				fwhmRMSF_xy             = float(lines[34].split("=")[1])
+				dQU_xy                  = float(lines[35].split("=")[1])
+				dFDFth_xy               = float(lines[36].split("=")[1])
+				#units_xy                = str(lines[37].split("=")[1])
+				min_freq_xy             = float(lines[38].split("=")[1])
+				max_freq_xy             = float(lines[39].split("=")[1])
+				N_channels_xy           = float(lines[40].split("=")[1])
+				median_channel_width_xy = float(lines[41].split("=")[1])
+				fracPol_xy              = float(lines[42].split("=")[1])
+				sigmaAddQ_xy            = float(lines[43].split("=")[1])
+				dSigmaAddMinusQ_xy      = float(lines[44].split("=")[1])
+				dSigmaAddPlusQ_xy       = float(lines[45].split("=")[1])
+				sigmaAddU_xy            = float(lines[46].split("=")[1])
+				dSigmaAddMinusU_xy      = float(lines[47].split("=")[1])
+				dSigmaAddPlusU_xy       = float(lines[48].split("=")[1])
+			# fill in arrays with results
+			dFDFcorMAD[_y,_x]           = dFDFcorMAD_xy
+			dFDFrms[_y,_x]              = dFDFrms_xy
+			phiPeakPIchan_rm2[_y,_x]    = phiPeakPIchan_rm2_xy
+			dPhiPeakPIchan_rm2[_y,_x]   = dPhiPeakPIchan_rm2_xy
+			ampPeakPIchan[_y,_x]        = ampPeakPIchan_xy
+			ampPeakPIchanEff[_y,_x]     = ampPeakPIchanEff_xy
+			dAmpPeakPIchan[_y,_x]       = dAmpPeakPIchan_xy
+			snrPIchan[_y,_x]            = snrPIchan_xy
+			indxPeakPIchan[_y,_x]       = indxPeakPIchan_xy
+			peakFDFimagChan[_y,_x]      = peakFDFimagChan_xy
+			peakFDFrealChan[_y,_x]      = peakFDFrealChan_xy
+			polAngleChan_deg[_y,_x]     = polAngleChan_deg_xy
+			dPolAngleChan_deg[_y,_x]    = dPolAngleChan_deg_xy
+			polAngle0Chan_deg[_y,_x]    = polAngle0Chan_deg_xy
+			dPolAngle0Chan_deg[_y,_x]   = dPolAngle0Chan_deg_xy
+			phiPeakPIfit_rm2[_y,_x]     = phiPeakPIfit_rm2_xy
+			dPhiPeakPIfit_rm2[_y,_x]    = dPhiPeakPIfit_rm2_xy
+			ampPeakPIfit[_y,_x]         = ampPeakPIfit_xy
+			ampPeakPIfitEff[_y,_x]      = ampPeakPIfitEff_xy
+			dAmpPeakPIfit[_y,_x]        = dAmpPeakPIfit_xy
+			snrPIfit[_y,_x]             = snrPIfit_xy
+			indxPeakPIfit[_y,_x]        = indxPeakPIfit_xy
+			peakFDFimagFit[_y,_x]       = peakFDFimagFit_xy
+			peakFDFrealFit[_y,_x]       = peakFDFrealFit_xy
+			polAngleFit_deg[_y,_x]      = polAngleFit_deg_xy
+			dPolAngleFit_deg[_y,_x]     = dPolAngleFit_deg_xy
+			polAngle0Fit_deg[_y,_x]     = polAngle0Fit_deg_xy
+			dPolAngle0Fit_deg[_y,_x]    = dPolAngle0Fit_deg_xy
+			Ifreq0[_y,_x]               = Ifreq0_xy
+			#polyCoeffs[_y,_x]           = polyCoeffs_xy
+			IfitStat[_y,_x]             = IfitStat_xy
+			IfitChiSqRed[_y,_x]         = IfitChiSqRed_xy
+			lam0Sq_m2[_y,_x]            = lam0Sq_m2_xy
+			freq0_Hz[_y,_x]             = freq0_Hz_xy
+			fwhmRMSF[_y,_x]             = fwhmRMSF_xy
+			dQU[_y,_x]                  = dQU_xy
+			dFDFth[_y,_x]               = dFDFth_xy
+			#units[_y,_x]                = units_xy
+			min_freq[_y,_x]             = min_freq_xy
+			max_freq[_y,_x]             = max_freq_xy
+			N_channels[_y,_x]           = N_channels_xy
+			median_channel_width[_y,_x] = median_channel_width_xy
+			fracPol[_y,_x]              = fracPol_xy
+			sigmaAddQ[_y,_x]            = sigmaAddQ_xy
+			dSigmaAddMinusQ[_y,_x]      = dSigmaAddMinusQ_xy
+			dSigmaAddPlusQ[_y,_x]       = dSigmaAddPlusQ_xy
+			sigmaAddU[_y,_x]            = sigmaAddU_xy
+			dSigmaAddMinusU[_y,_x]      = dSigmaAddMinusU_xy
+			dSigmaAddPlusU[_y,_x]       = dSigmaAddPlusU_xy
+'''
+		fits.writeto(rmsynth_outputfiledir+"dFDFcorMAD.fits",dFDFcorMAD,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"dFDFrms.fits",dFDFrms,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"phiPeakPIchan_rm2.fits",phiPeakPIchan_rm2,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"dPhiPeakPIchan_rm2.fits",dPhiPeakPIchan_rm2,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"ampPeakPIchan.fits",ampPeakPIchan,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"ampPeakPIchanEff.fits",ampPeakPIchanEff,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"dAmpPeakPIchan.fits",dAmpPeakPIchan,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"snrPIchan.fits",snrPIchan,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"indxPeakPIchan.fits",indxPeakPIchan,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"peakFDFimagChan.fits",peakFDFimagChan,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"peakFDFrealChan.fits",peakFDFrealChan,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"polAngleChan_deg.fits",polAngleChan_deg,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"dPolAngleChan_deg.fits",dPolAngleChan_deg,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"polAngle0Chan_deg.fits",polAngle0Chan_deg,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"dPolAngle0Chan_deg.fits",dPolAngle0Chan_deg,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"phiPeakPIfit_rm2.fits",phiPeakPIfit_rm2,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"dPhiPeakPIfit_rm2.fits",dPhiPeakPIfit_rm2,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"ampPeakPIfit.fits",ampPeakPIfit,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"ampPeakPIfitEff.fits",ampPeakPIfitEff,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"dAmpPeakPIfit.fits",dAmpPeakPIfit,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"snrPIfit.fits",snrPIfit,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"indxPeakPIfit.fits",indxPeakPIfit,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"peakFDFimagFit.fits",peakFDFimagFit,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"peakFDFrealFit.fits",peakFDFrealFit,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"polAngleFit_deg.fits",polAngleFit_deg,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"dPolAngleFit_deg.fits",dPolAngleFit_deg,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"polAngle0Fit_deg.fits",polAngle0Fit_deg,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"dPolAngle0Fit_deg.fits",dPolAngle0Fit_deg,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"Ifreq0.fits",Ifreq0,Q_header_2D,overwrite=True)
+		#fits.writeto(rmsynth_outputfiledir+"polyCoeffs.fits",polyCoeffs,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"IfitStat.fits",IfitStat,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"IfitChiSqRed.fits",IfitChiSqRed,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"lam0Sq_m2.fits",lam0Sq_m2,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"freq0_Hz.fits",freq0_Hz,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"fwhmRMSF.fits",fwhmRMSF,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"dQU.fits",dQU,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"dFDFth.fits",dFDFth,Q_header_2D,overwrite=True)
+		#fits.writeto(rmsynth_outputfiledir+"units.fits",units,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"min_freq.fits",min_freq,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"max_freq.fits",max_freq,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"N_channels.fits",N_channels,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"median_channel_width.fits",median_channel_width,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"fracPol.fits",fracPol,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"sigmaAddQ.fits",sigmaAddQ,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"dSigmaAddMinusQ.fits",dSigmaAddMinusQ,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"dSigmaAddPlusQ.fits",dSigmaAddPlusQ,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"sigmaAddU.fits",sigmaAddU,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"dSigmaAddMinusU.fits",dSigmaAddMinusU,Q_header_2D,overwrite=True)
+		fits.writeto(rmsynth_outputfiledir+"dSigmaAddPlusU.fits",dSigmaAddPlusU,Q_header_2D,overwrite=True)
+'''
 
 def fRMSF(freq_file,weights_file):
 	'''
