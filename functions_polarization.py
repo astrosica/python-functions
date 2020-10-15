@@ -34,10 +34,10 @@ def fPI_err(Q,U,Q_err,U_err):
 	Computes the uncertainty in the polarized intensity.
 
 	Input
-	Q     : 
-	U     : 
-	Q_err : 
-	U_err : 
+	Q     : Stokes Q
+	U     : Stokes U
+	Q_err : uncertainty in Stokes Q
+	U_err : uncertainty in Stokes U
 	'''
 
 	P = np.sqrt(Q**2.+U**2.)
@@ -203,7 +203,7 @@ def fQU(P,chi,deg=True):
 
 	return Q,U
 
-def fpolanglediff(Q_1,U_1,Q_2,U_2,toIAU=False,deg=True):
+def fpolanglediff_Stokes(Q_1,U_1,Q_2,U_2,toIAU=False,deg=True):
 	'''
 	Computes the difference between two polarization angles.
 	See Equation 7 in Planck XIX (2015).
@@ -237,6 +237,41 @@ def fpolanglediff(Q_1,U_1,Q_2,U_2,toIAU=False,deg=True):
 	if deg==True:
 		# convert from radians to degrees
 		pol_angle_diff = np.degrees(pol_angle)
+
+	return pol_angle_diff
+
+def fpolanglediff(polangle_1,polangle_2,inunits="deg",outunits="deg"):
+	'''
+	Computes the difference between two polarization angles.
+	See Equation 15 in Clark (2019a).
+	
+	Input
+	polangle_1 : 
+	polangle_2 :
+
+	Output
+	pol_angle_diff : difference between polarization angles
+	'''
+
+	degree_units = ["deg","degree","degrees"]
+	rad_units    = ["rad","radian","radians"]
+
+	if inunits in degree_units:
+		polangle_1_deg = polangle_1.copy()
+		polangle_2_deg = polangle_2.copy()
+		polangle_1_rad = np.radians(polangle_1)
+		polangle_2_rad = np.radians(polangle_2)
+	elif inunits in rad_units:
+		polangle_1_rad = polangle_1.copy()
+		polangle_2_rad = polangle_2.copy()
+		polangle_1_deg = np.degrees(polangle_1)
+		polangle_2_deg = np.degrees(polangle_2)
+
+	# difference between polarization angles
+	num = np.sin(2.*polangle_1_rad)*np.cos(2.*polangle_2_rad) - np.cos(2.*polangle_1_rad)*np.sin(2.*polangle_2_rad)
+	den = np.cos(2.*polangle_1_rad)*np.cos(2.*polangle_2_rad) + np.sin(2.*polangle_1_rad)*np.sin(2.*polangle_2_rad)
+
+	pol_angle_diff = 0.5*np.arctan2(num,den)
 
 	return pol_angle_diff
 
@@ -668,6 +703,28 @@ def fderotate(pangle,RM,wavel,inunit,outunit):
 		pangle_0 = pangle_0_rad
 
 	return pangle_0
+
+def fderotate_err(RMSF_FWHM,SNR,lambda_sq,deg=True):
+	'''
+	Commputes the uncertainty in de-rotated polarization angles.
+
+	Input
+	RMSF_FWHM : the FWHM of the RMSF                     [rad/m^2]
+	SNR       : signal-to-noise                          [dimensionless]
+	lambda_sq : wavelength^2                             [m^2]
+	deg       : if true, converts uncertainty to degrees [default=True]
+
+
+	Output
+	derotate_err : unceertainty in de-rotated angles [deg]
+	'''
+
+	derotate_err = (RMSF_FWHM/(2.*SNR))*lambda_sq
+
+	if deg==True:
+		derotate_err = np.degrees(derotate_err)
+
+	return derotate_err
 
 def fpolgradargdict(polgrad_arg):
 	'''
