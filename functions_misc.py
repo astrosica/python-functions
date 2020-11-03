@@ -41,6 +41,127 @@ def ffreq(wavel):
 
 	return freq
 
+def fEM(I_halpha,T4=0.8,E_BV=0):
+	'''
+	Computes the emission measure (EM) via h-alpha line intensity.
+
+	Input
+	I_halpha : h-alpha intensity in Rayleighs
+	T4       : WIM temperature in 10^4 K
+	E_BV     : E(B-V) colour excess in magnitudes
+
+	Output
+	EM : emission measure in pc/cm^6
+	'''
+
+	EM = 2.75*(T4**0.9)*I_halpha*np.exp(2.44*(E_BV))
+
+	return EM
+
+def fne(EM,f,L):
+	'''
+	Computes the thermal electron density.
+
+	Input
+	EM : emission measure in pc/cm^6
+	f  : dimensionless filling factor within the range [0,1]
+	L  : path length in pc
+
+	Output
+	ne : thermal electron density in cm^-3
+	'''
+
+	ne = np.sqrt(EM/(f*L))
+
+	return ne
+
+def fnH(NHI,L):
+	'''
+	Computes the neutral hydrogen density.
+
+	Input
+	NHI : HI column density in cm^-2
+	L   : path length in pc
+
+	Output
+	nHI : neutral hydrogen density in cm^-3
+	'''
+
+	nHI = NHI/(L*3.086e+18)
+
+	return nHI
+
+def fBparallel(RM,ne,f,L):
+	'''
+	Computes the line-of-sight magnetic field strength in micro-Gauss.
+
+	Input
+	RM : rotation measure in rad/m^2
+	ne : thermal electron density in cm^-3
+	f  : dimensionless filling factor within the range [0,1]
+	L  : path length in pc
+
+	Output
+	Bparallel : line-of-sight magnetic field strength in micro-Gauss
+	'''
+
+	Bparallel = RM / (0.81*ne*f*L)
+
+	return Bparallel
+
+def fPth_ion(f,ne,T):
+	'''
+	Computes the ionized thermal gas pressure.
+	Note: This returns P/k_B not P.
+
+	Input
+	f  : dimensionless ionized filling factor within the range [0,1]
+	ne : thermal electron density in cm^-3
+	T  : gas temperature in K
+
+	Output
+	Pth_ion : ionized thermal gas pressure in K cm^-3
+	'''
+
+	Pth_ion = 2.*f*ne*T
+
+	return Pth_ion
+
+
+def fPth_neut(nH,T):
+	'''
+	Computes the neutral thermal gas pressure.
+	Note: This returns P/k_B not P.
+
+	Input
+	ne : thermal electron density in cm^-3
+	T  : gas temperature in K
+
+	Output
+	Pth_neut : neutral thermal gas pressure in K cm^-3
+	'''
+
+	Pth_neut = nH*T
+
+	return Pth_neut
+
+def fPmag(B):
+	'''
+	Computes the magnetic pressure.
+	Note: This returns P/k_B not P.
+
+	Input
+	B : magnetic field strength in micro-gauss
+
+	Output
+	Pmag : magnetic pressure in K cm^-3
+	'''
+
+	Pmag = (B*1E-6)**2./(8.*np.pi)
+	Pmag /= const.k_B.cgs.value
+
+	return Pmag
+
 def fTk(delta_v,delta_t=None):
 	'''
 	Computes the upper-limit on kinetic temperature from line broadening.
@@ -76,6 +197,7 @@ def fmask_signal(data,signal,fill_value=np.nan,lessthan=True):
 	data       : data to be clipped
 	signal     : signal used for data clipping
 	fill_value : value to fill masked regions with
+	lessthan   : if True, mask values less than `signal'
 	
 	Output
 	mask         : bitmask used for data clipping
@@ -412,9 +534,10 @@ def freadROHSA(filedir,shape,vmin,vmax,deltav):
 	nx      : number of pixels in x-dimension
 
 	Output
-	amplitude : amplitude of Gaussian components         [pixels]
-	position : central position of Gaussian components   [pixels]
-	dispersion : dispersion of Gaussian componennts      [pixels]
+	amplitude  : amplitude of Gaussian components          [pixels]
+	position   : central position of Gaussian components   [pixels]
+	dispersion : dispersion of Gaussian componennts        [pixels]
+	deltav     : velocity channel width                    [km/s]
 	'''
 
 	def gauss_2D(xs,a,mu,sig):
@@ -443,23 +566,23 @@ def freadROHSA(filedir,shape,vmin,vmax,deltav):
 	position   = params[1::3]
 	dispersion = params[2::3]
 
-	model = np.zeros(shape)
+	model   = np.zeros(shape)
 	n_gauss = params.shape[0]/3
 
 	for i in np.arange(n_gauss):
 		model += gauss_2D(np.arange(shape[0]),params[int(0+(3*i))],params[int(1+(3*i))],params[int(2+(3*i))])
 
+	# translate dispersion from pixel to velocity units
+	dispersion_v = dispersion*deltav
+
 	# translate amplitude to column density (assuming optically thin emission)
-	columnden = amplitude*1.823E18
+	columnden = np.sqrt(2.*np.pi)*amplitude*dispersion_v*1.823E18
 
 	# translate pixel axis to velocity axis
 	vel_axis = np.arange(vmin,vmax,deltav)
 	pix_axis = np.arange(len(vel_axis))
 	fvel     = interpolate.interp1d(pix_axis,vel_axis)
 	velocity = fvel(position)
-
-	# translate dispersion from pixel to velocity units
-	dispersion_v = dispersion*deltav
 
 	#return amplitude,position,dispersion,model
 	return amplitude,columnden,position,velocity,dispersion,dispersion_v,model
@@ -742,11 +865,28 @@ def fmaskGALFACTSedges(data,pointing):
 
 	return data_masked
 
+def GaiaParallax(p_mas):
+    '''
+    Computes distance using Gaia parallax.
 
+    Input
+    p_mas : Gaia parallax in milli-arcseconds
 
+    Output
+    p_as   : parallax
+    d_pc   : 
+    d_10pc : 
+    '''
 
+    # convert parallax from milli-arcsec to arcsec
+    p_arcsec = p_mas*1E-3
 
+    # compute distances
+    d_pc     = 1./p_arcsec
+    d_10pc   = d_pc/10.
+    d_Mpc    = d_pc/1E6
 
+    return p_arcsec,d_pc,d_10pc,d_Mpc
 
 
 
