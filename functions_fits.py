@@ -526,29 +526,34 @@ def freproject_HI4PI(HI4PI_input_file,FITS_file,HI4PI_output_file,VERBOSE=True):
     f          = h5py.File(HI4PI_input_file,"r")
     HI4PI_data = f["survey"]
 
-    # read in HI4PI hdf5 data and store each velocity channel in a dictionary
-    HI4PI_data_dict = {}
+    #initialize reprojected data cube
+    HI4PI_cube_reproj_data = np.ones(shape=(HI4PI_data.shape[1],FITS_data.shape[0],FITS_data.shape[1]))
+
+    #HI4PI_data_dict = {}
+    # read in hdf5 data
     with h5py.File(HI4PI_input_file,"r") as f:
+        # iterate through each velocity channel
         for i in np.arange(HI4PI_data.shape[1]):
             if VERBOSE:
                 print "Reading in slice {}".format(i) 
+            # HEALPix image for ith velocity channe;
             vslice  = f["survey"][:,i]
-            HI4PI_data_dict[i] = vslice
+            #HI4PI_data_dict[i] = vslice
+            # reproject from HEALPix to input FITS header
+            if VERBOSE:
+                print "Reprojecting slice {}".format(i)
+            healpix_data_reproj,footprint = reproject_from_healpix((vslice,"G"),FITS_wcs,shape_out=FITS_data.shape,hdu_in=1,nested=False)
+            # update velocity channel in reprojected FITS cube
+            HI4PI_cube_reproj_data[i]*=healpix_data_reproj
+            # save intermediate FITS file in case kernel dies
+            if i%10==0:
+                if VERBOSE:
+                    print "Saving intermediate FITS file: {}".format(HI4PI_output_file)
+                fits.writeto(HI4PI_output_file,HI4PI_cube_reproj_data,overwrite=True)
 
-    #initialize reprojected data cube
-    HI4PI_cube_reproj_data = np.ones(shape=(HI4PI_data.shape[1],4320,8640))
-    # iterate through each velocity channel
-    for i in np.arange(HI4PI_data.shape[1]):
-        if VERBOSE:
-            print "Reprojecting slice {}".format(i)
-        # reproject
-        healpix_data_reproj,footprint = reproject_from_healpix((HI4PI_data_dict[i],"G"),FITS_wcs,shape_out=FITS_data.shape,hdu_in=1,nested=False)
-        # update cube index
-        HI4PI_cube_reproj_data[i]*=healpix_data_reproj
-
+    # save to FITS file
     if VERBOSE:
         print "Saving FITS file: {}".format(HI4PI_output_file)
-    # save to FITS file
     fits.writeto(HI4PI_output_file,HI4PI_cube_reproj_data,overwrite=True)
 
 def fhighlatmask(lb_coords,blim):
