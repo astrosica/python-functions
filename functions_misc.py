@@ -5,9 +5,9 @@ from scipy import interpolate
 from scipy import signal, spatial
 from astropy import constants as const
 from reproject import reproject_interp
+from uncertainties import ufloat, umath
 from astropy.coordinates import SkyCoord
 from astropy.convolution import convolve_fft
-
 from matplotlib import rc
 rc("text", usetex=True)
 
@@ -41,20 +41,31 @@ def ffreq(wavel):
 
 	return freq
 
-def fEM(I_halpha,T4=0.8,E_BV=0):
+def fEM(I_halpha,T4,EBV_int,EBV_ext):
 	'''
 	Computes the emission measure (EM) via h-alpha line intensity.
+	See Equation 8 of Finkbeiner (2003) for extinction correction.
 
 	Input
-	I_halpha : h-alpha intensity in Rayleighs
-	T4       : WIM temperature in 10^4 K
-	E_BV     : E(B-V) colour excess in magnitudes
+	I_halpha : h-alpha intensity             [Rayleighs]
+	T4       : WIM temperature               [10^4 K]
+	EBV_int  : E(B-V) internal colour excess [mags]
+	EBV_ext  : E(B-V) external colour excess [mags]
 
 	Output
 	EM : emission measure in pc/cm^6
 	'''
 
-	EM = 2.75*(T4**0.9)*I_halpha*np.exp(2.44*(E_BV))
+	# convert E(B-V) to optical depth
+	tau_int = 2.44*EBV_int # internal dust extinction mixed in with h-alpha
+	tau_ext = 2.44*EBV_ext # external/foreground dust extinction
+
+	# correction terms for dust extinction
+	int_corr = tau_int/(1. - np.exp(-tau_int))
+	ext_corr = np.exp(tau_ext)
+
+	# emission measure
+	EM = 2.75*(T4**0.9)*I_halpha*int_corr*ext_corr
 
 	return EM
 
