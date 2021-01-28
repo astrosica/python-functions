@@ -273,7 +273,36 @@ def fpolanglediff(polangle_1,polangle_2,inunits="deg",outunits="deg"):
 
 	pol_angle_diff = 0.5*np.arctan2(num,den)
 
+	if outunits in degree_units:
+		pol_angle_diff = np.degrees(pol_angle_diff)
+
 	return pol_angle_diff
+
+def fAM(theta1,theta2,inunits="deg"):
+	'''
+	Computes the alignment measure (AM) between two angles on the range [0,180).
+	See Equation 16 in Clark et al. (2019a).
+
+	Input
+	theta1  : angles in units of inunits
+	theta2  : angles in units of inunits
+	inunits : defines units of input angles
+
+	Output
+	AM_full : full array of "AM" measurements
+	AM      : alignment measure on the range [-1,1]
+
+	Note: An AM of +1, -1, and 0 implies that the angles are perfectly aligned, perfeclty anti-aligned, and not at all aligned, respectively.
+	'''
+
+	# compute angular diference in radians
+	deltatheta_rad = fpolanglediff(theta1,theta2,inunits=inunits,outunits="rad")
+
+	# compute AM
+	AM_full = np.cos(2.*deltatheta_rad)
+	AM      = np.nanmean(AM_full)
+
+	return AM_full,AM
 
 def fpolfrac(I,Q,U):
 	'''
@@ -668,17 +697,24 @@ def fSest(Q,U,delta):
 
 	return Sest
 
-def fderotate(pangle,RM,wavel,inunit,outunit):
+
+def fderotate(pangle,RM,freq,inunit,outunit):
 	'''
 	Computes the de-rotated polarization angles.
 
 	Input
 	pangle  : polarization angle                 [degrees or radians]
 	RM      : rotation measure                   [rad/m^2]
-	wavel   : observing wavelength               [m]
+	freq    : frequency channels                 [Hz]
 	inunit  : units of input polarization angle  [degrees or radians]
 	outunit : units of output polarization angle [degrees or radians]
 	'''
+
+	# compute weighted average of wavelength squared
+	wavel_sq   = fwavel(freq)**2.
+	weights    = np.ones(shape=wavel_sq.shape)
+	K          = 1.0/np.sum(weights)
+	wavel_0_sq = K*np.sum(weights*wavel_sq)
 
 	degree_units = ["deg","degree","degrees"]
 	rad_units    = ["rad","radian","radians"]
@@ -692,7 +728,7 @@ def fderotate(pangle,RM,wavel,inunit,outunit):
 		pangle_rad = pangle
 		pangle_deg = np.degrees(pangle)
 
-	pangle_0_rad = np.mod(pangle_rad-RM*wavel**2.,np.pi)
+	pangle_0_rad = np.mod(pangle_rad-RM*wavel_0_sq,np.pi)
 	pangle_0_deg = np.degrees(pangle_0_rad)
 
 	if outunit in degree_units:
