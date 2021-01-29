@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from astropy import constants as const
 from matplotlib.collections import LineCollection
 
-from functions_misc import fmask_signal
+from functions_misc import fmask_signal, fwavel
 from functions_fits import fheader_3Dto2D
 
 def fPI(Q,U):
