@@ -10,6 +10,7 @@ import montage_wrapper as montage
 from reproject import reproject_interp
 from astropy.coordinates import SkyCoord
 from reproject import reproject_from_healpix
+from coord_v_convert import *
 
 def ffreqaxis(file):
     '''
@@ -52,42 +53,84 @@ def fNpix(nside):
 
     return npix
 
-def fRotateHealpix_GC(file,I_field,Q_field,U_field,incoord,outcoord,inepoch=2000.,outepoch=2000.):
+def fRotateHealpix_GC(healpix_filedir,I_field,Q_field,U_field,inepoch=2000.,outepoch=2000.):
     '''
-    Rotates a Healpix FITS file between coordinate systems.
-
+    Rotates a Healpix FITS file between Galactic and Celestial coordinate systems.
+    
     Input
-    file     : path to Healpix file
+    healpix_filedir : path to Healpix file
     I_field  : field of Stokes I data
     Q_field  : field of Stokes Q data
     U_field  : field of Stokes U data
-    incoord  : 
-    outcoord : 
-    inepoch  : 
-    outepoch : 
-
+    inepoch  : epoch of input data
+    outepoch : epoch of output data
+    
     Output
-    I_rotated_data : 
-    Q_rotated_data : 
-    U_rotated_data : 
+    I_rotated_data : stokes I data rotated to Celestial coordinates
+    Q_rotated_data : stokes Q data rotated to Celestial coordinates
+    U_rotated_data : stokes U data rotated to Celestial coordinates
     '''
 
-    I_data = hp.read_map(planck_dust_353_dir+dust_353_file,field=I_field)
-    Q_data = hp.read_map(planck_dust_353_dir+dust_353_file,field=Q_field)
-    U_data = hp.read_map(planck_dust_353_dir+dust_353_file,field=U_field)
+    I_data = hp.read_map(healpix_filedir,field=I_field)
+    Q_data = hp.read_map(healpix_filedir,field=Q_field)
+    U_data = hp.read_map(healpix_filedir,field=U_field)
 
     IQU_data = np.array([I_data.tolist(),Q_data.tolist(),U_data.tolist()])
 
-    header = fits.getheader(file)
+    _,header = fits.getdata(healpix_filedir,header=True)
     NSIDE  = header["NSIDE"]
 
-    IQU_rotated_data = rotate_map(IQU_data,inepoch,outepoch,incoord,outcoord,NSIDE)
+    IQU_rotated_data = rotate_map(IQU_data,inepoch,outepoch,"G","C",NSIDE)
 
     I_rotated_data = IQU_rotated_data[0]
     Q_rotated_data = IQU_rotated_data[1]
     U_rotated_data = IQU_rotated_data[2]
 
-    return (I_rotated_data,Q_rotated_data,U_rotated_data)
+    return I_rotated_data,Q_rotated_data,U_rotated_data
+
+def fRotateHealpix_GC_reproject(healpix_filedir,I_field,Q_field,U_field,template_filedir,inepoch=2000.,outepoch=2000.,save=False,verbose=True):
+    '''
+    Rotates a Healpix FITS file between Galactic and Celestial coordinate systems.
+
+    Input
+    healpix_filedir  : path to Healpix file
+    I_field          : field of Stokes I data
+    Q_field          : field of Stokes Q data
+    U_field          : field of Stokes U data
+    template_filedir : path to template file for reprojection
+    inepoch          : epoch of input data
+    outepoch         : epoch of output data
+    '''
+
+    # first rotate healpix data from Galactic to Celestial coordinates
+    if verbose==True:
+        print "Rotating healpix data..."
+    I_rotated_data,Q_rotated_data,U_rotated_data = fRotateHealpix_GC(healpix_filedir,I_field,Q_field,U_field,inepoch=inepoch,outepoch=outepoch)
+
+    # reproject to new Celestial grid
+    template_header = fits.getheader(template_filedir)
+
+    if verbose==True:
+        print "Reprojecting Stokes I data..."
+    I_rotated_reproj_data,_ = reproject_from_healpix((I_rotated_data,"C"),template_header,nested=False)
+    if verbose==True:
+        print "Reprojecting Stokes Q data..."
+    Q_rotated_reproj_data,_ = reproject_from_healpix((Q_rotated_data,"C"),template_header,nested=False)
+    if verbose==True:
+        print "Reprojecting Stokes U data..."
+    U_rotated_reproj_data,_ = reproject_from_healpix((U_rotated_data,"C"),template_header,nested=False)
+
+    if save==True:
+        if verbose==True:
+            print "Saving data..."
+        I_rotated_reproj_filedir = healpix_filedir.split(".fits")[0]+"_I_rotated_GC_reproj.fits"
+        Q_rotated_reproj_filedir = healpix_filedir.split(".fits")[0]+"_Q_rotated_GC_reproj.fits"
+        U_rotated_reproj_filedir = healpix_filedir.split(".fits")[0]+"_U_rotated_GC_reproj.fits"
+
+        fits.writeto(I_rotated_reproj_filedir,I_rotated_reproj_data,template_header,overwrite=True)
+        fits.writeto(Q_rotated_reproj_filedir,Q_rotated_reproj_data,template_header,overwrite=True)
+        fits.writeto(U_rotated_reproj_filedir,U_rotated_reproj_data,template_header,overwrite=True)
+
 
 def fcubeavg(filedir_in,filedir_out,write=False):
     '''
@@ -529,7 +572,6 @@ def freproject_HI4PI(HI4PI_input_file,FITS_file,HI4PI_output_file,VERBOSE=True):
     #initialize reprojected data cube
     HI4PI_cube_reproj_data = np.ones(shape=(HI4PI_data.shape[1],FITS_data.shape[0],FITS_data.shape[1]))
 
-    #HI4PI_data_dict = {}
     # read in hdf5 data
     with h5py.File(HI4PI_input_file,"r") as f:
         # iterate through each velocity channel
@@ -538,7 +580,6 @@ def freproject_HI4PI(HI4PI_input_file,FITS_file,HI4PI_output_file,VERBOSE=True):
                 print "Reading in slice {}".format(i) 
             # HEALPix image for ith velocity channe;
             vslice  = f["survey"][:,i]
-            #HI4PI_data_dict[i] = vslice
             # reproject from HEALPix to input FITS header
             if VERBOSE:
                 print "Reprojecting slice {}".format(i)
