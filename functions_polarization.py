@@ -697,7 +697,6 @@ def fSest(Q,U,delta):
 
 	return Sest
 
-
 def fderotate(pangle,RM,freq,inunit,outunit):
 	'''
 	Computes the de-rotated polarization angles.
@@ -749,8 +748,7 @@ def fderotate_err(RMSF_FWHM,SNR,lambda_sq,deg=True):
 	SNR       : signal-to-noise                          [dimensionless]
 	lambda_sq : wavelength^2                             [m^2]
 	deg       : if true, converts uncertainty to degrees [default=True]
-
-
+	
 	Output
 	derotate_err : unceertainty in de-rotated angles [deg]
 	'''
@@ -761,6 +759,22 @@ def fderotate_err(RMSF_FWHM,SNR,lambda_sq,deg=True):
 		derotate_err = np.degrees(derotate_err)
 
 	return derotate_err
+
+def fRM_err(RMSF_FWHM,SNR):
+	'''
+	Commputes the uncertainty in the rotation measure (RM).
+
+	Input
+	RMSF_FWHM : the FWHM of the RMSF                     [rad/m^2]
+	SNR       : signal-to-noise                          [dimensionless]
+	
+	Output
+	derotate_err : unceertainty in de-rotated angles [deg]
+	'''
+
+	RM_err = (RMSF_FWHM/(2.*SNR))
+
+	return RM_err
 
 def fpolgradargdict(polgrad_arg):
 	'''
