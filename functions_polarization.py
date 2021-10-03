@@ -527,7 +527,7 @@ def fpolgradarg(Q,U,parallel=False,deg=True):
 def fpolgradarg_crossterms(Q,U,parallel=False,deg=True):
 	'''
 	Computes the argument of the polarization gradint with cross-terms.
-	See Equations 13 and 14 in Herron et al. (2018).
+	See Equations 13 and 14 in Herron et al. (2018) paper I.
 	
 	Input
 	Q        : Stokes Q map
@@ -854,7 +854,7 @@ def fplotvectors(imagefile,anglefile,deltapix=5,scale=1.,angleunit="deg",coords=
 					angles_rad = np.copy(angles)
 				else:
 					# raise error
-					print "Input angleunit is not defined."
+					print("Input angleunit is not defined.")
 					sys.exit() # pol_angle = np.mod(0.5*np.arctan2(U,Q), np.pi)
 				angle_rad = angles_rad[y,x]
 				angle_deg = angles_deg[y,x]

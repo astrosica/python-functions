@@ -104,25 +104,25 @@ def fRotateHealpix_GC_reproject(healpix_filedir,I_field,Q_field,U_field,template
 
     # first rotate healpix data from Galactic to Celestial coordinates
     if verbose==True:
-        print "Rotating healpix data..."
+        print("Rotating healpix data...")
     I_rotated_data,Q_rotated_data,U_rotated_data = fRotateHealpix_GC(healpix_filedir,I_field,Q_field,U_field,inepoch=inepoch,outepoch=outepoch)
 
     # reproject to new Celestial grid
     template_header = fits.getheader(template_filedir)
 
     if verbose==True:
-        print "Reprojecting Stokes I data..."
+        print("Reprojecting Stokes I data...")
     I_rotated_reproj_data,_ = reproject_from_healpix((I_rotated_data,"C"),template_header,nested=False)
     if verbose==True:
-        print "Reprojecting Stokes Q data..."
+        print("Reprojecting Stokes Q data...")
     Q_rotated_reproj_data,_ = reproject_from_healpix((Q_rotated_data,"C"),template_header,nested=False)
     if verbose==True:
-        print "Reprojecting Stokes U data..."
+        print("Reprojecting Stokes U data...")
     U_rotated_reproj_data,_ = reproject_from_healpix((U_rotated_data,"C"),template_header,nested=False)
 
     if save==True:
         if verbose==True:
-            print "Saving data..."
+            print("Saving data...")
         I_rotated_reproj_filedir = healpix_filedir.split(".fits")[0]+"_I_rotated_GC_reproj.fits"
         Q_rotated_reproj_filedir = healpix_filedir.split(".fits")[0]+"_Q_rotated_GC_reproj.fits"
         U_rotated_reproj_filedir = healpix_filedir.split(".fits")[0]+"_U_rotated_GC_reproj.fits"
@@ -524,7 +524,7 @@ def freproj3D_EQ_GAL(filedir_in,filedir_out,header_file):
     os.remove(header_file)
     montage.reproject_cube(filedir_in,filedir_out,header=mheader_file,clobber=True)
 
-def freproj_fromHEALPix(healpix_file,fits_file,output_file,coord="G",nested=False,write=True):
+def freproj_fromHEALPix(healpix_file,fits_file,output_file,coord="G",field=False,nested=False,write=True):
     '''
     Reprojects a HEALPix image to a standard FITS projection.
 
@@ -533,6 +533,7 @@ def freproj_fromHEALPix(healpix_file,fits_file,output_file,coord="G",nested=Fals
     fits_file    : directory to FITS file which the HEALPix image will be reprojected to
     output_file  : directory to reprojected FITS file
     coord        : coordinate system of input HEALPix image ("G" for Galactic or "C" for celestial)
+    field        : specifies healpix field [False or integer]
     nested       : order of HEALPix data (True for nested or False for ring)
     write        : if True, writes reprojected FITS file
 
@@ -541,7 +542,10 @@ def freproj_fromHEALPix(healpix_file,fits_file,output_file,coord="G",nested=Fals
     footprint           : reprojection footprint
     '''
 
-    healpix_data          = hp.read_map(healpix_file)
+    if field==False:
+        healpix_data = hp.read_map(healpix_file)
+    else:
+        healpix_data = hp.read_map(healpix_file,field=field)
     fits_data,fits_header = fits.getdata(fits_file,header=True)
 
     healpix_data_reproj,footprint = reproject_from_healpix((healpix_data,coord),fits_header,nested=nested)
@@ -577,24 +581,24 @@ def freproject_HI4PI(HI4PI_input_file,FITS_file,HI4PI_output_file,VERBOSE=True):
         # iterate through each velocity channel
         for i in np.arange(HI4PI_data.shape[1]):
             if VERBOSE:
-                print "Reading in slice {}".format(i) 
+                print("Reading in slice {}".format(i))
             # HEALPix image for ith velocity channe;
             vslice  = f["survey"][:,i]
             # reproject from HEALPix to input FITS header
             if VERBOSE:
-                print "Reprojecting slice {}".format(i)
+                print("Reprojecting slice {}".format(i))
             healpix_data_reproj,footprint = reproject_from_healpix((vslice,"G"),FITS_wcs,shape_out=FITS_data.shape,hdu_in=1,nested=False)
             # update velocity channel in reprojected FITS cube
             HI4PI_cube_reproj_data[i]*=healpix_data_reproj
             # save intermediate FITS file in case kernel dies
             if i%10==0:
                 if VERBOSE:
-                    print "Saving intermediate FITS file: {}".format(HI4PI_output_file)
+                    print("Saving intermediate FITS file: {}".format(HI4PI_output_file))
                 fits.writeto(HI4PI_output_file,HI4PI_cube_reproj_data,overwrite=True)
 
     # save to FITS file
     if VERBOSE:
-        print "Saving FITS file: {}".format(HI4PI_output_file)
+        print("Saving FITS file: {}".format(HI4PI_output_file))
     fits.writeto(HI4PI_output_file,HI4PI_cube_reproj_data,overwrite=True)
 
 def fhighlatmask(lb_coords,blim):
@@ -666,7 +670,7 @@ def fheader_3Dto2D(filedir_in,filedir_out,write=False):
     header_keys = header.keys()
     header["NAXIS"]=2
 
-    keys_3D = ["NAXIS3","CDELT3","CROTA3","CRPIX3","CRVAL3","CTYPE3"]
+    keys_3D = ["NAXIS3","CDELT3","CROTA3","CRPIX3","CRVAL3","CTYPE3","CUNIT3"]
 
     for key in keys_3D:
         if key in header_keys:
@@ -704,5 +708,5 @@ def fslice3DFITS(filedir_in,dir_out,units="kms",verbose=True):
         fname        = os.path.basename(filedir_in)+"_"+str(third_axis_i)+"_"+units+".fits"
         fdir         = dir_out+fname
         if verbose==True:
-            print "writing "+fdir+"..."
+            print("writing "+fdir+"...")
         fits.writeto(fdir,data_i,header_2D,overwrite=True)

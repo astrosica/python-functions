@@ -297,9 +297,9 @@ def fannregfiles(names,ra,dec,fdir,color="RED",size=0.001,deg=True,writenames=Tr
 		file_kvis_names  = fdir+"positions_names.ann"
 		file_ds9_names   = fdir+"positions_names.reg"
 
-	print "writing files...."
-	print file_kvis
-	print file_ds9
+	print("writing files....")
+	print(file_kvis)
+	print(file_ds9)
 	
 	# open files
 	f_kvis           = open(file_kvis,"w+")

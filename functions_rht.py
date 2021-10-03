@@ -23,7 +23,7 @@ def fRHTdir(dir,wlen,smr,frac):
 	for file in files:
 		if file[-5:]==".fits":
 			filedir = dir+file
-			print "Executing the RHT on file "+filedir
+			print("Executing the RHT on file "+filedir)
 			rht.main(filedir,wlen=wlen,smr=smr,frac=frac)
 
 def faddtoRHTheader(rhtfile,newheader):
