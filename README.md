@@ -1,6 +1,6 @@
 # Python functions
 
-Possibly useful functions written in Python.
+Python functions for PhD work.
 
 ## Polarization
 
